@@ -1,0 +1,463 @@
+"""
+database.py
+Quản lý cơ sở dữ liệu SQLite (study_progress.db) đa người dùng (Multi-user Data Isolation):
+1. Bảng users: Quản lý tài khoản, mã hóa mật khẩu an toàn với salt & SHA-256.
+2. Bảng user_sessions: Phiên đăng nhập độc lập.
+3. Bảng user_vocab_progress: Trạng thái tích chọn từ vựng riêng biệt cho từng người dùng.
+4. Bảng user_passages: Lịch sử đoạn văn và bài dịch của từng người dùng.
+5. Duy trì tương thích ngược với file Excel và chế độ khách (Guest).
+"""
+
+import os
+import sqlite3
+import logging
+import hashlib
+import secrets
+from datetime import datetime
+import openpyxl
+
+logger = logging.getLogger(__name__)
+
+DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "study_progress.db"))
+
+def get_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# ─── PASSWORD HASHING & SECURITY ─────────────────────────────────────────────
+def hash_password(password: str) -> str:
+    """Tạo salt ngẫu nhiên và băm mật khẩu an toàn bằng SHA-256."""
+    salt = secrets.token_hex(16)
+    pwd_hash = hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
+    return f"{salt}${pwd_hash}"
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    """Xác thực mật khẩu với stored_hash bằng hàm chống timing-attack."""
+    try:
+        if not stored_hash or "$" not in stored_hash:
+            return False
+        salt, pwd_hash = stored_hash.split("$", 1)
+        check_hash = hashlib.sha256(f"{salt}:{password}".encode("utf-8")).hexdigest()
+        return secrets.compare_digest(pwd_hash, check_hash)
+    except Exception:
+        return False
+
+# ─── DATABASE INITIALIZATION ────────────────────────────────────────────────
+def init_db(excel_words=None):
+    """
+    Khởi tạo cấu trúc các bảng cho hệ thống đa người dùng nếu chưa tồn tại.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # 1. Bảng Users
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 2. Bảng User Sessions
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        session_token TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        expires_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+
+    # 3. Bảng User Vocab Progress (Độc lập cho từng user)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_vocab_progress (
+        user_id INTEGER NOT NULL,
+        word TEXT NOT NULL,
+        is_mastered INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, word),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+
+    # 4. Bảng User Passages (Lịch sử bài dịch riêng của từng user)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_passages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        used_words TEXT,
+        english_passage TEXT,
+        vietnamese_translation TEXT,
+        user_translation TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+
+    # 5. Các bảng chung (Legacy / Global fallback)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS vocab_selection (
+        word TEXT PRIMARY KEY,
+        topic TEXT,
+        is_selected INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS translations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        used_words TEXT,
+        english_passage TEXT,
+        vietnamese_translation TEXT,
+        my_translation TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    conn.commit()
+
+    # Seed từ vựng ban đầu nếu bảng chung rỗng
+    cursor.execute("SELECT COUNT(*) FROM vocab_selection")
+    count = cursor.fetchone()[0]
+
+    if count == 0 and excel_words:
+        logger.info(f"[Database] Seeding vocab_selection with {len(excel_words)} words from Excel...")
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        records = [
+            (w["word"], w.get("topic", ""), 1 if w.get("learned", False) else 0, now_str)
+            for w in excel_words if w.get("word")
+        ]
+        cursor.executemany(
+            "INSERT OR REPLACE INTO vocab_selection (word, topic, is_selected, updated_at) VALUES (?, ?, ?, ?)",
+            records
+        )
+        conn.commit()
+        logger.info("[Database] Seeding completed.")
+
+    conn.close()
+
+# ─── USER & AUTHENTICATION MANAGEMENT ───────────────────────────────────────
+def register_user(username: str, password: str, excel_words=None):
+    """
+    Đăng ký tài khoản mới. Trả về (user_dict, error_message).
+    """
+    username = (username or "").strip()
+    if len(username) < 3:
+        return None, "Tên đăng nhập phải có ít nhất 3 ký tự."
+    if len(password or "") < 4:
+        return None, "Mật khẩu phải có ít nhất 4 ký tự."
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        pwd_hash = hash_password(password)
+        cursor.execute(
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+            (username, pwd_hash)
+        )
+        user_id = cursor.lastrowid
+        conn.commit()
+
+        # Tự động khởi tạo trạng thái từ vựng mặc định cho tài khoản mới
+        # Khởi tạo mặc định: người dùng mới bắt đầu với 0 từ đã học để học từ đầu
+        user = {"id": user_id, "username": username}
+        logger.info(f"[Auth] Registered new user: {username} (ID: {user_id})")
+        return user, None
+    except sqlite3.IntegrityError:
+        return None, "Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác."
+    except Exception as e:
+        logger.error(f"[Auth] Register error: {e}")
+        return None, f"Lỗi hệ thống khi đăng ký: {e}"
+    finally:
+        conn.close()
+
+def authenticate_user(username: str, password: str):
+    """
+    Xác thực người dùng và cấp session_token. Trả về (user_dict, token, error_message).
+    """
+    username = (username or "").strip()
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("SELECT id, username, password_hash, created_at FROM users WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        if not row:
+            return None, None, "Tài khoản không tồn tại."
+
+        if not verify_password(password, row["password_hash"]):
+            return None, None, "Mật khẩu không chính xác."
+
+        user_id = row["id"]
+        # Tạo session token ngẫu nhiên
+        token = secrets.token_urlsafe(32)
+        cursor.execute(
+            "INSERT INTO user_sessions (session_token, user_id) VALUES (?, ?)",
+            (token, user_id)
+        )
+        conn.commit()
+
+        user = {"id": user_id, "username": row["username"], "created_at": row["created_at"]}
+        logger.info(f"[Auth] User logged in: {username} (Token: ...{token[-6:]})")
+        return user, token, None
+    except Exception as e:
+        logger.error(f"[Auth] Login error: {e}")
+        return None, None, f"Lỗi đăng nhập: {e}"
+    finally:
+        conn.close()
+
+def get_user_by_session(session_token: str):
+    """
+    Lấy thông tin người dùng từ session_token.
+    """
+    if not session_token:
+        return None
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        SELECT u.id, u.username, u.created_at
+        FROM user_sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.session_token = ?
+        """, (session_token,))
+        row = cursor.fetchone()
+        if row:
+            return dict(row)
+        return None
+    finally:
+        conn.close()
+
+def delete_session(session_token: str):
+    """Hủy session khi đăng xuất."""
+    if not session_token:
+        return
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM user_sessions WHERE session_token = ?", (session_token,))
+    conn.commit()
+    conn.close()
+
+# ─── MULTI-USER VOCABULARY PROGRESS ─────────────────────────────────────────
+def get_user_all_selections(user_id: int) -> dict[str, bool]:
+    """Trả về dictionary {word: is_mastered (bool)} của riêng user_id."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT word, is_mastered FROM user_vocab_progress WHERE user_id = ?", (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {r["word"]: bool(r["is_mastered"]) for r in rows}
+
+def get_user_selected_words(user_id: int) -> list[str]:
+    """Trả về danh sách từ vựng đang được tích chọn (is_mastered = 1) của riêng user_id."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT word FROM user_vocab_progress WHERE user_id = ? AND is_mastered = 1", (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [r["word"] for r in rows]
+
+def update_user_vocab_selection(user_id: int, words: list[str], is_mastered: bool):
+    """Cập nhật trạng thái tích chọn cho một nhóm từ của user_id."""
+    if not words:
+        return
+    conn = get_connection()
+    cursor = conn.cursor()
+    val = 1 if is_mastered else 0
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    cursor.executemany(
+        """
+        INSERT INTO user_vocab_progress (user_id, word, is_mastered, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id, word) DO UPDATE SET is_mastered = excluded.is_mastered, updated_at = excluded.updated_at
+        """,
+        [(user_id, w, val, now_str) for w in words]
+    )
+    conn.commit()
+    conn.close()
+
+def set_all_user_selections(user_id: int, selected_words: list[str]):
+    """Đồng bộ toàn bộ danh sách từ được tích của user_id."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Đưa tất cả từ của user về 0
+    cursor.execute("UPDATE user_vocab_progress SET is_mastered = 0, updated_at = ? WHERE user_id = ?", (now_str, user_id))
+
+    # Cập nhật các từ được chọn thành 1
+    if selected_words:
+        cursor.executemany(
+            """
+            INSERT INTO user_vocab_progress (user_id, word, is_mastered, updated_at)
+            VALUES (?, ?, 1, ?)
+            ON CONFLICT(user_id, word) DO UPDATE SET is_mastered = 1, updated_at = excluded.updated_at
+            """,
+            [(user_id, w, now_str) for w in selected_words]
+        )
+    conn.commit()
+    conn.close()
+
+# ─── MULTI-USER TRANSLATIONS & PASSAGES ──────────────────────────────────────
+def save_user_translation_submission(user_id: int, used_words: str, english_passage: str, vietnamese_translation: str, user_translation: str) -> int:
+    """Lưu bài dịch của riêng user_id vào bảng user_passages."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO user_passages (user_id, used_words, english_passage, vietnamese_translation, user_translation)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (user_id, used_words, english_passage, vietnamese_translation, user_translation)
+    )
+    inserted_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return inserted_id
+
+def get_user_recent_translations(user_id: int, limit: int = 15) -> list[dict]:
+    """Lấy danh sách các bài dịch gần nhất của riêng user_id."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, used_words, english_passage, vietnamese_translation, user_translation as my_translation, created_at
+        FROM user_passages
+        WHERE user_id = ?
+        ORDER BY id DESC LIMIT ?
+        """,
+        (user_id, limit)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+# ─── LEGACY & FALLBACK FUNCTIONS (CHO GUEST HOẶC BẢO LƯU DỮ LIỆU CŨ) ─────────
+def get_all_selections(user_id: int = None) -> dict[str, bool]:
+    if user_id:
+        return get_user_all_selections(user_id)
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT word, is_selected FROM vocab_selection")
+    rows = cursor.fetchall()
+    conn.close()
+    return {r["word"]: bool(r["is_selected"]) for r in rows}
+
+def get_selected_words_list(user_id: int = None) -> list[str]:
+    if user_id:
+        return get_user_selected_words(user_id)
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT word FROM vocab_selection WHERE is_selected = 1")
+    rows = cursor.fetchall()
+    conn.close()
+    return [r["word"] for r in rows]
+
+def update_vocab_selection(words: list[str], is_selected: bool, user_id: int = None):
+    if user_id:
+        return update_user_vocab_selection(user_id, words, is_selected)
+    if not words:
+        return
+    conn = get_connection()
+    cursor = conn.cursor()
+    val = 1 if is_selected else 0
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.executemany(
+        """
+        INSERT INTO vocab_selection (word, is_selected, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(word) DO UPDATE SET is_selected = excluded.is_selected, updated_at = excluded.updated_at
+        """,
+        [(w, val, now_str) for w in words]
+    )
+    conn.commit()
+    conn.close()
+
+def set_all_selections(selected_words: list[str], user_id: int = None):
+    if user_id:
+        return set_all_user_selections(user_id, selected_words)
+    conn = get_connection()
+    cursor = conn.cursor()
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cursor.execute("UPDATE vocab_selection SET is_selected = 0, updated_at = ?", (now_str,))
+    if selected_words:
+        cursor.executemany(
+            """
+            INSERT INTO vocab_selection (word, is_selected, updated_at)
+            VALUES (?, 1, ?)
+            ON CONFLICT(word) DO UPDATE SET is_selected = 1, updated_at = excluded.updated_at
+            """,
+            [(w, now_str) for w in selected_words]
+        )
+    conn.commit()
+    conn.close()
+
+def save_translation_submission(used_words: str, english_passage: str, vietnamese_translation: str, my_translation: str, user_id: int = None) -> int:
+    if user_id:
+        return save_user_translation_submission(user_id, used_words, english_passage, vietnamese_translation, my_translation)
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO translations (used_words, english_passage, vietnamese_translation, my_translation)
+        VALUES (?, ?, ?, ?)
+        """,
+        (used_words, english_passage, vietnamese_translation, my_translation)
+    )
+    inserted_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return inserted_id
+
+def get_recent_translations(limit: int = 15, user_id: int = None) -> list[dict]:
+    if user_id:
+        return get_user_recent_translations(user_id, limit)
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT id, used_words, english_passage, vietnamese_translation, my_translation, created_at
+        FROM translations
+        ORDER BY id DESC LIMIT ?
+        """,
+        (limit,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def sync_selection_to_excel(selected_words_set: set[str], excel_paths: list[str] = None):
+    """
+    Đồng bộ trạng thái tích chọn vào cột I (Đã học) của file Excel.
+    """
+    if not excel_paths:
+        excel_paths = [
+            "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx",
+            "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Gemini_Live.xlsx"
+        ]
+
+    for path in set(excel_paths):
+        if not os.path.exists(path):
+            continue
+        try:
+            wb = openpyxl.load_workbook(path)
+            sheet_name = 'Lộ trình 1000 từ cốt lõi' if 'Lộ trình 1000 từ cốt lõi' in wb.sheetnames else wb.sheetnames[0]
+            ws = wb[sheet_name]
+
+            for row in range(2, ws.max_row + 1):
+                word_val = str(ws.cell(row=row, column=4).value or '').strip()
+                if not word_val:
+                    continue
+                is_checked = word_val in selected_words_set
+                ws.cell(row=row, column=9, value=is_checked)
+
+            wb.save(path)
+            logger.info(f"[Database Sync] Synchronized selection to Excel column I: {path}")
+        except Exception as e:
+            logger.error(f"[Database Sync] Failed to update Excel {path}: {e}")
