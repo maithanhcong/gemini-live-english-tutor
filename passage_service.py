@@ -47,24 +47,43 @@ EMBEDDING_MODELS = [
     "gemini-embedding-2",
 ]
 
+from pathlib import Path
+
+# Thư mục gốc chứa dữ liệu của dự án
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+
 # In-memory Cache for generated passages: key is tuple of sorted words
 PASSAGE_CACHE = {}
 
-def get_excel_path():
-    parent_dirs = [
-        os.path.dirname(__file__),
-        "d:\\el",
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    ]
-    for d in parent_dirs:
-        p1 = os.path.join(d, "Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx")
-        if os.path.exists(p1):
-            return p1
-        matches = glob.glob(os.path.join(d, "*Lo_Trinh*.xlsx"))
+def get_excel_path() -> str:
+    """
+    Trả về đường dẫn tuyệt đối tới file Excel lộ trình 1000 từ cốt lõi.
+    Sử dụng đường dẫn động chuẩn trong thư mục data/.
+    """
+    # 1. Đường dẫn chuẩn chính thức trong data/
+    primary_file = DATA_DIR / "1000_core_words_curriculum.xlsx"
+    if primary_file.exists():
+        return str(primary_file)
+
+    # 2. Tìm kiếm bất kỳ file xlsx nào trong data/
+    if DATA_DIR.exists():
+        matches = list(DATA_DIR.glob("*.xlsx"))
         if matches:
-            return matches[0]
-    return "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx"
+            return str(matches[0])
+
+    # 3. Dự phòng tương thích ngược với các thư mục ngoài
+    for parent in [BASE_DIR, Path("d:/el"), BASE_DIR.parent.parent]:
+        for fname in [
+            "1000_core_words_curriculum.xlsx",
+            "Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx",
+            "Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Gemini_Live.xlsx"
+        ]:
+            cand = parent / fname
+            if cand.exists():
+                return str(cand)
+
+    return str(primary_file)
 
 def load_words_from_excel(filter_learned_only=False, user_id=None):
     """
@@ -328,11 +347,8 @@ def record_passage_to_excel(used_words: str, english_passage: str, vietnamese_tr
         logger.error(f"[Database] Failed to save translation to SQLite: {db_err}")
 
     # 2. Ghi nhận vào Excel
-    paths = [
-        get_excel_path(),
-        "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx",
-        "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Gemini_Live.xlsx"
-    ]
+    excel_path = get_excel_path()
+    paths = [excel_path]
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     for path in set(paths):
@@ -368,11 +384,8 @@ def update_user_translation(used_words: str, english_passage: str, my_translatio
     """
     Cập nhật bản dịch thực hành của người dùng vào dòng tương ứng trong Sheet Luyen_Dich_Passages của Excel.
     """
-    paths = [
-        get_excel_path(),
-        "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx",
-        "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Gemini_Live.xlsx"
-    ]
+    excel_path = get_excel_path()
+    paths = [excel_path]
     for path in set(paths):
         if not os.path.exists(path):
             continue

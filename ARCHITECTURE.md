@@ -38,7 +38,7 @@ flowchart TB
 
         subgraph Persistence ["Persistence Layer"]
             SQLiteDB[("SQLite (study_progress.db)\nMulti-user Progress")]
-            ExcelStorage[("Excel Sheet (Lo_Trinh_1000_Tu.xlsx)\nLong-term Progress")]
+            ExcelStorage[("Excel Sheet (data/1000_core_words_curriculum.xlsx)\nLong-term Progress")]
         end
     end
 

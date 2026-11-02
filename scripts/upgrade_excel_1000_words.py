@@ -787,18 +787,39 @@ def write_upgraded_workbook(words_1000, target_path):
     print(f"Successfully saved 1000-word workbook with 2 sheets to: {target_path}")
 
 def run():
-    parent_dir = "d:\\el"
-    existing_file = glob.glob(os.path.join(parent_dir, "*Lo_Trinh*.xlsx"))[0]
-    existing_words = get_existing_words(existing_file)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(current_dir, ".."))
+    data_dir = os.path.join(project_root, "data")
+    os.makedirs(data_dir, exist_ok=True)
+
+    candidates = [
+        os.path.join(data_dir, "1000_core_words_curriculum.xlsx"),
+        "d:\\el\\1000_core_words_curriculum.xlsx",
+        "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx",
+    ]
+    existing_file = None
+    for c in candidates:
+        if os.path.exists(c):
+            existing_file = c
+            break
+
+    if not existing_file:
+        matches = glob.glob(os.path.join(data_dir, "*.xlsx")) or glob.glob("d:\\el\\*Lo_Trinh*.xlsx")
+        if matches:
+            existing_file = matches[0]
+
+    existing_words = get_existing_words(existing_file) if existing_file else []
     words_1000 = generate_1000_list(existing_words)
     
-    # Save to requested name and original name for complete compatibility
-    name1 = os.path.join(parent_dir, "Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx")
-    name2 = os.path.join(parent_dir, "Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Gemini_Live.xlsx")
-    
-    write_upgraded_workbook(words_1000, name1)
-    write_upgraded_workbook(words_1000, name2)
-    print("Excel upgrade completed successfully!")
+    # Save to primary data/ directory
+    primary_target = os.path.join(data_dir, "1000_core_words_curriculum.xlsx")
+    write_upgraded_workbook(words_1000, primary_target)
+
+    # Save to external folder if exists
+    if os.path.exists("d:\\el"):
+        write_upgraded_workbook(words_1000, "d:\\el\\1000_core_words_curriculum.xlsx")
+
+    print(f"Excel upgrade completed successfully! Primary saved to: {primary_target}")
 
 if __name__ == "__main__":
     run()

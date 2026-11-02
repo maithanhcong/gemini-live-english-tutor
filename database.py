@@ -437,10 +437,10 @@ def sync_selection_to_excel(selected_words_set: set[str], excel_paths: list[str]
     Đồng bộ trạng thái tích chọn vào cột I (Đã học) của file Excel.
     """
     if not excel_paths:
-        excel_paths = [
-            "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx",
-            "d:\\el\\Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Gemini_Live.xlsx"
-        ]
+        from pathlib import Path
+        data_dir = Path(__file__).resolve().parent / "data"
+        primary_excel = data_dir / "1000_core_words_curriculum.xlsx"
+        excel_paths = [str(primary_excel)]
 
     for path in set(excel_paths):
         if not os.path.exists(path):

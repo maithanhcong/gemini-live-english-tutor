@@ -56,29 +56,38 @@
 
 ## 📁 Cấu Trúc Dự Án (Project Structure)
 
-```
+```text
 gemini-live-english-tutor/
-├── main.py                          # Máy chủ FastAPI & WebSocket router (/ws, /api/*)
-├── gemini_live.py                   # Bộ điều khiển phiên kết nối Gemini Live WebSocket
-├── database.py                      # ORM/Quản lý CSDL SQLite đa người dùng & xác thực
-├── passage_service.py               # Dịch vụ sinh đoạn văn ngữ cảnh & quản lý Excel
-├── tutor_system_instruction.py      # Bộ sinh System Instruction cá nhân hóa động
-├── tutor_knowledge_base.json        # Cơ sở tri thức phát âm tiếng Anh cho người Việt
-├── build_tutor_knowledge.py         # Script tự động trích xuất tri thức từ tài liệu PDF
-├── upgrade_excel_1000_words.py      # Script chuẩn hóa 1000 từ vựng vào file Excel
-├── Lo_Trinh_80_Ngay_560_Tu_Vung_Phat_Am_Co_Ban.xlsx  # Dữ liệu 1000 từ vựng cốt lõi
-├── requirements.txt                 # Danh sách thư viện Python phụ thuộc
-├── .env.example                     # Mẫu cấu hình biến môi trường
-├── .gitignore                       # Danh sách loại trừ tệp nhạy cảm
-├── ARCHITECTURE.md                  # Tài liệu đặc tả kiến trúc kỹ thuật chi tiết
-├── README.md                        # Hướng dẫn dự án song ngữ
-└── frontend/                        # Toàn bộ giao diện người dùng (Responsive Web UI)
-    ├── index.html                   # Cấu trúc giao diện 2 Tab (Live & Luyện Dịch)
-    ├── style.css                    # Thiết kế giao diện (Desktop, iPad, Mobile Drawer)
-    ├── main.js                      # Logic điều khiển ứng dụng, Auth & Modal
-    ├── gemini-client.js             # Client WebSocket trao đổi âm thanh với backend
-    ├── media-handler.js             # Bộ xử lý Microphone, Camera và loa phát
-    └── pcm-processor.js             # AudioWorklet xử lý luồng PCM 16/24kHz
+├── data/                                # Chứa Excel 1000 từ và knowledge base json/md
+│   ├── 1000_core_words_curriculum.xlsx  # Dữ liệu 1000 từ vựng cốt lõi & tiến độ
+│   ├── tutor_knowledge_base.json        # Cơ sở tri thức phát âm tiếng Anh cho người Việt
+│   └── tutor_knowledge_base.md          # Bản tra cứu Markdown của cẩm nang phát âm
+├── docs/                                # Tài liệu hướng dẫn triển khai
+│   └── deployment_cloud_run.md          # Hướng dẫn deploy Docker lên Google Cloud Run
+├── frontend/                            # Toàn bộ giao diện người dùng (Responsive Web UI)
+│   ├── index.html                       # Cấu trúc giao diện 2 Tab (Live & Luyện Dịch)
+│   ├── style.css                        # Thiết kế giao diện (Desktop, iPad, Mobile Drawer)
+│   ├── main.js                          # Logic điều khiển ứng dụng, Auth & Modal
+│   ├── gemini-client.js                 # Client WebSocket trao đổi âm thanh với backend
+│   ├── media-handler.js                 # Bộ xử lý Microphone, Camera và loa phát
+│   └── pcm-processor.js                 # AudioWorklet xử lý luồng PCM 16/24kHz
+├── scripts/                             # Các script migrate dữ liệu, build tri thức, test
+│   ├── build_tutor_knowledge.py         # Script tự động trích xuất tri thức từ PDF
+│   ├── upgrade_excel_1000_words.py      # Script chuẩn hóa 1000 từ vựng vào file Excel
+│   ├── test_multiuser_flow.py           # Test kiểm thử tính năng đăng ký/đăng nhập
+│   └── twilio_handler.py                # Twilio voice call handler mở rộng
+├── .dockerignore                        # Danh sách loại trừ build Docker
+├── .env.example                         # Mẫu cấu hình biến môi trường
+├── .gitignore                           # Danh sách loại trừ tệp nhạy cảm
+├── ARCHITECTURE.md                      # Tài liệu đặc tả kiến trúc kỹ thuật chi tiết
+├── database.py                          # ORM/Quản lý CSDL SQLite đa người dùng & xác thực
+├── Dockerfile                           # Cấu hình containerization sản phẩm
+├── gemini_live.py                       # Bộ điều khiển phiên kết nối Gemini Live WebSocket
+├── main.py                              # Máy chủ FastAPI & WebSocket router (/ws, /api/*)
+├── passage_service.py                   # Dịch vụ sinh đoạn văn ngữ cảnh & quản lý Excel
+├── README.md                            # Hướng dẫn dự án song ngữ
+├── requirements.txt                     # Danh sách thư viện Python phụ thuộc
+└── tutor_system_instruction.py          # Bộ sinh System Instruction cá nhân hóa động
 ```
 
 ---

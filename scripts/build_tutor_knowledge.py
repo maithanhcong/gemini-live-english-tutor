@@ -32,15 +32,17 @@ def find_file(patterns, search_dirs):
 
 def extract_all():
     current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(current_dir, ".."))
+    data_dir = os.path.join(project_root, "data")
     search_dirs = [
+        data_dir,
         current_dir,
-        os.path.abspath(os.path.join(current_dir, "..")),
-        os.path.abspath(os.path.join(current_dir, "..", "..")),
-        os.path.abspath(os.path.join(current_dir, "..", "..", "..")),
+        project_root,
+        os.path.abspath(os.path.join(project_root, "..")),
         "D:\\el"
     ]
 
-    xlsx_path = find_file(["*Lo_Trinh*.xlsx", "*560_Tu*.xlsx"], search_dirs)
+    xlsx_path = find_file(["*1000_core_words*.xlsx", "*Lo_Trinh*.xlsx", "*560_Tu*.xlsx"], search_dirs)
     pdf_path = find_file(["*Lỗi Phát Âm*.pdf", "*Cam_Nang*.pdf", "*Luyen_Noi*.pdf"], search_dirs)
 
     if not xlsx_path or not os.path.exists(xlsx_path):
@@ -167,13 +169,14 @@ def extract_all():
         "days": days_data
     }
 
-    json_file_path = os.path.join(current_dir, "tutor_knowledge_base.json")
+    os.makedirs(data_dir, exist_ok=True)
+    json_file_path = os.path.join(data_dir, "tutor_knowledge_base.json")
     with open(json_file_path, "w", encoding="utf-8") as f:
         json.dump(knowledge, f, ensure_ascii=False, indent=2)
     print(f"Saved JSON knowledge base to {json_file_path}")
 
     # 5. Save Markdown documentation
-    md_file_path = os.path.join(current_dir, "tutor_knowledge_base.md")
+    md_file_path = os.path.join(data_dir, "tutor_knowledge_base.md")
     with open(md_file_path, "w", encoding="utf-8") as f:
         f.write("# TÀI LIỆU HUẤN LUYỆN GIA SƯ TIẾNG ANH GEMINI LIVE\n\n")
         f.write("## 1. Cẩm Nang Sửa Lỗi Phát Âm Cho Người Việt (Trích từ PDF)\n\n")

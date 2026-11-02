@@ -11,8 +11,13 @@ from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect, HTTPExceptio
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from gemini_live import GeminiLive
-from twilio_handler import TwilioHandler
+try:
+    from scripts.twilio_handler import TwilioHandler
+except ImportError:
+    try:
+        from twilio_handler import TwilioHandler
+    except ImportError:
+        TwilioHandler = None
 import passage_service
 import database
 
@@ -575,7 +580,10 @@ async def twilio_outbound(
 async def twilio_stream(websocket: WebSocket):
     """WebSocket endpoint for Twilio Media Streams."""
     await websocket.accept()
-    logger.info("Twilio media stream WebSocket connected")
+    if TwilioHandler is None:
+        logger.error("TwilioHandler is not available")
+        await websocket.close()
+        return
 
     handler = TwilioHandler(gemini_api_key=GEMINI_API_KEY, model=MODEL)
     try:
