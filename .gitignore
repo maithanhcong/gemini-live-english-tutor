@@ -1,0 +1,56 @@
+# ==========================================
+# GEMINI LIVE ENGLISH TUTOR - GITIGNORE
+# ==========================================
+
+# Environment & Secrets (TUYỆT ĐỐI KHÔNG PUSH)
+.env
+.env.*
+!.env.example
+
+# SQLite Database & Storage (Dữ liệu học tập cá nhân)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+study_progress.db
+
+# Binaries & Executables
+cloudflared.exe
+*.exe
+*.dll
+*.so
+*.dylib
+*.whl
+
+# Python Virtual Environments & Bytecode
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor & System Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & Temporary Files
+*.log
+scratch/
+.system_generated/
