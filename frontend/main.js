@@ -255,6 +255,39 @@ let openTopicSet = new Set([0]); // Default topic 0 open
 let currentPassageData = null;
 let sessionPassageHistory = [];
 
+// Helper auto-select words when no words are ticked yet
+function autoSelectDefaultWords() {
+  if (syncedTopics && syncedTopics.length > 0) {
+    // 1. Ưu tiên các từ đã đánh dấu 'Đã học = TRUE' trong Excel
+    for (const topic of syncedTopics) {
+      for (const w of topic.words) {
+        if (w.learned) {
+          selectedWordSet.add(w.word);
+        }
+      }
+    }
+    // 2. Nếu không có từ nào đánh dấu learned, lấy 5 từ đầu tiên
+    if (selectedWordSet.size === 0) {
+      let count = 0;
+      for (const topic of syncedTopics) {
+        for (const w of topic.words) {
+          selectedWordSet.add(w.word);
+          count++;
+          if (count >= 5) break;
+        }
+        if (count >= 5) break;
+      }
+    }
+    renderTopics();
+    updateSelectedCount();
+  }
+}
+
+// Cập nhật số lượng đếm từ ngay khi khởi tạo từ bộ nhớ đệm
+try {
+  updateSelectedCount();
+} catch (e) {}
+
 // Media & Live Client
 const mediaHandler = new MediaHandler();
 const geminiClient = new GeminiClient({
@@ -541,7 +574,7 @@ async function syncVocabFromExcel() {
       syncedTopics = data.topics || [];
 
       // Phục hồi chính xác trạng thái tích chọn từ CSDL SQLite theo user_id
-      if (Array.isArray(data.selected_words)) {
+      if (Array.isArray(data.selected_words) && data.selected_words.length > 0) {
         selectedWordSet = new Set(data.selected_words);
         try {
           localStorage.setItem(
@@ -550,16 +583,22 @@ async function syncVocabFromExcel() {
           );
         } catch (e) {}
         updateSyncBanners();
-      } else if (!currentUser && selectedWordSet.size === 0 && !localStorage.getItem(STORAGE_KEY_MASTERED_WORDS)) {
-        // Chỉ chọn mẫu 10 từ đầu tiên nếu là khách vãng lai hoàn toàn mới
-        let count = 0;
+      } else if (selectedWordSet.size === 0) {
+        // Tự động tích chọn tất cả các từ đã học (TRUE) từ Excel để đồng bộ số lượng chính xác
         for (const topic of syncedTopics) {
           for (const w of topic.words) {
-            selectedWordSet.add(w.word);
-            count++;
-            if (count >= 10) break;
+            if (w.learned) {
+              selectedWordSet.add(w.word);
+            }
           }
-          if (count >= 10) break;
+        }
+        // Nếu không có từ nào đánh dấu learned, tự động chọn tất cả từ của các chủ đề hiện tại
+        if (selectedWordSet.size === 0) {
+          for (const topic of syncedTopics) {
+            for (const w of topic.words) {
+              selectedWordSet.add(w.word);
+            }
+          }
         }
         saveMasteredWordsToStorage();
       }
@@ -788,8 +827,9 @@ function updateSelectedCount() {
   btnGeneratePassage.disabled = count === 0;
   if (btnRandomToolbar) btnRandomToolbar.disabled = count === 0;
   if (btnDoneMobileVocab) btnDoneMobileVocab.disabled = count === 0;
-  if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = count === 0;
-  if (btnRandomMobile) btnRandomMobile.disabled = count === 0;
+  // Cụm nút trên Mobile luôn giữ màu sắc nổi bật, sẵn sàng bấm (bấm khi 0 từ sẽ tự động chọn từ)
+  if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = false;
+  if (btnRandomMobile) btnRandomMobile.disabled = false;
   if (mobileSelectionHintText) {
     mobileSelectionHintText.textContent = `Đang chọn: ${count} từ cốt lõi`;
   }
@@ -834,6 +874,9 @@ vocabSearchInput.oninput = () => {
 
 // ─── GENERATE PASSAGE & RANDOM EXERCISE FLOW ────────────────────────────────
 async function requestGeneratePassage(randomChange = false) {
+  if (selectedWordSet.size === 0) {
+    autoSelectDefaultWords();
+  }
   if (selectedWordSet.size === 0) {
     alert("Vui lòng tích chọn ít nhất 1 từ vựng trong danh sách trước khi tạo bài tập.");
     return;
@@ -888,8 +931,8 @@ async function requestGeneratePassage(randomChange = false) {
     btnGeneratePassage.disabled = !hasSelection;
     if (btnRandomToolbar) btnRandomToolbar.disabled = !hasSelection;
     if (btnRandomPassage) btnRandomPassage.disabled = false;
-    if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = !hasSelection;
-    if (btnRandomMobile) btnRandomMobile.disabled = !hasSelection;
+    if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = false;
+    if (btnRandomMobile) btnRandomMobile.disabled = false;
   }
 }
 
@@ -1006,8 +1049,22 @@ if (btnRandomPassage) btnRandomPassage.onclick = () => requestGeneratePassage(tr
 if (btnNextRandomPassage) btnNextRandomPassage.onclick = () => requestGeneratePassage(true);
 
 // Mobile Generator Action Buttons
-if (btnGeneratePassageMobile) btnGeneratePassageMobile.onclick = () => requestGeneratePassage(false);
-if (btnRandomMobile) btnRandomMobile.onclick = () => requestGeneratePassage(true);
+if (btnGeneratePassageMobile) {
+  btnGeneratePassageMobile.onclick = () => {
+    if (selectedWordSet.size === 0) {
+      autoSelectDefaultWords();
+    }
+    requestGeneratePassage(false);
+  };
+}
+if (btnRandomMobile) {
+  btnRandomMobile.onclick = () => {
+    if (selectedWordSet.size === 0) {
+      autoSelectDefaultWords();
+    }
+    requestGeneratePassage(true);
+  };
+}
 
 // Generator Settings Listeners (Difficulty Pills & Length Controls)
 if (levelPillsSelector) {
@@ -1238,6 +1295,16 @@ if (btnPlaceholderOpenDrawer) {
       const search = document.getElementById("vocabSearchInput");
       if (search) search.focus();
     }
+  };
+}
+
+const btnPlaceholderStartGenerate = document.getElementById("btnPlaceholderStartGenerate");
+if (btnPlaceholderStartGenerate) {
+  btnPlaceholderStartGenerate.onclick = () => {
+    if (selectedWordSet.size === 0) {
+      autoSelectDefaultWords();
+    }
+    requestGeneratePassage(false);
   };
 }
 

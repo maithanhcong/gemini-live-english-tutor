@@ -1,416 +1,423 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gia Sư Tiếng Anh 1:1 & Luyện Dịch Song Ngữ - Gemini Live</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css" />
-  </head>
-  <body>
-    <div class="container">
-      <!-- App Header -->
-      <header class="app-header">
-        <div class="header-left">
-          <div class="logo-icon">🎓</div>
-          <div>
-            <h1 class="header-title">Gia Sư Tiếng Anh Cá Nhân 1:1</h1>
-            <p class="header-subtitle">Lộ trình 1000 từ vựng cốt lõi & Sổ tay chuẩn hóa phát âm</p>
-          </div>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gia Sư Tiếng Anh 1:1 & Luyện Dịch Song Ngữ - Gemini Live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=2.4" />
+</head>
+
+<body>
+  <div class="container">
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo-icon">🎓</div>
+        <div>
+          <h1 class="header-title">Gia Sư Tiếng Anh Cá Nhân 1:1</h1>
+          <p class="header-subtitle">Lộ trình 1000 từ vựng cốt lõi & Sổ tay chuẩn hóa phát âm</p>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Main Navigation Tabs -->
+        <nav class="nav-tabs">
+          <button id="navTabLive" class="nav-tab active">
+            <span class="tab-icon">🎙️</span> Đàm Thoại Trực Tiếp
+          </button>
+          <button id="navTabTranslation" class="nav-tab">
+            <span class="tab-icon">📝</span> Luyện Dịch Song Ngữ
+          </button>
+        </nav>
+        <div class="header-status-wrapper">
+          <div id="status" class="status disconnected">Disconnected</div>
+          <div id="interaction-status" class="interaction-status hidden"></div>
         </div>
 
-        <div class="header-right">
-          <!-- Main Navigation Tabs -->
-          <nav class="nav-tabs">
-            <button id="navTabLive" class="nav-tab active">
-              <span class="tab-icon">🎙️</span> Đàm Thoại Trực Tiếp
+        <!-- User Authentication Profile & Actions -->
+        <div class="header-user-section" id="headerUserSection">
+          <!-- Khi chưa đăng nhập (Guest) -->
+          <div id="userGuestBox" class="user-guest-box">
+            <button id="btnOpenAuthModal" class="btn btn-outline-auth">
+              <span class="btn-icon">👤</span> Đăng Nhập
             </button>
-            <button id="navTabTranslation" class="nav-tab">
-              <span class="tab-icon">📝</span> Luyện Dịch Song Ngữ
-            </button>
-          </nav>
-          <div class="header-status-wrapper">
-            <div id="status" class="status disconnected">Disconnected</div>
-            <div id="interaction-status" class="interaction-status hidden"></div>
           </div>
-
-          <!-- User Authentication Profile & Actions -->
-          <div class="header-user-section" id="headerUserSection">
-            <!-- Khi chưa đăng nhập (Guest) -->
-            <div id="userGuestBox" class="user-guest-box">
-              <button id="btnOpenAuthModal" class="btn btn-outline-auth">
-                <span class="btn-icon">👤</span> Đăng Nhập
-              </button>
-            </div>
-            <!-- Khi đã đăng nhập (Logged In) -->
-            <div id="userLoggedInBox" class="user-logged-box hidden">
-              <div class="user-avatar-badge" title="Tài khoản hiện tại">
-                <span class="user-avatar-circle" id="userAvatarChar">U</span>
-                <div class="user-details">
-                  <span class="user-name" id="headerUsername">Tài khoản</span>
-                  <span class="user-mastered-badge" id="headerMasteredBadge">🎯 0 từ đã học</span>
-                </div>
+          <!-- Khi đã đăng nhập (Logged In) -->
+          <div id="userLoggedInBox" class="user-logged-box hidden">
+            <div class="user-avatar-badge" title="Tài khoản hiện tại">
+              <span class="user-avatar-circle" id="userAvatarChar">U</span>
+              <div class="user-details">
+                <span class="user-name" id="headerUsername">Tài khoản</span>
+                <span class="user-mastered-badge" id="headerMasteredBadge">🎯 0 từ đã học</span>
               </div>
-              <button id="btnLogout" class="btn btn-logout-icon" title="Đăng Xuất">
-                <span class="btn-icon">🚪</span>
-                <span class="btn-text">Thoát</span>
-              </button>
             </div>
+            <button id="btnLogout" class="btn btn-logout-icon" title="Đăng Xuất">
+              <span class="btn-icon">🚪</span>
+              <span class="btn-text">Thoát</span>
+            </button>
           </div>
         </div>
-      </header>
+      </div>
+    </header>
 
-      <!-- TAB 1: Đàm thoại trực tiếp (Gemini Live) -->
-      <section id="tabContentLive" class="tab-page active">
-        <div class="auth-section" id="auth-section">
-          <div class="tutor-hero-card">
-            <div class="badge-pill">✨ Đồng hành học tập thông minh</div>
-            <h2>Chào mừng bạn đến với Gia Sư Tiếng Anh 1:1</h2>
-            <p>Hệ thống tích hợp phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị:</p>
-            
-            <div class="features-grid">
-              <div class="feature-item">
-                <span class="f-icon">📚</span>
-                <div>
-                  <strong>Lộ trình 1000 từ cốt lõi:</strong>
-                  <span>Chia đều 100 ngày (10 từ/ngày), bao quát đầy đủ đại từ, trợ động từ, mạo từ và chủ đề thông dụng.</span>
-                </div>
-              </div>
-              <div class="feature-item">
-                <span class="f-icon">🎯</span>
-                <div>
-                  <strong>Sổ tay sửa lỗi phát âm:</strong>
-                  <span>Bắt lỗi triệt để âm đuôi (/s/, /z/, /t/, /d/), cặp âm /θ/ - /ð/, và nguyên âm dài ngắn.</span>
-                </div>
-              </div>
-              <div class="feature-item">
-                <span class="f-icon">⚡</span>
-                <div>
-                  <strong>Cơ chế Failover 4 API Key:</strong>
-                  <span>Tự động chuyển đổi mượt mà khi gặp giới hạn hạn ngạch hoặc lỗi đường truyền.</span>
-                </div>
-              </div>
-            </div>
+    <!-- TAB 1: Đàm thoại trực tiếp (Gemini Live) -->
+    <section id="tabContentLive" class="tab-page active">
+      <div class="auth-section" id="auth-section">
+        <div class="tutor-hero-card">
+          <div class="badge-pill">✨ Đồng hành học tập thông minh</div>
+          <h2>Chào mừng bạn đến với Gia Sư Tiếng Anh 1:1</h2>
+          <p>Hệ thống tích hợp phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị:</p>
 
-            <div class="sync-status-card" id="liveSyncStatusCard">
-              <span class="sync-icon">🔄</span>
+          <div class="features-grid">
+            <div class="feature-item">
+              <span class="f-icon">📚</span>
               <div>
-                <strong>Đồng bộ từ vựng với Tab Luyện Dịch:</strong>
-                <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, Gia sư AI chỉ luyện các từ còn lại.</span>
+                <strong>Lộ trình 1000 từ cốt lõi:</strong>
+                <span>Chia đều 100 ngày (10 từ/ngày), bao quát đầy đủ đại từ, trợ động từ, mạo từ và chủ đề thông
+                  dụng.</span>
               </div>
             </div>
-
-            <div class="hero-action">
-              <button id="connectBtn" class="btn btn-primary btn-large">
-                <span class="btn-icon">🎙️</span> Bắt Đầu Buổi Học (Connect)
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="session-end-section hidden" id="session-end-section">
-          <h2>Phiên học đã kết thúc</h2>
-          <p>Bạn có thể bắt đầu phiên học mới bất kỳ lúc nào.</p>
-          <button id="restartBtn" class="btn btn-primary">Bắt Đầu Phiên Mới</button>
-        </div>
-
-        <div class="app-section hidden" id="app-section">
-          <div class="app-grid">
-            <div class="left-panel">
-              <div class="video-container">
-                <div id="video-placeholder">Bật Camera hoặc Chia sẻ màn hình để tương tác đa phương tiện</div>
-                <video id="video-preview" autoplay playsinline muted></video>
-                <canvas id="video-canvas" style="display: none"></canvas>
-              </div>
-
-              <div class="controls">
-                <button id="micBtn" class="btn icon-btn">Start Mic</button>
-                <button id="cameraBtn" class="btn icon-btn">Start Camera</button>
-                <button id="screenBtn" class="btn icon-btn">Share Screen</button>
-                <button id="disconnectBtn" class="btn icon-btn danger">Disconnect</button>
+            <div class="feature-item">
+              <span class="f-icon">🎯</span>
+              <div>
+                <strong>Sổ tay sửa lỗi phát âm:</strong>
+                <span>Bắt lỗi triệt để âm đuôi (/s/, /z/, /t/, /d/), cặp âm /θ/ - /ð/, và nguyên âm dài ngắn.</span>
               </div>
             </div>
-
-            <div class="right-panel">
-              <div class="live-active-sync-bar" id="liveActiveSyncBar">
-                <span class="sync-badge-icon">🎯</span>
-                <span id="liveActiveSyncText">Đang loại trừ 0 từ đã thành thạo từ tab Luyện Dịch</span>
-              </div>
-              <div class="chat-log" id="chat-log"></div>
-              <div class="input-area">
-                <input
-                  type="text"
-                  id="textInput"
-                  placeholder="Gõ tin nhắn để gửi đến gia sư..."
-                />
-                <button id="sendBtn" class="btn">Gửi</button>
+            <div class="feature-item">
+              <span class="f-icon">⚡</span>
+              <div>
+                <strong>Cơ chế Failover 4 API Key:</strong>
+                <span>Tự động chuyển đổi mượt mà khi gặp giới hạn hạn ngạch hoặc lỗi đường truyền.</span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- TAB 2: Luyện dịch văn bản song ngữ -->
-      <section id="tabContentTranslation" class="tab-page hidden">
-        <!-- Translation Top Bar -->
-        <div class="translation-toolbar">
-          <div class="toolbar-stats">
-            <div class="stat-badge">
-              <span class="stat-label">Tổng từ cốt lõi:</span>
-              <span class="stat-value" id="statTotalWords">1000</span>
-            </div>
-            <div class="stat-badge learned">
-              <span class="stat-label">Đã học:</span>
-              <span class="stat-value" id="statLearnedWords">1000</span>
-            </div>
-            <div class="stat-badge selected">
-              <span class="stat-label">Đang chọn:</span>
-              <span class="stat-value" id="statSelectedCount">0</span>
+          <div class="sync-status-card" id="liveSyncStatusCard">
+            <span class="sync-icon">🔄</span>
+            <div>
+              <strong>Đồng bộ từ vựng với Tab Luyện Dịch:</strong>
+              <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, Gia sư AI chỉ
+                luyện các từ còn lại.</span>
             </div>
           </div>
 
-          <div class="toolbar-actions">
-            <label class="toggle-control" title="Chỉ lấy những từ đã được tích 'Đã học = TRUE' trong file Excel">
-              <input type="checkbox" id="chkLearnedOnly" checked />
-              <span class="toggle-slider"></span>
-              <span class="toggle-text">Chỉ từ "Đã học" (TRUE)</span>
-            </label>
-            <button id="btnSyncVocab" class="btn btn-secondary">
-              <span class="btn-icon">🔄</span> Đồng bộ từ Excel
-            </button>
-            <button id="btnRandomToolbar" class="btn btn-secondary" title="Chọn ngẫu nhiên 3-5 từ đang tích để sinh bài mới" disabled>
-              <span class="btn-icon">🎲</span> Đổi bài khác (Random)
-            </button>
-            <button id="btnGeneratePassage" class="btn btn-primary" disabled>
-              <span class="btn-icon">✨</span> Tạo đoạn văn luyện dịch (Anh ↔ Việt)
+          <div class="hero-action">
+            <button id="connectBtn" class="btn btn-primary btn-large">
+              <span class="btn-icon">🎙️</span> Bắt Đầu Buổi Học (Connect)
             </button>
           </div>
         </div>
+      </div>
 
-        <!-- Mobile Vocab Drawer Quick Button -->
-        <div class="mobile-vocab-trigger-bar">
-          <button id="btnToggleMobileVocabDrawer" class="btn-mobile-select-vocab">
-            <span class="btn-mobile-select-text">📚 Chọn từ vựng luyện tập (<span id="mobileSelectedCountHighlight">Đang chọn: 0 từ</span>) ▼</span>
+      <div class="session-end-section hidden" id="session-end-section">
+        <h2>Phiên học đã kết thúc</h2>
+        <p>Bạn có thể bắt đầu phiên học mới bất kỳ lúc nào.</p>
+        <button id="restartBtn" class="btn btn-primary">Bắt Đầu Phiên Mới</button>
+      </div>
+
+      <div class="app-section hidden" id="app-section">
+        <div class="app-grid">
+          <div class="left-panel">
+            <div class="video-container">
+              <div id="video-placeholder">Bật Camera hoặc Chia sẻ màn hình để tương tác đa phương tiện</div>
+              <video id="video-preview" autoplay playsinline muted></video>
+              <canvas id="video-canvas" style="display: none"></canvas>
+            </div>
+
+            <div class="controls">
+              <button id="micBtn" class="btn icon-btn">Start Mic</button>
+              <button id="cameraBtn" class="btn icon-btn">Start Camera</button>
+              <button id="screenBtn" class="btn icon-btn">Share Screen</button>
+              <button id="disconnectBtn" class="btn icon-btn danger">Disconnect</button>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div class="live-active-sync-bar" id="liveActiveSyncBar">
+              <span class="sync-badge-icon">🎯</span>
+              <span id="liveActiveSyncText">Đang loại trừ 0 từ đã thành thạo từ tab Luyện Dịch</span>
+            </div>
+            <div class="chat-log" id="chat-log"></div>
+            <div class="input-area">
+              <input type="text" id="textInput" placeholder="Gõ tin nhắn để gửi đến gia sư..." />
+              <button id="sendBtn" class="btn">Gửi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Luyện dịch văn bản song ngữ -->
+    <section id="tabContentTranslation" class="tab-page hidden">
+      <!-- Translation Top Bar -->
+      <div class="translation-toolbar">
+        <div class="toolbar-stats">
+          <div class="stat-badge">
+            <span class="stat-label">Tổng từ cốt lõi:</span>
+            <span class="stat-value" id="statTotalWords">1000</span>
+          </div>
+          <div class="stat-badge learned">
+            <span class="stat-label">Đã học:</span>
+            <span class="stat-value" id="statLearnedWords">1000</span>
+          </div>
+          <div class="stat-badge selected">
+            <span class="stat-label">Đang chọn:</span>
+            <span class="stat-value" id="statSelectedCount">0</span>
+          </div>
+        </div>
+
+        <div class="toolbar-actions">
+          <label class="toggle-control" title="Chỉ lấy những từ đã được tích 'Đã học = TRUE' trong file Excel">
+            <input type="checkbox" id="chkLearnedOnly" checked />
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Chỉ từ "Đã học" (TRUE)</span>
+          </label>
+          <button id="btnSyncVocab" class="btn btn-secondary">
+            <span class="btn-icon">🔄</span> Đồng bộ từ Excel
+          </button>
+          <button id="btnRandomToolbar" class="btn btn-secondary"
+            title="Chọn ngẫu nhiên 3-5 từ đang tích để sinh bài mới" disabled>
+            <span class="btn-icon">🎲</span> Đổi bài khác (Random)
+          </button>
+          <button id="btnGeneratePassage" class="btn btn-primary" disabled>
+            <span class="btn-icon">✨</span> Tạo đoạn văn luyện dịch (Anh ↔ Việt)
           </button>
         </div>
+      </div>
 
-        <!-- Generator Settings Bar (Difficulty Level & Sentence Count) - Visible on ALL screens -->
-        <div class="generator-settings-bar" id="generatorSettingsBar">
-          <!-- Difficulty Level Selector -->
-          <div class="settings-group settings-group-level">
-            <span class="settings-label">🎯 Mức độ khó:</span>
-            <div class="level-pills-selector" id="levelPillsSelector">
-              <button type="button" class="level-pill active" data-level="beginner" title="Câu đơn cực ngắn, S-V-O trực diện, thì hiện tại đơn">Cơ bản (Mất gốc)</button>
-              <button type="button" class="level-pill" data-level="elementary" title="Câu ghép cơ bản, thêm liên từ and/but/because/so">Sơ cấp (A1 - A2)</button>
-              <button type="button" class="level-pill" data-level="intermediate" title="Câu phức, mệnh đề quan hệ who/which/that, từ nối thời gian">Trung cấp (B1)</button>
+      <!-- Mobile Vocab Drawer Quick Button -->
+      <div class="mobile-vocab-trigger-bar">
+        <button id="btnToggleMobileVocabDrawer" class="btn-mobile-select-vocab">
+          <span class="btn-mobile-select-text">📚 Chọn từ vựng luyện tập (<span id="mobileSelectedCountHighlight">Đang
+              chọn: 0 từ</span>) ▼</span>
+        </button>
+      </div>
+
+      <!-- Backdrop for Mobile Bottom Sheet -->
+      <div id="vocabDrawerBackdrop" class="bottom-sheet-backdrop hidden"></div>
+
+      <!-- Translation Main Workspace -->
+      <div class="translation-workspace">
+        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, Bottom Sheet on Mobile) -->
+        <div class="vocab-sidebar" id="vocabSidebar">
+          <!-- Mobile Bottom Sheet Handle -->
+          <div class="bottom-sheet-drag-handle"></div>
+
+          <div class="vocab-sidebar-header">
+            <div class="sidebar-title-row">
+              <div class="bottom-sheet-header-title">
+                <h3>Bộ Lọc Từ Vựng</h3>
+                <span class="sheet-count-tag" id="sheetCountTag">0 từ đã chọn</span>
+              </div>
+              <button id="btnCloseMobileVocabDrawer" class="btn-close-bottom-sheet" title="Đóng danh sách">✕
+                Đóng</button>
+            </div>
+            <div class="quick-select-links">
+              <a href="javascript:void(0)" id="linkSelectAll" title="Tích chọn tất cả các từ">Chọn hết</a> ·
+              <a href="javascript:void(0)" id="linkDeselectAll" title="Bỏ chọn tất cả các từ">Bỏ chọn</a> ·
+              <a href="javascript:void(0)" id="linkExpandAll" title="Mở rộng tất cả chủ đề">Mở hết</a> ·
+              <a href="javascript:void(0)" id="linkCollapseAll" title="Thu gọn tất cả chủ đề">Thu gọn</a>
+            </div>
+            <div class="search-box">
+              <input type="text" id="vocabSearchInput" placeholder="🔍 Tìm kiếm từ, nghĩa, phiên âm..." />
             </div>
           </div>
 
-          <!-- Sentence Count Stepper & Slider -->
-          <div class="settings-group settings-group-length">
-            <span class="settings-label">📏 Độ dài đoạn văn:</span>
-            <div class="length-controls-wrapper">
-              <button type="button" class="btn-stepper" id="btnLengthMinus" title="Giảm 1 câu">−</button>
-              <div class="stepper-display">
-                <span class="stepper-value" id="sentenceCountDisplay">3</span>
-                <span class="stepper-unit">câu</span>
-              </div>
-              <button type="button" class="btn-stepper" id="btnLengthPlus" title="Tăng 1 câu">+</button>
-              <input
-                type="range"
-                id="sentenceLengthSlider"
-                min="2"
-                max="15"
-                value="3"
-                class="length-slider"
-                title="Kéo thanh trượt để chỉnh từ 2 đến 15 câu"
-              />
+          <div class="topics-accordion" id="topicsContainer">
+            <div class="empty-state">
+              <p>Nhấn <strong>"Đồng bộ từ Excel"</strong> để tải dữ liệu từ vựng theo chủ đề.</p>
             </div>
+          </div>
+
+          <!-- Mobile Bottom Sheet Footer Action -->
+          <div class="bottom-sheet-footer">
+            <button id="btnDoneMobileVocab" class="btn btn-primary btn-large btn-sheet-done">
+              <span>✓ Hoàn tất & Luyện dịch</span>
+            </button>
           </div>
         </div>
 
-        <!-- Mobile Action Controls Cluster - Visible ONLY on Mobile (@media max-width: 767.98px) -->
-        <div class="mobile-action-bar" id="mobileActionBar">
-          <div class="mobile-action-row">
-            <button id="btnGeneratePassageMobile" class="btn-mobile-generate" disabled>
-              <span class="btn-icon">✨</span> Tạo đoạn văn AI
-            </button>
-            <button id="btnRandomMobile" class="btn-mobile-random" disabled title="Lấy ngẫu nhiên từ đang tích để sinh bài mới">
-              <span class="btn-icon">🎲</span> Đổi bài
-            </button>
-          </div>
-          <div class="mobile-selection-hint">
-            <span class="hint-dot"></span>
-            <span id="mobileSelectionHintText">Đang chọn: 0 từ cốt lõi</span>
-          </div>
-        </div>
-
-        <!-- Backdrop for Mobile Bottom Sheet -->
-        <div id="vocabDrawerBackdrop" class="bottom-sheet-backdrop hidden"></div>
-
-        <!-- Translation Main Workspace -->
-        <div class="translation-workspace">
-          <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, Bottom Sheet on Mobile) -->
-          <div class="vocab-sidebar" id="vocabSidebar">
-            <!-- Mobile Bottom Sheet Handle -->
-            <div class="bottom-sheet-drag-handle"></div>
-
-            <div class="vocab-sidebar-header">
-              <div class="sidebar-title-row">
-                <div class="bottom-sheet-header-title">
-                  <h3>Bộ Lọc Từ Vựng</h3>
-                  <span class="sheet-count-tag" id="sheetCountTag">0 từ đã chọn</span>
-                </div>
-                <button id="btnCloseMobileVocabDrawer" class="btn-close-bottom-sheet" title="Đóng danh sách">✕ Đóng</button>
-              </div>
-              <div class="quick-select-links">
-                <a href="javascript:void(0)" id="linkSelectAll" title="Tích chọn tất cả các từ">Chọn hết</a> · 
-                <a href="javascript:void(0)" id="linkDeselectAll" title="Bỏ chọn tất cả các từ">Bỏ chọn</a> · 
-                <a href="javascript:void(0)" id="linkExpandAll" title="Mở rộng tất cả chủ đề">Mở hết</a> · 
-                <a href="javascript:void(0)" id="linkCollapseAll" title="Thu gọn tất cả chủ đề">Thu gọn</a>
-              </div>
-              <div class="search-box">
-                <input type="text" id="vocabSearchInput" placeholder="🔍 Tìm kiếm từ, nghĩa, phiên âm..." />
-              </div>
-            </div>
-
-            <div class="topics-accordion" id="topicsContainer">
-              <div class="empty-state">
-                <p>Nhấn <strong>"Đồng bộ từ Excel"</strong> để tải dữ liệu từ vựng theo chủ đề.</p>
-              </div>
-            </div>
-
-            <!-- Mobile Bottom Sheet Footer Action -->
-            <div class="bottom-sheet-footer">
-              <button id="btnDoneMobileVocab" class="btn btn-primary btn-large btn-sheet-done">
-                <span>✓ Hoàn tất & Luyện dịch</span>
+        <!-- Right: Generated Passage & Translation Practice -->
+        <div class="passage-main">
+          <!-- Mobile Action Controls Cluster - Visible ONLY on Mobile (@media max-width: 767.98px) -->
+          <div class="mobile-action-bar" id="mobileActionBar">
+            <div class="mobile-action-row">
+              <button id="btnGeneratePassageMobile" class="btn-mobile-generate" type="button">
+                <span class="btn-icon">✨</span> Tạo đoạn văn AI
+              </button>
+              <button id="btnRandomMobile" class="btn-mobile-random" type="button"
+                title="Lấy ngẫu nhiên từ đang tích để sinh bài mới">
+                <span class="btn-icon">🎲</span> Đổi bài
               </button>
             </div>
+            <div class="mobile-selection-hint">
+              <span class="hint-dot"></span>
+              <span id="mobileSelectionHintText">Đang chọn: 0 từ cốt lõi</span>
+            </div>
           </div>
 
-          <!-- Right: Generated Passage & Translation Practice -->
-          <div class="passage-main">
-            <!-- Loading indicator -->
-            <div id="passageLoading" class="passage-loading hidden">
-              <div class="spinner"></div>
-              <h4>Gemini AI đang kiến tạo đoạn văn ngữ cảnh...</h4>
-              <p id="passageLoadingSubtext">Đang lồng ghép các từ vựng bạn đã tích và tối ưu cấu trúc đoạn văn theo mức độ đã chọn.</p>
-            </div>
-
-            <!-- Passage Content Card -->
-            <div id="passageCard" class="passage-card hidden">
-              <div class="passage-card-header">
-                <div class="target-words-wrapper">
-                  <span class="target-label">Từ vựng mục tiêu:</span>
-                  <div class="target-pills" id="passageUsedWords"></div>
-                </div>
-                <div class="card-tools">
-                  <button id="btnSpeakPassage" class="btn-tool" title="Nghe đọc tiếng Anh chuẩn">🔊 Nghe mẫu</button>
-                  <button id="btnRandomPassage" class="btn-tool accent" title="Lấy ngẫu nhiên 3-5 từ khác để tạo bài mới">🎲 Đổi bài khác</button>
-                </div>
-              </div>
-
-              <div class="passage-box">
-                <label class="passage-label">📖 Đoạn văn tiếng Anh thực hành (Reading & Context):</label>
-                <div class="english-passage-text" id="passageEnglishText"></div>
-              </div>
-
-              <!-- User Translation Practice Input -->
-              <div class="practice-box">
-                <label class="passage-label" for="txtUserTranslation">
-                  ✍️ Bản dịch thực hành của tôi (Hãy tự dịch trước khi nộp để đối chiếu):
-                </label>
-                <textarea
-                  id="txtUserTranslation"
-                  rows="3"
-                  placeholder="Nhập bản dịch tiếng Việt của bạn tại đây để đối chiếu với đáp án chuẩn của AI..."
-                ></textarea>
-                <div class="practice-actions">
-                  <button id="btnSubmitTranslation" class="btn btn-success btn-large">
-                    <span class="btn-icon">🚀</span> Nộp bài & Đối chiếu đáp án
-                  </button>
-                  <span id="saveStatusMsg" class="save-status-msg"></span>
-                </div>
-              </div>
-
-              <!-- Side-by-side Comparative Results Card (Shown ONLY after submission) -->
-              <div id="passageComparisonCard" class="comparison-card hidden">
-                <div class="comparison-header">
-                  <div class="comparison-title-box">
-                    <span class="c-icon">🎯</span>
-                    <div>
-                      <h4>Kết Quả Đối Chiếu Bản Dịch</h4>
-                      <p>So sánh bản dịch của bạn với lời dịch gợi ý chuẩn mực từ Gia sư AI</p>
-                    </div>
-                  </div>
-                  <span class="badge-success-pill">🎉 Đã hoàn thành!</span>
-                </div>
-
-                <div class="comparison-grid">
-                  <div class="comparison-col student-col">
-                    <div class="col-header student-header">
-                      <span class="col-icon">✍️</span>
-                      <strong>Bản dịch của bạn</strong>
-                    </div>
-                    <div class="comparison-text" id="compareStudentText"></div>
-                  </div>
-
-                  <div class="comparison-col ai-col">
-                    <div class="col-header ai-header">
-                      <span class="col-icon">🤖</span>
-                      <strong>Gợi ý chuẩn của Gia sư AI</strong>
-                    </div>
-                    <div class="comparison-text" id="compareAiText"></div>
-                  </div>
-                </div>
-
-                <div class="comparison-footer">
-                  <div class="sync-saved-tag">
-                    <span class="check-icon">✅</span>
-                    <span>Đã tự động lưu vào <strong>SQLite</strong> & Sheet <strong>Luyen_Dich_Passages</strong> trong Excel</span>
-                  </div>
-                  <button id="btnNextRandomPassage" class="btn btn-primary">
-                    <span class="btn-icon">🎲</span> Làm bài tiếp theo (Đổi bài khác)
-                  </button>
-                </div>
+          <!-- Generator Settings Card (Difficulty Level & Sentence Count) - Clean card container on all screens -->
+          <div class="generator-settings-card" id="generatorSettingsBar">
+            <!-- Difficulty Level Selector -->
+            <div class="settings-group settings-group-level">
+              <span class="settings-label">🎯 Mức độ khó:</span>
+              <div class="level-pills-selector" id="levelPillsSelector">
+                <button type="button" class="level-pill active" data-level="beginner"
+                  title="Câu đơn cực ngắn, S-V-O trực diện, thì hiện tại đơn">Cơ bản (Mất gốc)</button>
+                <button type="button" class="level-pill" data-level="elementary"
+                  title="Câu ghép cơ bản, thêm liên từ and/but/because/so">Sơ cấp (A1 - A2)</button>
+                <button type="button" class="level-pill" data-level="intermediate"
+                  title="Câu phức, mệnh đề quan hệ who/which/that, từ nối thời gian">Trung cấp (B1)</button>
               </div>
             </div>
 
-            <!-- Placeholder when no passage is generated yet -->
-            <div id="passageEmptyPlaceholder" class="passage-empty-placeholder">
-              <div class="placeholder-icon">📝</div>
-              <h3>Chưa có đoạn văn nào được tạo</h3>
-              <p>Hãy tích chọn từ 1 đến nhiều từ vựng ở cột bên trái và nhấn <strong>"Tạo đoạn văn luyện dịch (Anh ↔ Việt)"</strong>.</p>
-              <div class="placeholder-actions" style="margin-top: 16px;">
-                <button id="btnPlaceholderOpenDrawer" class="btn btn-primary" style="padding: 10px 20px; font-weight: 700;">
-                  <span class="btn-icon">📚</span> Chọn từ vựng để bắt đầu luyện tập
+            <!-- Sentence Count Stepper & Slider -->
+            <div class="settings-group settings-group-length">
+              <span class="settings-label">📏 Độ dài:</span>
+              <div class="length-controls-wrapper">
+                <button type="button" class="btn-stepper" id="btnLengthMinus" title="Giảm 1 câu">−</button>
+                <input type="range" id="sentenceLengthSlider" min="2" max="15" value="3" class="length-slider"
+                  title="Kéo thanh trượt để chỉnh từ 2 đến 15 câu" />
+                <button type="button" class="btn-stepper" id="btnLengthPlus" title="Tăng 1 câu">+</button>
+                <div class="stepper-display">
+                  <span class="stepper-value" id="sentenceCountDisplay">3</span>
+                  <span class="stepper-unit">câu</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loading indicator -->
+          <div id="passageLoading" class="passage-loading hidden">
+            <div class="spinner"></div>
+            <h4>Gemini AI đang kiến tạo đoạn văn ngữ cảnh...</h4>
+            <p id="passageLoadingSubtext">Đang lồng ghép các từ vựng bạn đã tích và tối ưu cấu trúc đoạn văn theo mức độ
+              đã chọn.</p>
+          </div>
+
+          <!-- Passage Content Card -->
+          <div id="passageCard" class="passage-card hidden">
+            <div class="passage-card-header">
+              <div class="target-words-wrapper">
+                <span class="target-label">Từ vựng mục tiêu:</span>
+                <div class="target-pills" id="passageUsedWords"></div>
+              </div>
+              <div class="card-tools">
+                <button id="btnSpeakPassage" class="btn-tool" title="Nghe đọc tiếng Anh chuẩn">🔊 Nghe mẫu</button>
+                <button id="btnRandomPassage" class="btn-tool accent"
+                  title="Lấy ngẫu nhiên 3-5 từ khác để tạo bài mới">🎲 Đổi bài khác</button>
+              </div>
+            </div>
+
+            <div class="passage-box">
+              <label class="passage-label">📖 Đoạn văn tiếng Anh thực hành (Reading & Context):</label>
+              <div class="english-passage-text" id="passageEnglishText"></div>
+            </div>
+
+            <!-- User Translation Practice Input -->
+            <div class="practice-box">
+              <label class="passage-label" for="txtUserTranslation">
+                ✍️ Bản dịch thực hành của tôi (Hãy tự dịch trước khi nộp để đối chiếu):
+              </label>
+              <textarea id="txtUserTranslation" rows="3"
+                placeholder="Nhập bản dịch tiếng Việt của bạn tại đây để đối chiếu với đáp án chuẩn của AI..."></textarea>
+              <div class="practice-actions">
+                <button id="btnSubmitTranslation" class="btn btn-success btn-large">
+                  <span class="btn-icon">🚀</span> Nộp bài & Đối chiếu đáp án
+                </button>
+                <span id="saveStatusMsg" class="save-status-msg"></span>
+              </div>
+            </div>
+
+            <!-- Side-by-side Comparative Results Card (Shown ONLY after submission) -->
+            <div id="passageComparisonCard" class="comparison-card hidden">
+              <div class="comparison-header">
+                <div class="comparison-title-box">
+                  <span class="c-icon">🎯</span>
+                  <div>
+                    <h4>Kết Quả Đối Chiếu Bản Dịch</h4>
+                    <p>So sánh bản dịch của bạn với lời dịch gợi ý chuẩn mực từ Gia sư AI</p>
+                  </div>
+                </div>
+                <span class="badge-success-pill">🎉 Đã hoàn thành!</span>
+              </div>
+
+              <div class="comparison-grid">
+                <div class="comparison-col student-col">
+                  <div class="col-header student-header">
+                    <span class="col-icon">✍️</span>
+                    <strong>Bản dịch của bạn</strong>
+                  </div>
+                  <div class="comparison-text" id="compareStudentText"></div>
+                </div>
+
+                <div class="comparison-col ai-col">
+                  <div class="col-header ai-header">
+                    <span class="col-icon">🤖</span>
+                    <strong>Gợi ý chuẩn của Gia sư AI</strong>
+                  </div>
+                  <div class="comparison-text" id="compareAiText"></div>
+                </div>
+              </div>
+
+              <div class="comparison-footer">
+                <div class="sync-saved-tag">
+                  <span class="check-icon">✅</span>
+                  <span>Đã tự động lưu vào <strong>SQLite</strong> & Sheet <strong>Luyen_Dich_Passages</strong> trong
+                    Excel</span>
+                </div>
+                <button id="btnNextRandomPassage" class="btn btn-primary">
+                  <span class="btn-icon">🎲</span> Làm bài tiếp theo (Đổi bài khác)
                 </button>
               </div>
-              <div class="tips-box" style="margin-top: 20px;">
-                <strong>💡 Mẹo học thông minh:</strong>
-                <ul>
-                  <li>Hệ thống tự động chọn ngẫu nhiên 3 - 5 từ trong số các từ bạn đã tích để tạo đoạn văn 2-3 câu tự nhiên.</li>
-                  <li>Mỗi đoạn văn sinh ra sẽ được ghi nhận vĩnh viễn vào Sheet <code>Luyen_Dich_Passages</code> trong file Excel.</li>
-                  <li>Tận dụng bộ nhớ đệm (Cache) để giảm tối đa chi phí Token & Quota API!</li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- Recent session history -->
-            <div id="passageHistorySection" class="history-section hidden">
-              <h4>Lịch sử đoạn văn đã sinh trong phiên:</h4>
-              <div class="history-list" id="passageHistoryList"></div>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- App Footer -->
-      <footer class="app-footer">
-        <p>Gia Sư Gemini Live &bull; Độc quyền với Lộ Trình 1000 Từ Cốt Lõi &bull; Failover 4 API Key &bull; Sổ Tay Phát Âm Chuẩn</p>
-      </footer>
+          <!-- Placeholder when no passage is generated yet -->
+          <div id="passageEmptyPlaceholder" class="passage-empty-placeholder">
+            <div class="placeholder-icon">📝</div>
+            <h3>Chưa có đoạn văn nào được tạo</h3>
+            <p>Hãy tích chọn từ 1 đến nhiều từ vựng ở cột bên trái và nhấn <strong>"Tạo đoạn văn luyện dịch (Anh ↔
+                Việt)"</strong>.</p>
+            <div class="placeholder-actions" style="margin-top: 16px;">
+              <button id="btnPlaceholderStartGenerate" class="btn btn-primary btn-large btn-empty-generate"
+                style="padding: 12px 24px; font-weight: 800; font-size: 1rem;">
+                <span class="btn-icon">✨</span> Bắt đầu tạo đoạn văn ngay
+              </button>
+            </div>
+            <div class="tips-box" style="margin-top: 20px;">
+              <strong>💡 Mẹo học thông minh:</strong>
+              <ul>
+                <li>Hệ thống tự động chọn ngẫu nhiên 3 - 5 từ trong số các từ bạn đã tích để tạo đoạn văn 2-3 câu tự
+                  nhiên.</li>
+                <li>Mỗi đoạn văn sinh ra sẽ được ghi nhận vĩnh viễn vào Sheet <code>Luyen_Dich_Passages</code> trong
+                  file Excel.</li>
+                <li>Tận dụng bộ nhớ đệm (Cache) để giảm tối đa chi phí Token & Quota API!</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Recent session history -->
+          <div id="passageHistorySection" class="history-section hidden">
+            <h4>Lịch sử đoạn văn đã sinh trong phiên:</h4>
+            <div class="history-list" id="passageHistoryList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <p>Gia Sư Gemini Live &bull; Độc quyền với Lộ Trình 1000 Từ Cốt Lõi &bull; Failover 4 API Key &bull; Sổ Tay Phát
+        Âm Chuẩn</p>
+    </footer>
     <!-- Auth Modal Popup (Login & Register) -->
     <div id="authModal" class="auth-modal-overlay hidden">
       <div class="auth-modal-card">
@@ -433,7 +440,8 @@
             <label for="authUsername">Tên đăng nhập</label>
             <div class="input-icon-wrapper">
               <span class="input-icon">👤</span>
-              <input type="text" id="authUsername" placeholder="Nhập tên tài khoản (tối thiểu 3 ký tự)" autocomplete="username" required />
+              <input type="text" id="authUsername" placeholder="Nhập tên tài khoản (tối thiểu 3 ký tự)"
+                autocomplete="username" required />
             </div>
           </div>
 
@@ -441,7 +449,8 @@
             <label for="authPassword">Mật khẩu</label>
             <div class="input-icon-wrapper">
               <span class="input-icon">🔒</span>
-              <input type="password" id="authPassword" placeholder="Nhập mật khẩu (tối thiểu 4 ký tự)" autocomplete="current-password" required />
+              <input type="password" id="authPassword" placeholder="Nhập mật khẩu (tối thiểu 4 ký tự)"
+                autocomplete="current-password" required />
             </div>
           </div>
 
@@ -463,6 +472,7 @@
     <!-- Scripts -->
     <script src="/static/media-handler.js"></script>
     <script src="/static/gemini-client.js"></script>
-    <script src="/static/main.js"></script>
-  </body>
+    <script src="/static/main.js?v=2.4"></script>
+</body>
+
 </html>
