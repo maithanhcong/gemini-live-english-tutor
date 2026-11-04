@@ -20,6 +20,7 @@ except ImportError:
         TwilioHandler = None
 import passage_service
 import database
+from gemini_live import GeminiLive
 
 # Load environment variables
 load_dotenv()
@@ -173,134 +174,155 @@ async def auth_logout(request: Request, response: Response):
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for Gemini Live with Auto Failover & Dynamic Vocab Sync theo user_id."""
-    await websocket.accept()
-
-    token = websocket.query_params.get("token") or websocket.cookies.get("session_token")
-    user = database.get_user_by_session(token) if token else None
-    user_id = user["id"] if user else None
-    username_str = user["username"] if user else "Khách"
-
-    # Lấy danh sách từ đã tích riêng của người dùng
-    mastered_words = []
-    if user_id:
-        mastered_words = database.get_user_selected_words(user_id)
-
-    # Đọc thêm từ query param nếu client gửi kèm
-    mastered_param = websocket.query_params.get("mastered")
-    if mastered_param:
-        try:
-            parsed = json.loads(mastered_param)
-            if isinstance(parsed, list):
-                mastered_words = list(set(mastered_words + [str(w).strip() for w in parsed if str(w).strip()]))
-            elif isinstance(parsed, str):
-                mastered_words = list(set(mastered_words + [w.strip() for w in parsed.split(",") if w.strip()]))
-        except Exception:
-            mastered_words = list(set(mastered_words + [w.strip() for w in mastered_param.split(",") if w.strip()]))
-
-    logger.info(
-        f"WebSocket connection accepted from client ({username_str}). Mastered words count: {len(mastered_words)}"
-    )
-
-    audio_input_queue = asyncio.Queue()
-    video_input_queue = asyncio.Queue()
-    text_input_queue = asyncio.Queue()
-
-    async def audio_output_callback(data):
-        await websocket.send_bytes(data)
-
-    async def audio_interrupt_callback():
-        pass
-
-    gemini_client = GeminiLive(
-        api_keys=GEMINI_API_KEYS,
-        models=FALLBACK_MODELS,
-        input_sample_rate=16000,
-        mastered_words=mastered_words,
-    )
-
-    async def receive_from_client():
-        try:
-            while True:
-                message = await websocket.receive()
-
-                if message.get("bytes"):
-                    await audio_input_queue.put(message["bytes"])
-                elif message.get("text"):
-                    text = message["text"]
-                    try:
-                        payload = json.loads(text)
-                        if isinstance(payload, dict):
-                            if payload.get("type") == "image":
-                                logger.info(
-                                    f"Received image chunk from client: {len(payload['data'])} base64 chars"
-                                )
-                                image_data = base64.b64decode(payload["data"])
-                                await video_input_queue.put(image_data)
-                                continue
-                            elif payload.get("type") == "sync_vocab_state":
-                                mastered_list = payload.get("mastered_words", [])
-                                logger.info(
-                                    f"Received live sync_vocab_state with {len(mastered_list)} mastered words (user={username_str})"
-                                )
-                                if user_id:
-                                    database.set_all_selections(mastered_list, user_id=user_id)
-                                else:
-                                    database.set_all_selections(mastered_list)
-                                    asyncio.create_task(asyncio.to_thread(database.sync_selection_to_excel, set(mastered_list)))
-
-                                if mastered_list:
-                                    words_sample = ", ".join(mastered_list[:250])
-                                    sync_directive = (
-                                        f"System: [ĐỒNG BỘ TRẠNG THÁI TỪ VỰNG TỪ TAB LUYỆN DỊCH]\n"
-                                        f"Danh sách các từ học viên {username_str} ĐÃ THÀNH THẠO ({len(mastered_list)} từ): [{words_sample}].\n"
-                                        f"Hướng dẫn cho Gia sư: Tuyệt đối KHÔNG yêu cầu học viên đọc lại hay kiểm tra lại những từ này! "
-                                        f"Hãy tập trung hỏi, luyện phát âm và đàm thoại dựa trên các từ còn lại mà học viên CHƯA học."
-                                    )
-                                else:
-                                    sync_directive = (
-                                        f"System: [ĐỒNG BỘ TRẠNG THÁI TỪ VỰNG]\n"
-                                        f"Học viên {username_str} hiện chưa đánh dấu từ nào là thành thạo. Hãy kiểm tra và hướng dẫn theo các từ trong lộ trình."
-                                    )
-                                await text_input_queue.put(sync_directive)
-                                await websocket.send_json({
-                                    "type": "sync_vocab_state_ack",
-                                    "mastered_count": len(mastered_list),
-                                    "status": "success",
-                                })
-                                continue
-                    except json.JSONDecodeError:
-                        pass
-
-                    await text_input_queue.put(text)
-        except WebSocketDisconnect:
-            logger.info(f"WebSocket disconnected from client ({username_str})")
-            gemini_client.stop()
-        except Exception as e:
-            logger.error(f"Error receiving from client ({username_str}): {e}")
-            gemini_client.stop()
-
-    receive_task = asyncio.create_task(receive_from_client())
-
-    async def run_session():
-        async for event in gemini_client.start_session(
-            audio_input_queue=audio_input_queue,
-            video_input_queue=video_input_queue,
-            text_input_queue=text_input_queue,
-            audio_output_callback=audio_output_callback,
-            audio_interrupt_callback=audio_interrupt_callback,
-        ):
-            if event:
-                await websocket.send_json(event)
-
     try:
-        await run_session()
-    except WebSocketDisconnect:
-        logger.info(f"Client ({username_str}) disconnected normally")
+        await websocket.accept()
     except Exception as e:
-        logger.error(f"Error in Gemini session ({username_str}): {type(e).__name__}: {e}")
-    finally:
-        gemini_client.stop()
-        receive_task.cancel()
+        logger.error(f"WebSocket accept error: {e}", exc_info=True)
+        return
+
+    username_str = "Khách"
+    try:
+        token = websocket.query_params.get("token") or websocket.cookies.get("session_token")
+        user = database.get_user_by_session(token) if token else None
+        user_id = user["id"] if user else None
+        username_str = user["username"] if user else "Khách"
+
+        # Lấy danh sách từ đã tích riêng của người dùng
+        mastered_words = []
+        if user_id:
+            mastered_words = database.get_user_selected_words(user_id)
+
+        # Đọc thêm từ query param nếu client gửi kèm
+        mastered_param = websocket.query_params.get("mastered")
+        if mastered_param:
+            try:
+                parsed = json.loads(mastered_param)
+                if isinstance(parsed, list):
+                    mastered_words = list(set(mastered_words + [str(w).strip() for w in parsed if str(w).strip()]))
+                elif isinstance(parsed, str):
+                    mastered_words = list(set(mastered_words + [w.strip() for w in mastered_param.split(",") if w.strip()]))
+            except Exception:
+                mastered_words = list(set(mastered_words + [w.strip() for w in mastered_param.split(",") if w.strip()]))
+
+        logger.info(
+            f"WebSocket connection accepted from client ({username_str}). Mastered words count: {len(mastered_words)}"
+        )
+
+        audio_input_queue = asyncio.Queue()
+        video_input_queue = asyncio.Queue()
+        text_input_queue = asyncio.Queue()
+
+        async def audio_output_callback(data):
+            try:
+                await websocket.send_bytes(data)
+            except Exception as e:
+                logger.debug(f"Audio output callback error: {e}")
+
+        async def audio_interrupt_callback():
+            pass
+
+        gemini_client = GeminiLive(
+            api_keys=GEMINI_API_KEYS,
+            models=FALLBACK_MODELS,
+            input_sample_rate=16000,
+            mastered_words=mastered_words,
+        )
+
+        async def receive_from_client():
+            try:
+                while True:
+                    message = await websocket.receive()
+
+                    if message.get("bytes"):
+                        await audio_input_queue.put(message["bytes"])
+                    elif message.get("text"):
+                        text = message["text"]
+                        try:
+                            payload = json.loads(text)
+                            if isinstance(payload, dict):
+                                if payload.get("type") == "image":
+                                    logger.info(
+                                        f"Received image chunk from client: {len(payload['data'])} base64 chars"
+                                    )
+                                    image_data = base64.b64decode(payload["data"])
+                                    await video_input_queue.put(image_data)
+                                    continue
+                                elif payload.get("type") == "sync_vocab_state":
+                                    mastered_list = payload.get("mastered_words", [])
+                                    logger.info(
+                                        f"Received live sync_vocab_state with {len(mastered_list)} mastered words (user={username_str})"
+                                    )
+                                    if user_id:
+                                        database.set_all_selections(mastered_list, user_id=user_id)
+                                    else:
+                                        database.set_all_selections(mastered_list)
+                                        asyncio.create_task(asyncio.to_thread(database.sync_selection_to_excel, set(mastered_list)))
+
+                                    if mastered_list:
+                                        words_sample = ", ".join(mastered_list[:250])
+                                        sync_directive = (
+                                            f"""System: [ĐỒNG BỘ TRẠNG THÁI TỪ VỰNG TỪ TAB LUYỆN DỊCH]
+"""
+                                            f"""Danh sách các từ học viên {username_str} ĐÃ THÀNH THẠO ({len(mastered_list)} từ): [{words_sample}].
+"""
+                                            f"""Hướng dẫn cho Gia sư: Tuyệt đối KHÔNG yêu cầu học viên đọc lại hay kiểm tra lại những từ này! """
+                                            f"""Hãy tập trung hỏi, luyện phát âm và đàm thoại dựa trên các từ còn lại mà học viên CHƯA học."""
+                                        )
+                                    else:
+                                        sync_directive = (
+                                            f"""System: [ĐỒNG BỘ TRẠNG THÁI TỪ VỰNG]
+"""
+                                            f"""Học viên {username_str} hiện chưa đánh dấu từ nào là thành thạo. Hãy kiểm tra và hướng dẫn theo các từ trong lộ trình."""
+                                        )
+                                    await text_input_queue.put(sync_directive)
+                                    await websocket.send_json({
+                                        "type": "sync_vocab_state_ack",
+                                        "mastered_count": len(mastered_list),
+                                        "status": "success",
+                                    })
+                                    continue
+                                elif "text" in payload:
+                                    await text_input_queue.put(payload["text"])
+                                    continue
+                        except json.JSONDecodeError:
+                            pass
+
+                        await text_input_queue.put(text)
+            except WebSocketDisconnect:
+                logger.info(f"WebSocket disconnected from client ({username_str})")
+                gemini_client.stop()
+            except Exception as e:
+                logger.error(f"Error receiving from client ({username_str}): {e}", exc_info=True)
+                gemini_client.stop()
+
+        receive_task = asyncio.create_task(receive_from_client())
+
+        async def run_session():
+            async for event in gemini_client.start_session(
+                audio_input_queue=audio_input_queue,
+                video_input_queue=video_input_queue,
+                text_input_queue=text_input_queue,
+                audio_output_callback=audio_output_callback,
+                audio_interrupt_callback=audio_interrupt_callback,
+            ):
+                if event:
+                    await websocket.send_json(event)
+
+        try:
+            await run_session()
+        except WebSocketDisconnect:
+            logger.info(f"Client ({username_str}) disconnected normally")
+        except Exception as e:
+            logger.error(f"Error in Gemini session ({username_str}): {type(e).__name__}: {e}", exc_info=True)
+        finally:
+            gemini_client.stop()
+            receive_task.cancel()
+            try:
+                await websocket.close()
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"WebSocket error in websocket_endpoint ({username_str}): {e}", exc_info=True)
         try:
             await websocket.close()
         except Exception:
@@ -329,7 +351,7 @@ class GeneratePassageRequest(BaseModel):
     selected_words: List[str]
     random_change: bool = False
     model_family: str = "flash"
-    level: str = "beginner"
+    level: str = "a0"
     sentence_count: int = 3
 
 

@@ -159,35 +159,58 @@ def is_quota_error(status_code: int, err_msg: str) -> bool:
     s = str(err_msg).lower()
     return any(term in s for term in ["429", "resource_exhausted", "quota", "rate limit", "exhausted"])
 
-LEVEL_DESCRIPTIONS = {
-    "beginner": (
-        "Cơ bản / Mất gốc (Beginner): Sử dụng các câu đơn cực ngắn, ngữ pháp thì hiện tại đơn giản nhất, "
-        "cấu trúc Chủ ngữ - Động từ - Tân ngữ (S-V-O) trực diện, từ ngữ thông dụng đời thường, dễ đọc dễ dịch."
+DIFFICULTY_PROMPTS = {
+    'a0': (
+        "Target Level: A0 (Complete Beginner / Khởi động - Mất gốc hoàn toàn). "
+        "ONLY use extremely simple Subject-Verb-Object (S + V + O) or Subject-to be-Adjective (S + to be + Adj) sentences in Present Simple tense. "
+        "Simple affirmative statements only. Examples: 'I have a pen.', 'She is happy.', 'The tea is hot.' "
+        "STRICT PROHIBITION: NO compound sentences, NO conjunctions (no and/but/because), NO relative clauses, NO complex tenses."
     ),
-    "elementary": (
-        "Sơ cấp (A1 - A2 / Elementary): Sử dụng các câu ghép cơ bản, có liên từ nối tự nhiên (and, but, because, so), "
-        "kết hợp thì hiện tại đơn và thì quá khứ đơn hoặc tương lai đơn giản."
+    'a1': (
+        "Target Level: A1 (Elementary / Căn bản - Cực dễ). "
+        "Simple sentences with basic negations (do not, cannot, is not) and simple questions. "
+        "Introduce frequency adverbs (always, usually, sometimes) and basic short conjunctions (and, but). "
+        "Use basic adjectives and daily vocabulary."
     ),
-    "intermediate": (
-        "Trung cấp (B1 / Intermediate): Sử dụng các câu phức với mệnh đề quan hệ (who, which, that), "
-        "từ nối chỉ thời gian và nguyên nhân (when, while, although, since, however), ngữ cảnh đàm thoại/đời sống phong phú hơn."
+    'a2': (
+        "Target Level: A2 (Pre-Intermediate / Sơ cấp - Giao tiếp hàng ngày). "
+        "Everyday conversational English. Mix Present Simple, Past Simple (went, bought, saw), and Future (will / be going to). "
+        "Include Wh-questions and simple cause-effect connectors (because, so)."
     ),
+    'b1_minus': (
+        "Target Level: B1- (Early Intermediate / Tiền trung cấp - Mở rộng ngữ cảnh). "
+        "Introduce Present Perfect tense, comparatives (more... than, as... as), modals (should, must, might), "
+        "and compound sentences with time clauses (when, while, after, before)."
+    ),
+    'b1': (
+        "Target Level: B1 (Solid Intermediate / Trung cấp vững - Đa dạng cấu trúc). "
+        "Rich context with defining relative clauses (who, which, that), Conditionals (Type 1: If... will...), "
+        "contrast connectors (although, however, even though), and natural, idiomatic phrasing."
+    )
 }
+
+LEVEL_ALIASES = {
+    "beginner": "a0",
+    "elementary": "a1",
+    "intermediate": "b1",
+}
+
+LEVEL_DESCRIPTIONS = DIFFICULTY_PROMPTS
 
 async def generate_passage_async(
     selected_words: list[str],
     random_change: bool = False,
     model_family: str = "flash",
-    level: str = "beginner",
+    level: str = "a0",
     sentence_count: int = 3
 ):
     """
-    Async sinh đoạn văn luyện dịch từ danh sách từ đã chọn với tùy chọn độ khó và độ dài:
-    - Tham số level: 'beginner' (Cơ bản), 'elementary' (Sơ cấp A1-A2), 'intermediate' (Trung cấp B1).
-    - Tham số sentence_count: từ 2 đến 15 câu (mặc định 3).
-    - Áp dụng xoay vòng 4 API Key với failover tự động.
-    - Hỗ trợ dòng Fast Flash và Gemma models.
-    - Token động (350 - 1200 tokens) chống đứt câu khi đoạn văn dài.
+    Async sinh đoạn văn luyện dịch từ danh sách từ đã chọn với tùy chọn 5 cấp độ chi tiết:
+    - a0: Khởi động (Mất gốc hoàn toàn)
+    - a1: Căn bản (Cực dễ)
+    - a2: Sơ cấp (Giao tiếp hàng ngày)
+    - b1_minus: Tiền trung cấp (Mở rộng ngữ cảnh)
+    - b1: Trung cấp vững (Đa dạng cấu trúc)
     """
     if not selected_words:
         raise ValueError("Danh sách từ vựng được chọn không được để trống.")
@@ -199,9 +222,11 @@ async def generate_passage_async(
         sentence_count = 3
 
     level = str(level).strip().lower()
-    if level not in LEVEL_DESCRIPTIONS:
-        level = "beginner"
-    level_desc = LEVEL_DESCRIPTIONS[level]
+    if level in LEVEL_ALIASES:
+        level = LEVEL_ALIASES[level]
+    if level not in DIFFICULTY_PROMPTS:
+        level = "a0"
+    level_instruction = DIFFICULTY_PROMPTS[level]
 
     # 1. Xác định số lượng từ mục tiêu cần lồng ghép linh hoạt theo độ dài đoạn văn
     if sentence_count <= 3:
@@ -238,10 +263,10 @@ async def generate_passage_async(
     prompt = (
         f"You are an expert English tutor creating a reading and translation exercise for Vietnamese learners.\n"
         f"Target vocabulary to embed: {words_str}.\n"
-        f"Difficulty Level: {level_desc}\n"
-        f"Exact Sentence Count: CHÍNH XÁC {sentence_count} câu (không được viết ít hơn hoặc nhiều hơn {sentence_count} câu).\n\n"
+        f"Grammar Specification:\n{level_instruction}\n"
+        f"Exact Sentence Count: EXACTLY {sentence_count} sentences (do NOT write fewer or more than {sentence_count} sentences).\n\n"
         f"Strict Requirements:\n"
-        f"1. Write an English passage containing EXACTLY {sentence_count} sentences at the specified difficulty level ({level}).\n"
+        f"1. Write an English passage containing EXACTLY {sentence_count} sentences strictly matching the Grammar Specification for Level {level}.\n"
         f"2. You MUST weave all target words ({words_str}) seamlessly and naturally into the passage.\n"
         f"3. Provide an accurate, natural Vietnamese translation for the entire passage.\n"
         f"4. Return ONLY a valid JSON object with this exact schema (no markdown formatting, no code fences):\n"

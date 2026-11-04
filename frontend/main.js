@@ -185,7 +185,7 @@ const sentenceCountDisplay = document.getElementById("sentenceCountDisplay");
 const sentenceLengthSlider = document.getElementById("sentenceLengthSlider");
 
 // Generator Config State
-let selectedDifficulty = "beginner";
+let selectedDifficulty = "a0";
 let selectedSentenceCount = 3;
 
 function setSentenceCount(val) {
@@ -379,8 +379,12 @@ try {
 const mediaHandler = new MediaHandler();
 mediaHandler.onAudioVolume = handleAudioVolumeLevel;
 
+let isSessionActive = false;
+
 const geminiClient = new GeminiClient({
-  onOpen: () => {
+  onOpen: async () => {
+    console.log("[Live] Socket opened");
+    isSessionActive = true;
     statusDiv.textContent = "Connected";
     statusDiv.className = "status connected";
     authSection.classList.add("hidden");
@@ -392,6 +396,21 @@ const geminiClient = new GeminiClient({
     refreshIcons();
 
     updateSyncBanners();
+
+    // Auto-start recording so tutor hears student right away
+    try {
+      await mediaHandler.startAudio((data) => {
+        if (geminiClient.isConnected()) {
+          geminiClient.send(data);
+        }
+      });
+      micBtn.innerHTML = `<i data-lucide="mic-off" class="lucide-icon"></i> Stop Mic`;
+      refreshIcons();
+    } catch (e) {
+      console.warn("[Live] Auto-start mic warning:", e);
+    }
+
+    console.log("[Live] Session ready");
 
     // Send personalized tutor intro instruction reflecting mastered words
     const masteredList = Array.from(selectedWordSet);
@@ -408,14 +427,14 @@ const geminiClient = new GeminiClient({
         const msg = JSON.parse(event.data);
         handleJsonMessage(msg);
       } catch (e) {
-        console.error("Parse error:", e);
+        console.error("[Live] Parse error:", e);
       }
     } else {
       mediaHandler.playAudio(event.data);
     }
   },
   onClose: (e) => {
-    console.log("WS Closed:", e);
+    console.log("[Live] Socket closed:", e);
     statusDiv.textContent = "Disconnected";
     statusDiv.className = "status disconnected";
     if (interactionStatusDiv) {
@@ -424,10 +443,16 @@ const geminiClient = new GeminiClient({
     if (siriWaveInstance) {
       siriWaveInstance.stop();
     }
-    showSessionEnd();
+    if (isSessionActive) {
+      showSessionEnd();
+    } else {
+      notyf.error("Không thể kết nối đến máy chủ đàm thoại Gemini Live.");
+      resetUI();
+    }
+    isSessionActive = false;
   },
   onError: (e) => {
-    console.error("WS Error:", e);
+    console.error("[Live] WS Error:", e);
     statusDiv.textContent = "Connection Error";
     statusDiv.className = "status error";
   },
@@ -481,16 +506,37 @@ function appendMessage(type, text) {
 
 // Connect Button Handler
 connectBtn.onclick = async () => {
+  console.log("[Live] Requesting mic & audio setup...");
   statusDiv.textContent = "Connecting...";
   connectBtn.disabled = true;
 
   try {
+    // 1. Request and verify microphone access upfront
+    console.log("[Live] Requesting mic...");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      console.log("[Live] Mic permission granted.");
+    } catch (micErr) {
+      console.error("[Live] Mic permission denied/unavailable:", micErr);
+      notyf.error("Vui lòng cấp quyền Microphone để bắt đầu!");
+      statusDiv.textContent = "Cần cấp quyền Mic";
+      statusDiv.className = "status error";
+      connectBtn.disabled = false;
+      return;
+    }
+
+    // 2. Initialize AudioContext and Worklet module
     await mediaHandler.initializeAudio();
+
+    // 3. Connect WebSocket
+    console.log("[Live] Socket connecting...");
     const masteredList = Array.from(selectedWordSet);
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
     geminiClient.connect(masteredList, token);
   } catch (error) {
-    console.error("Connection error:", error);
+    console.error("[Live] Connection error:", error);
+    notyf.error("Lỗi kết nối đàm thoại: " + (error.message || error));
     statusDiv.textContent = "Connection Failed: " + error.message;
     statusDiv.className = "status error";
     connectBtn.disabled = false;
@@ -1008,7 +1054,16 @@ async function requestGeneratePassage(randomChange = false) {
   passageLoading.classList.remove("hidden");
   const loadingSub = document.getElementById("passageLoadingSubtext");
   if (loadingSub) {
-    const lvlNames = { beginner: "Cơ bản", elementary: "Sơ cấp A1-A2", intermediate: "Trung cấp B1" };
+    const lvlNames = {
+      a0: "Khởi động (A0)",
+      a1: "Căn bản (A1)",
+      a2: "Sơ cấp (A2)",
+      b1_minus: "Tiền trung cấp (B1-)",
+      b1: "Trung cấp (B1)",
+      beginner: "Khởi động (A0)",
+      elementary: "Căn bản (A1)",
+      intermediate: "Trung cấp (B1)",
+    };
     loadingSub.textContent = `Đang lồng ghép từ vựng đã chọn vào đoạn văn ${selectedSentenceCount} câu (Mức độ: ${lvlNames[selectedDifficulty] || "Cơ bản"}).`;
   }
   if (passageComparisonCard) passageComparisonCard.classList.add("hidden");
@@ -1066,9 +1121,14 @@ function displayGeneratedPassage(data) {
 
   // Meta badge for level & sentence count
   const levelLabels = {
-    beginner: "Cơ bản",
-    elementary: "Sơ cấp A1-A2",
-    intermediate: "Trung cấp B1"
+    a0: "Khởi động (A0)",
+    a1: "Căn bản (A1)",
+    a2: "Sơ cấp (A2)",
+    b1_minus: "Tiền trung cấp (B1-)",
+    b1: "Trung cấp (B1)",
+    beginner: "Khởi động (A0)",
+    elementary: "Căn bản (A1)",
+    intermediate: "Trung cấp (B1)",
   };
   const lvlName = levelLabels[data.level || selectedDifficulty] || "Cơ bản";
   const sCount = data.sentence_count || selectedSentenceCount;
@@ -1196,7 +1256,7 @@ if (levelPillsSelector) {
     pill.addEventListener("click", () => {
       pills.forEach((p) => p.classList.remove("active"));
       pill.classList.add("active");
-      selectedDifficulty = pill.dataset.level || "beginner";
+      selectedDifficulty = pill.dataset.level || "a0";
     });
   });
 }

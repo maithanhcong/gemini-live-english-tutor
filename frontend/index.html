@@ -14,7 +14,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Notyf Toast Notification CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.0" />
+  <link rel="stylesheet" href="/static/style.css?v=3.1" />
 </head>
 
 <body>
@@ -282,12 +282,16 @@
             <div class="settings-group settings-group-level">
               <span class="settings-label"><i data-lucide="target" class="lucide-icon"></i> Mức độ khó:</span>
               <div class="level-pills-selector" id="levelPillsSelector">
-                <button type="button" class="level-pill active" data-level="beginner"
-                  title="Câu đơn cực ngắn, S-V-O trực diện, thì hiện tại đơn">Cơ bản (Mất gốc)</button>
-                <button type="button" class="level-pill" data-level="elementary"
-                  title="Câu ghép cơ bản, thêm liên từ and/but/because/so">Sơ cấp (A1 - A2)</button>
-                <button type="button" class="level-pill" data-level="intermediate"
-                  title="Câu phức, mệnh đề quan hệ who/which/that, từ nối thời gian">Trung cấp (B1)</button>
+                <button type="button" class="level-pill active" data-level="a0"
+                  title="Nấc 1: Khởi động (A0 - Mất gốc hoàn toàn) - Chỉ dùng câu khẳng định cực đơn giản, thì hiện tại đơn, cấu trúc S + V + O hoặc S + to be + Adj.">Khởi động (A0)</button>
+                <button type="button" class="level-pill" data-level="a1"
+                  title="Nấc 2: Căn bản (A1 - Cực dễ) - Câu phủ định, nghi vấn đơn giản, trạng từ tần suất (always, usually), liên từ nối ngắn (and, but).">Căn bản (A1)</button>
+                <button type="button" class="level-pill" data-level="a2"
+                  title="Nấc 3: Sơ cấp (A2 - Giao tiếp hàng ngày) - Hiện tại đơn, Quá khứ đơn, Tương lai đơn, câu hỏi Wh-, liên từ nguyên nhân kết quả (because, so).">Sơ cấp (A2)</button>
+                <button type="button" class="level-pill" data-level="b1_minus"
+                  title="Nấc 4: Tiền trung cấp (B1- - Mở rộng ngữ cảnh) - Hiện tại hoàn thành, câu so sánh, động từ khuyết thiếu (should, must), mệnh đề thời gian.">Tiền trung cấp (B1-)</button>
+                <button type="button" class="level-pill" data-level="b1"
+                  title="Nấc 5: Trung cấp vững (B1 - Đa dạng cấu trúc) - Mệnh đề quan hệ (who, which, that), câu điều kiện loại 1, liên từ tương phản (although, however).">Trung cấp (B1)</button>
               </div>
             </div>
 
@@ -488,7 +492,7 @@
   <script src="/static/siriwave.umd.min.js"></script>
   <script src="/static/media-handler.js"></script>
   <script src="/static/gemini-client.js"></script>
-  <script src="/static/main.js?v=3.0"></script>
+  <script src="/static/main.js?v=3.1"></script>
 </body>
 
 </html>
