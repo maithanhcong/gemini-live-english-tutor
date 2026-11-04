@@ -196,6 +196,57 @@
           </button>
         </div>
 
+        <!-- Generator Settings Bar (Difficulty Level & Sentence Count) - Visible on ALL screens -->
+        <div class="generator-settings-bar" id="generatorSettingsBar">
+          <!-- Difficulty Level Selector -->
+          <div class="settings-group settings-group-level">
+            <span class="settings-label">🎯 Mức độ khó:</span>
+            <div class="level-pills-selector" id="levelPillsSelector">
+              <button type="button" class="level-pill active" data-level="beginner" title="Câu đơn cực ngắn, S-V-O trực diện, thì hiện tại đơn">Cơ bản (Mất gốc)</button>
+              <button type="button" class="level-pill" data-level="elementary" title="Câu ghép cơ bản, thêm liên từ and/but/because/so">Sơ cấp (A1 - A2)</button>
+              <button type="button" class="level-pill" data-level="intermediate" title="Câu phức, mệnh đề quan hệ who/which/that, từ nối thời gian">Trung cấp (B1)</button>
+            </div>
+          </div>
+
+          <!-- Sentence Count Stepper & Slider -->
+          <div class="settings-group settings-group-length">
+            <span class="settings-label">📏 Độ dài đoạn văn:</span>
+            <div class="length-controls-wrapper">
+              <button type="button" class="btn-stepper" id="btnLengthMinus" title="Giảm 1 câu">−</button>
+              <div class="stepper-display">
+                <span class="stepper-value" id="sentenceCountDisplay">3</span>
+                <span class="stepper-unit">câu</span>
+              </div>
+              <button type="button" class="btn-stepper" id="btnLengthPlus" title="Tăng 1 câu">+</button>
+              <input
+                type="range"
+                id="sentenceLengthSlider"
+                min="2"
+                max="15"
+                value="3"
+                class="length-slider"
+                title="Kéo thanh trượt để chỉnh từ 2 đến 15 câu"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile Action Controls Cluster - Visible ONLY on Mobile (@media max-width: 767.98px) -->
+        <div class="mobile-action-bar" id="mobileActionBar">
+          <div class="mobile-action-row">
+            <button id="btnGeneratePassageMobile" class="btn-mobile-generate" disabled>
+              <span class="btn-icon">✨</span> Tạo đoạn văn AI
+            </button>
+            <button id="btnRandomMobile" class="btn-mobile-random" disabled title="Lấy ngẫu nhiên từ đang tích để sinh bài mới">
+              <span class="btn-icon">🎲</span> Đổi bài
+            </button>
+          </div>
+          <div class="mobile-selection-hint">
+            <span class="hint-dot"></span>
+            <span id="mobileSelectionHintText">Đang chọn: 0 từ cốt lõi</span>
+          </div>
+        </div>
+
         <!-- Backdrop for Mobile Bottom Sheet -->
         <div id="vocabDrawerBackdrop" class="bottom-sheet-backdrop hidden"></div>
 
@@ -245,7 +296,7 @@
             <div id="passageLoading" class="passage-loading hidden">
               <div class="spinner"></div>
               <h4>Gemini AI đang kiến tạo đoạn văn ngữ cảnh...</h4>
-              <p>Đang chọn lọc 3 - 5 từ trong danh sách bạn đã tích và tối ưu độ dài 2-3 câu.</p>
+              <p id="passageLoadingSubtext">Đang lồng ghép các từ vựng bạn đã tích và tối ưu cấu trúc đoạn văn theo mức độ đã chọn.</p>
             </div>
 
             <!-- Passage Content Card -->

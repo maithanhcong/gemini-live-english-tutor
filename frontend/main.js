@@ -91,6 +91,27 @@ const vocabDrawerBackdrop = document.getElementById("vocabDrawerBackdrop");
 const mobileSelectedCountHighlight = document.getElementById("mobileSelectedCountHighlight");
 const sheetCountTag = document.getElementById("sheetCountTag");
 
+// Generator Settings & Mobile Controls
+const btnGeneratePassageMobile = document.getElementById("btnGeneratePassageMobile");
+const btnRandomMobile = document.getElementById("btnRandomMobile");
+const mobileSelectionHintText = document.getElementById("mobileSelectionHintText");
+const levelPillsSelector = document.getElementById("levelPillsSelector");
+const btnLengthMinus = document.getElementById("btnLengthMinus");
+const btnLengthPlus = document.getElementById("btnLengthPlus");
+const sentenceCountDisplay = document.getElementById("sentenceCountDisplay");
+const sentenceLengthSlider = document.getElementById("sentenceLengthSlider");
+
+// Generator Config State
+let selectedDifficulty = "beginner";
+let selectedSentenceCount = 3;
+
+function setSentenceCount(val) {
+  const num = Math.max(2, Math.min(15, parseInt(val, 10) || 3));
+  selectedSentenceCount = num;
+  if (sentenceCountDisplay) sentenceCountDisplay.textContent = num;
+  if (sentenceLengthSlider) sentenceLengthSlider.value = num;
+}
+
 // Auth State & Token Persistence
 const AUTH_TOKEN_KEY = "study_auth_token";
 let currentUser = null;
@@ -767,6 +788,11 @@ function updateSelectedCount() {
   btnGeneratePassage.disabled = count === 0;
   if (btnRandomToolbar) btnRandomToolbar.disabled = count === 0;
   if (btnDoneMobileVocab) btnDoneMobileVocab.disabled = count === 0;
+  if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = count === 0;
+  if (btnRandomMobile) btnRandomMobile.disabled = count === 0;
+  if (mobileSelectionHintText) {
+    mobileSelectionHintText.textContent = `Đang chọn: ${count} từ cốt lõi`;
+  }
   saveMasteredWordsToStorage();
   if (geminiClient && geminiClient.isConnected()) {
     geminiClient.syncMasteredWords(Array.from(selectedWordSet));
@@ -816,10 +842,17 @@ async function requestGeneratePassage(randomChange = false) {
   btnGeneratePassage.disabled = true;
   if (btnRandomToolbar) btnRandomToolbar.disabled = true;
   if (btnRandomPassage) btnRandomPassage.disabled = true;
+  if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = true;
+  if (btnRandomMobile) btnRandomMobile.disabled = true;
 
   passageEmptyPlaceholder.classList.add("hidden");
   passageCard.classList.add("hidden");
   passageLoading.classList.remove("hidden");
+  const loadingSub = document.getElementById("passageLoadingSubtext");
+  if (loadingSub) {
+    const lvlNames = { beginner: "Cơ bản", elementary: "Sơ cấp A1-A2", intermediate: "Trung cấp B1" };
+    loadingSub.textContent = `Đang lồng ghép từ vựng đã chọn vào đoạn văn ${selectedSentenceCount} câu (Mức độ: ${lvlNames[selectedDifficulty] || "Cơ bản"}).`;
+  }
   if (passageComparisonCard) passageComparisonCard.classList.add("hidden");
   saveStatusMsg.textContent = "";
 
@@ -832,6 +865,8 @@ async function requestGeneratePassage(randomChange = false) {
       body: JSON.stringify({
         selected_words: selectedList,
         random_change: randomChange,
+        level: selectedDifficulty,
+        sentence_count: selectedSentenceCount,
       }),
     });
 
@@ -849,9 +884,12 @@ async function requestGeneratePassage(randomChange = false) {
     passageEmptyPlaceholder.classList.remove("hidden");
   } finally {
     passageLoading.classList.add("hidden");
-    btnGeneratePassage.disabled = selectedWordSet.size === 0;
-    if (btnRandomToolbar) btnRandomToolbar.disabled = selectedWordSet.size === 0;
+    const hasSelection = selectedWordSet.size > 0;
+    btnGeneratePassage.disabled = !hasSelection;
+    if (btnRandomToolbar) btnRandomToolbar.disabled = !hasSelection;
     if (btnRandomPassage) btnRandomPassage.disabled = false;
+    if (btnGeneratePassageMobile) btnGeneratePassageMobile.disabled = !hasSelection;
+    if (btnRandomMobile) btnRandomMobile.disabled = !hasSelection;
   }
 }
 
@@ -865,6 +903,19 @@ function displayGeneratedPassage(data) {
     pill.textContent = w;
     passageUsedWords.appendChild(pill);
   });
+
+  // Meta badge for level & sentence count
+  const levelLabels = {
+    beginner: "Cơ bản",
+    elementary: "Sơ cấp A1-A2",
+    intermediate: "Trung cấp B1"
+  };
+  const lvlName = levelLabels[data.level || selectedDifficulty] || "Cơ bản";
+  const sCount = data.sentence_count || selectedSentenceCount;
+  const metaBadge = document.createElement("span");
+  metaBadge.className = "target-meta-pill";
+  metaBadge.textContent = `🎯 ${lvlName} (${sCount} câu)`;
+  passageUsedWords.appendChild(metaBadge);
 
   // English text
   passageEnglishText.textContent = data.english_passage || "";
@@ -953,6 +1004,40 @@ btnGeneratePassage.onclick = () => requestGeneratePassage(false);
 if (btnRandomToolbar) btnRandomToolbar.onclick = () => requestGeneratePassage(true);
 if (btnRandomPassage) btnRandomPassage.onclick = () => requestGeneratePassage(true);
 if (btnNextRandomPassage) btnNextRandomPassage.onclick = () => requestGeneratePassage(true);
+
+// Mobile Generator Action Buttons
+if (btnGeneratePassageMobile) btnGeneratePassageMobile.onclick = () => requestGeneratePassage(false);
+if (btnRandomMobile) btnRandomMobile.onclick = () => requestGeneratePassage(true);
+
+// Generator Settings Listeners (Difficulty Pills & Length Controls)
+if (levelPillsSelector) {
+  const pills = levelPillsSelector.querySelectorAll(".level-pill");
+  pills.forEach((pill) => {
+    pill.addEventListener("click", () => {
+      pills.forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      selectedDifficulty = pill.dataset.level || "beginner";
+    });
+  });
+}
+
+if (btnLengthMinus) {
+  btnLengthMinus.addEventListener("click", () => {
+    setSentenceCount(selectedSentenceCount - 1);
+  });
+}
+
+if (btnLengthPlus) {
+  btnLengthPlus.addEventListener("click", () => {
+    setSentenceCount(selectedSentenceCount + 1);
+  });
+}
+
+if (sentenceLengthSlider) {
+  sentenceLengthSlider.addEventListener("input", (e) => {
+    setSentenceCount(e.target.value);
+  });
+}
 
 function addToSessionHistory(data) {
   sessionPassageHistory.unshift(data);
@@ -1135,7 +1220,7 @@ if (btnDoneMobileVocab) {
   btnDoneMobileVocab.onclick = () => {
     closeMobileVocabSheet();
     if (selectedWordSet.size > 0) {
-      generatePassage();
+      requestGeneratePassage(false);
     }
   };
 }

@@ -329,6 +329,8 @@ class GeneratePassageRequest(BaseModel):
     selected_words: List[str]
     random_change: bool = False
     model_family: str = "flash"
+    level: str = "beginner"
+    sentence_count: int = 3
 
 
 class SubmitTranslationRequest(BaseModel):
@@ -447,6 +449,8 @@ async def generate_passage_api(req: GeneratePassageRequest):
             req.selected_words,
             random_change=req.random_change,
             model_family=req.model_family,
+            level=req.level,
+            sentence_count=req.sentence_count,
         )
         return {"status": "success", "data": data}
     except Exception as e:

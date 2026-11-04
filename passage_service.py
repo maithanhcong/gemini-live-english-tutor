@@ -159,26 +159,69 @@ def is_quota_error(status_code: int, err_msg: str) -> bool:
     s = str(err_msg).lower()
     return any(term in s for term in ["429", "resource_exhausted", "quota", "rate limit", "exhausted"])
 
-async def generate_passage_async(selected_words: list[str], random_change: bool = False, model_family: str = "flash"):
+LEVEL_DESCRIPTIONS = {
+    "beginner": (
+        "Cơ bản / Mất gốc (Beginner): Sử dụng các câu đơn cực ngắn, ngữ pháp thì hiện tại đơn giản nhất, "
+        "cấu trúc Chủ ngữ - Động từ - Tân ngữ (S-V-O) trực diện, từ ngữ thông dụng đời thường, dễ đọc dễ dịch."
+    ),
+    "elementary": (
+        "Sơ cấp (A1 - A2 / Elementary): Sử dụng các câu ghép cơ bản, có liên từ nối tự nhiên (and, but, because, so), "
+        "kết hợp thì hiện tại đơn và thì quá khứ đơn hoặc tương lai đơn giản."
+    ),
+    "intermediate": (
+        "Trung cấp (B1 / Intermediate): Sử dụng các câu phức với mệnh đề quan hệ (who, which, that), "
+        "từ nối chỉ thời gian và nguyên nhân (when, while, although, since, however), ngữ cảnh đàm thoại/đời sống phong phú hơn."
+    ),
+}
+
+async def generate_passage_async(
+    selected_words: list[str],
+    random_change: bool = False,
+    model_family: str = "flash",
+    level: str = "beginner",
+    sentence_count: int = 3
+):
     """
-    Async sinh đoạn văn ngắn 2-3 câu từ 3-5 từ đã chọn.
-    - Áp dụng xoay vòng 4 API Key với failover.
+    Async sinh đoạn văn luyện dịch từ danh sách từ đã chọn với tùy chọn độ khó và độ dài:
+    - Tham số level: 'beginner' (Cơ bản), 'elementary' (Sơ cấp A1-A2), 'intermediate' (Trung cấp B1).
+    - Tham số sentence_count: từ 2 đến 15 câu (mặc định 3).
+    - Áp dụng xoay vòng 4 API Key với failover tự động.
     - Hỗ trợ dòng Fast Flash và Gemma models.
-    - Nếu random_change=True: lấy ngẫu nhiên 3-5 từ mới và bỏ qua cache.
+    - Token động (350 - 1200 tokens) chống đứt câu khi đoạn văn dài.
     """
     if not selected_words:
         raise ValueError("Danh sách từ vựng được chọn không được để trống.")
 
-    # 1. Chọn 3 - 5 từ ngẫu nhiên
-    sample_size = min(len(selected_words), random.randint(3, 5))
-    if random_change or len(selected_words) > 5:
+    # Chuẩn hóa độ dài câu và mức độ khó
+    try:
+        sentence_count = max(2, min(15, int(sentence_count)))
+    except (ValueError, TypeError):
+        sentence_count = 3
+
+    level = str(level).strip().lower()
+    if level not in LEVEL_DESCRIPTIONS:
+        level = "beginner"
+    level_desc = LEVEL_DESCRIPTIONS[level]
+
+    # 1. Xác định số lượng từ mục tiêu cần lồng ghép linh hoạt theo độ dài đoạn văn
+    if sentence_count <= 3:
+        target_sample_size = random.randint(3, 5)
+    elif sentence_count <= 6:
+        target_sample_size = random.randint(4, 7)
+    elif sentence_count <= 10:
+        target_sample_size = random.randint(5, 9)
+    else:
+        target_sample_size = random.randint(6, 12)
+
+    sample_size = min(len(selected_words), target_sample_size)
+    if random_change or len(selected_words) > sample_size:
         target_words = random.sample(selected_words, sample_size)
     else:
         target_words = selected_words
 
-    cache_key = tuple(sorted(target_words))
+    cache_key = (tuple(sorted(target_words)), level, sentence_count)
     if not random_change and cache_key in PASSAGE_CACHE:
-        logger.info(f"[Passage Cache] Cache hit for words: {target_words}")
+        logger.info(f"[Passage Cache] Cache hit for words: {target_words} (level={level}, sentences={sentence_count})")
         return PASSAGE_CACHE[cache_key]
 
     api_keys = get_api_keys()
@@ -191,18 +234,25 @@ async def generate_passage_async(selected_words: list[str], random_change: bool 
     else:
         models_to_try = FAST_FLASH_MODELS + GEMMA_MODELS
 
+    words_str = ", ".join(target_words)
     prompt = (
-        f"You are an English language tutor creating a short reading & translation exercise for Vietnamese learners.\n"
-        f"Target vocabulary to include: {', '.join(target_words)}.\n"
-        f"Requirements:\n"
-        f"1. Write an everyday English passage of exactly 2 to 3 short, natural sentences (elementary / A2 level).\n"
-        f"2. Provide a clear, natural Vietnamese translation.\n"
-        f"3. Return ONLY a valid JSON object with this exact schema (no markdown, no code fences):\n"
-        f'{{"used_words": {json.dumps(target_words)}, "english_passage": "...", "vietnamese_translation": "..."}}'
+        f"You are an expert English tutor creating a reading and translation exercise for Vietnamese learners.\n"
+        f"Target vocabulary to embed: {words_str}.\n"
+        f"Difficulty Level: {level_desc}\n"
+        f"Exact Sentence Count: CHÍNH XÁC {sentence_count} câu (không được viết ít hơn hoặc nhiều hơn {sentence_count} câu).\n\n"
+        f"Strict Requirements:\n"
+        f"1. Write an English passage containing EXACTLY {sentence_count} sentences at the specified difficulty level ({level}).\n"
+        f"2. You MUST weave all target words ({words_str}) seamlessly and naturally into the passage.\n"
+        f"3. Provide an accurate, natural Vietnamese translation for the entire passage.\n"
+        f"4. Return ONLY a valid JSON object with this exact schema (no markdown formatting, no code fences):\n"
+        f'{{"used_words": {json.dumps(target_words)}, "english_passage": "...", "vietnamese_translation": "...", "sentence_count": {sentence_count}, "level": "{level}"}}'
     )
 
+    # Tính toán maxOutputTokens linh hoạt theo số câu để đảm bảo không bao giờ bị đứt câu
+    dynamic_max_tokens = max(350, min(1200, sentence_count * 75 + 200))
+
     last_error = None
-    async with httpx.AsyncClient(timeout=25.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         for idx, key in enumerate(api_keys):
             key_label = f"Key {idx + 1} (...{key[-6:]})"
             key_switched = False
@@ -212,7 +262,7 @@ async def generate_passage_async(selected_words: list[str], random_change: bool 
                 
                 # Cấu hình config: Flash hỗ trợ responseMimeType JSON
                 gen_config = {
-                    "maxOutputTokens": 200,
+                    "maxOutputTokens": dynamic_max_tokens,
                     "temperature": 0.7,
                 }
                 if "flash" in model_name:
@@ -297,6 +347,9 @@ async def generate_passage_async(selected_words: list[str], random_change: bool 
                 continue
 
     raise RuntimeError(f"All API Keys and models failed for passage generation. Last error: {last_error}")
+
+# Alias hỗ trợ đồng thời tên gọi generate_passage_with_failover
+generate_passage_with_failover = generate_passage_async
 
 async def compute_embedding_async(text: str, model: str = None) -> list[float]:
     """
