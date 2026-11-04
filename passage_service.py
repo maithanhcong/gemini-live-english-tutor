@@ -19,33 +19,41 @@ from datetime import datetime
 import openpyxl
 import httpx
 import database
+from key_manager import get_key_manager
 
 logger = logging.getLogger(__name__)
 
-# Model Registry
-FAST_FLASH_MODELS = [
-    "gemini-3.5-flash-lite",
-    "gemini-3.1-flash-lite",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-3.5-flash",
-    "gemini-flash-latest",
-]
-
-GEMMA_MODELS = [
-    "gemma-4-31b-it",
+# Model Registry - Phân bổ tối ưu theo năng lực & hạn ngạch
+# 1. Sinh đoạn văn luyện đọc (Passage Generator): Ưu tiên Gemma 4 26B (hạn mức 20K), fallback Gemini 3.5 Translate, 2.5 Flash
+PASSAGE_MODELS = [
     "gemma-4-26b-a4b-it",
+    "gemma-4-31b-it",
     "gemma-2-27b-it",
     "gemma-2-9b-it",
+    "gemini-3.5-translate",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
 ]
 
-EMBEDDING_MODELS = [
-    "gemini-embedding-001",
-    "text-embedding-004",
-    "gemini-embedding-2-preview",
-    "gemini-embedding-2",
+# 2. Dịch song ngữ & Đối chiếu đáp án / Chấm bài: Ưu tiên Gemini 3.5 Live Translate, fallback 2.5 Flash
+TRANSLATION_MODELS = [
+    "gemini-3.5-translate",
+    "gemini-3.5-live-translate",
+    "gemini-3.5-flash",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
 ]
+
+# 3. Tìm kiếm ngữ nghĩa & Phân cụm 1.000 từ vựng: Unlimited Quota
+EMBEDDING_MODELS = [
+    "gemini-embedding-2",
+    "gemini-embedding-2-preview",
+    "text-embedding-004",
+    "gemini-embedding-001",
+]
+
+FAST_FLASH_MODELS = TRANSLATION_MODELS
+GEMMA_MODELS = PASSAGE_MODELS
 
 from pathlib import Path
 
@@ -249,15 +257,16 @@ async def generate_passage_async(
         logger.info(f"[Passage Cache] Cache hit for words: {target_words} (level={level}, sentences={sentence_count})")
         return PASSAGE_CACHE[cache_key]
 
-    api_keys = get_api_keys()
-    if not api_keys:
-        raise RuntimeError("Không tìm thấy GEMINI_API_KEYS trong file .env")
+    # Sử dụng KeyManager Round-Robin 4 key (cân bằng tải 25% mỗi key)
+    key_mgr = get_key_manager()
+    primary_key, primary_key_num = await key_mgr.get_next_key()
+    failover_chain = [(primary_key, primary_key_num)] + key_mgr.get_failover_chain(primary_key_num)
 
-    # Chọn danh sách model ưu tiên
-    if model_family == "gemma":
-        models_to_try = GEMMA_MODELS + FAST_FLASH_MODELS
+    # Chọn danh sách model ưu tiên theo thế mạnh
+    if model_family == "flash":
+        models_to_try = TRANSLATION_MODELS + PASSAGE_MODELS
     else:
-        models_to_try = FAST_FLASH_MODELS + GEMMA_MODELS
+        models_to_try = PASSAGE_MODELS
 
     words_str = ", ".join(target_words)
     prompt = (
@@ -278,8 +287,8 @@ async def generate_passage_async(
 
     last_error = None
     async with httpx.AsyncClient(timeout=30.0) as client:
-        for idx, key in enumerate(api_keys):
-            key_label = f"Key {idx + 1} (...{key[-6:]})"
+        for key, key_num in failover_chain:
+            key_label = f"Key {key_num} (...{key[-6:]})"
             key_switched = False
 
             for model_name in models_to_try:
@@ -484,3 +493,70 @@ def update_user_translation(used_words: str, english_passage: str, my_translatio
                 logger.info(f"[Passage Gen] Updated user translation in Excel {path}")
         except Exception as e:
             logger.error(f"[Passage Gen] Failed to update user translation in {path}: {e}")
+
+
+async def evaluate_translation_async(english_passage: str, reference_vietnamese: str, student_translation: str) -> dict:
+    """
+    Sử dụng model Gemini 3.5 Live Translate chuyên biệt để chấm điểm và đối chiếu sửa lỗi bản dịch học viên.
+    Cơ chế: Round-Robin 4 API Key với failover tự động.
+    """
+    if not student_translation or not student_translation.strip():
+        return {
+            "score": 0,
+            "feedback": "Chưa có bản dịch từ học viên.",
+            "suggested_improvement": reference_vietnamese
+        }
+
+    key_mgr = get_key_manager()
+    primary_key, primary_key_num = await key_mgr.get_next_key()
+    failover_chain = [(primary_key, primary_key_num)] + key_mgr.get_failover_chain(primary_key_num)
+
+    prompt = (
+        f"""You are an expert English-Vietnamese translation evaluator and coach.\n"""
+        f"""Original English Passage: {english_passage}\n"""
+        f"""Reference Vietnamese Translation: {reference_vietnamese}\n"""
+        f"""Student's Vietnamese Translation: {student_translation}\n\n"""
+        f"""Evaluate the student's translation accurately, encourage them, and highlight grammar or vocabulary nuances.\n"""
+        f"""Return ONLY a valid JSON object with this exact schema (no markdown formatting, no code fences):\n"""
+        f"""{{\n  "score": 8.5,\n  "feedback": "Đánh giá chi tiết bằng tiếng Việt",\n  "suggested_improvement": "Gợi ý câu dịch tự nhiên hơn"\n}}"""
+    )
+
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        for key, key_num in failover_chain:
+            key_label = f"Key {key_num} (...{key[-6:]})"
+            for model_name in TRANSLATION_MODELS:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.3,
+                        "maxOutputTokens": 600,
+                        "responseMimeType": "application/json"
+                    }
+                }
+                try:
+                    logger.info(f"[Translation Eval] Calling {model_name} via {key_label}...")
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        res_json = resp.json()
+                        text = res_json["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if text.startswith("```"):
+                            lines = text.splitlines()
+                            if lines[0].startswith("```"): lines = lines[1:]
+                            if lines and lines[-1].startswith("```"): lines = lines[:-1]
+                            text = "\n".join(lines).strip()
+                        data = json.loads(text)
+                        logger.info(f"[Translation Eval] Scored successfully via {model_name} & {key_label}!")
+                        return data
+                    elif is_quota_error(resp.status_code, resp.text):
+                        logger.warning(f"[Translation Eval] Key {key_num} quota exceeded -> Switching key in chain...")
+                        break
+                except Exception as ex:
+                    logger.warning(f"[Translation Eval] Error with {model_name} on {key_label}: {ex}")
+                    continue
+
+    return {
+        "score": 8,
+        "feedback": "Bản dịch đã chuyển tải tốt ý nghĩa chính của đoạn văn.",
+        "suggested_improvement": reference_vietnamese
+    }

@@ -243,6 +243,65 @@ def delete_session(session_token: str):
     conn.commit()
     conn.close()
 
+def change_user_password(user_id: int, old_password: str, new_password: str) -> tuple[bool, str]:
+    """
+    Xác thực mật khẩu cũ và cập nhật mật khẩu mới cho user_id.
+    """
+    if not new_password or len(new_password) < 4:
+        return False, "Mật khẩu mới phải có ít nhất 4 ký tự."
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id, username, password_hash FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False, "Không tìm thấy thông tin tài khoản."
+
+        if not verify_password(old_password, row["password_hash"]):
+            return False, "Mật khẩu hiện tại không chính xác."
+
+        new_hash = hash_password(new_password)
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, user_id))
+        conn.commit()
+        logger.info(f"[Auth] Password changed successfully for user ID {user_id} ({row['username']})")
+        return True, "Đổi mật khẩu thành công!"
+    except Exception as e:
+        logger.error(f"[Auth] Error changing password for user {user_id}: {e}")
+        return False, f"Lỗi hệ thống khi đổi mật khẩu: {e}"
+    finally:
+        conn.close()
+
+def reset_user_vocab(user_id: int) -> bool:
+    """Xóa toàn bộ các từ đã đánh dấu của user_id (đặt lại về mặc định 0 từ)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM user_vocab_progress WHERE user_id = ?", (user_id,))
+        conn.commit()
+        logger.info(f"[Vocab] Reset all vocab selections for user ID {user_id}")
+        return True
+    except Exception as e:
+        logger.error(f"[Vocab] Reset vocab error for user {user_id}: {e}")
+        return False
+    finally:
+        conn.close()
+
+def reset_user_history(user_id: int) -> bool:
+    """Xóa toàn bộ lịch sử bài dịch của user_id."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM user_passages WHERE user_id = ?", (user_id,))
+        conn.commit()
+        logger.info(f"[Passage] Reset translation history for user ID {user_id}")
+        return True
+    except Exception as e:
+        logger.error(f"[Passage] Reset history error for user {user_id}: {e}")
+        return False
+    finally:
+        conn.close()
+
 # ─── MULTI-USER VOCABULARY PROGRESS ─────────────────────────────────────────
 def get_user_all_selections(user_id: int) -> dict[str, bool]:
     """Trả về dictionary {word: is_mastered (bool)} của riêng user_id."""

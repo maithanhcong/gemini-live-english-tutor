@@ -14,7 +14,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Notyf Toast Notification CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css" />
-  <link rel="stylesheet" href="/static/style.css?v=3.1" />
+  <link rel="stylesheet" href="/static/style.css?v=3.2" />
 </head>
 
 <body>
@@ -42,6 +42,16 @@
         <div class="header-status-wrapper">
           <div id="status" class="status disconnected">Disconnected</div>
           <div id="interaction-status" class="interaction-status hidden"></div>
+        </div>
+
+        <!-- Header Quick Tools: Theme Toggle & Settings Modal -->
+        <div class="header-tools-group">
+          <button type="button" id="btnThemeToggle" class="btn btn-icon-round" title="Chuyển chế độ Sáng / Tối">
+            <i data-lucide="moon" class="lucide-icon"></i>
+          </button>
+          <button type="button" id="btnSettings" class="btn btn-icon-round" title="Cài đặt & Quản lý tài khoản">
+            <i data-lucide="settings" class="lucide-icon"></i>
+          </button>
         </div>
 
         <!-- User Authentication Profile & Actions -->
@@ -383,6 +393,18 @@
                 </div>
               </div>
 
+              <!-- AI Translation Evaluation & Scoring (Gemini 3.5 Live Translate) -->
+              <div id="compareEvaluationBox" class="comparison-evaluation-box hidden">
+                <div class="eval-header">
+                  <span class="eval-badge"><i data-lucide="sparkles" class="lucide-icon"></i> Điểm chấm: <strong id="evalScoreText">--</strong>/10</span>
+                  <span class="eval-model-tag"><i data-lucide="cpu" class="lucide-icon"></i> Gemini 3.5 Live Translate</span>
+                </div>
+                <div class="eval-feedback" id="evalFeedbackText"></div>
+                <div class="eval-suggestion" id="evalSuggestionRow">
+                  <strong>Gợi ý trau chuốt:</strong> <span id="evalSuggestionText"></span>
+                </div>
+              </div>
+
               <div class="comparison-footer">
                 <div class="sync-saved-tag">
                   <span class="check-icon"><i data-lucide="check-circle-2" class="lucide-icon"></i></span>
@@ -487,12 +509,124 @@
     </div>
   </div>
 
+  <!-- Modal Settings & Account Management -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal-card settings-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon"><i data-lucide="settings" class="lucide-icon"></i></div>
+          <h3>Cài Đặt & Quản Lý Tài Khoản</h3>
+        </div>
+        <button type="button" class="btn-close-modal" id="btnCloseSettingsModal" title="Đóng">
+          <i data-lucide="x" class="lucide-icon"></i>
+        </button>
+      </div>
+
+      <!-- Tabs bên trong Settings Modal -->
+      <div class="settings-tabs-nav">
+        <button type="button" class="settings-tab-btn active" data-tab="tabSettingsProfile">
+          <i data-lucide="user" class="lucide-icon"></i> Tài khoản
+        </button>
+        <button type="button" class="settings-tab-btn" data-tab="tabSettingsPassword">
+          <i data-lucide="key-round" class="lucide-icon"></i> Đổi mật khẩu
+        </button>
+        <button type="button" class="settings-tab-btn" data-tab="tabSettingsPreferences">
+          <i data-lucide="sliders" class="lucide-icon"></i> Tùy chọn & Dữ liệu
+        </button>
+      </div>
+
+      <div class="modal-body settings-modal-body">
+        <!-- Tab 1: Profile Info -->
+        <div id="tabSettingsProfile" class="settings-tab-pane active">
+          <div class="profile-card">
+            <div class="profile-avatar-large">
+              <span id="settingsAvatarChar">U</span>
+            </div>
+            <div class="profile-info-grid">
+              <div class="profile-info-row">
+                <span class="info-label">Tên tài khoản:</span>
+                <strong id="settingsUsernameDisplay">Khách (Chưa đăng nhập)</strong>
+              </div>
+              <div class="profile-info-row">
+                <span class="info-label">Mã học viên:</span>
+                <span id="settingsUserIdDisplay">#GUEST</span>
+              </div>
+              <div class="profile-info-row">
+                <span class="info-label">Số từ đã thành thạo:</span>
+                <span class="badge-count" id="settingsMasteredCount">0 từ</span>
+              </div>
+              <div class="profile-info-row">
+                <span class="info-label">Giao diện hiện tại:</span>
+                <span id="settingsCurrentThemeText">Sáng (Light Mode)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Change Password -->
+        <div id="tabSettingsPassword" class="settings-tab-pane">
+          <form id="formChangePassword" class="settings-form">
+            <div class="form-group">
+              <label for="inputOldPassword">Mật khẩu hiện tại</label>
+              <input type="password" id="inputOldPassword" placeholder="Nhập mật khẩu cũ của bạn" required />
+            </div>
+            <div class="form-group">
+              <label for="inputNewPassword">Mật khẩu mới</label>
+              <input type="password" id="inputNewPassword" placeholder="Tối thiểu 4 ký tự" required minlength="4" />
+            </div>
+            <div class="form-group">
+              <label for="inputConfirmPassword">Xác nhận mật khẩu mới</label>
+              <input type="password" id="inputConfirmPassword" placeholder="Nhập lại mật khẩu mới" required minlength="4" />
+            </div>
+            <div id="changePasswordStatusMsg" class="form-status-msg hidden"></div>
+            <button type="submit" id="btnSubmitChangePassword" class="btn btn-primary btn-block">
+              <span class="btn-icon"><i data-lucide="save" class="lucide-icon"></i></span> Lưu Thay Đổi Mật Khẩu
+            </button>
+          </form>
+        </div>
+
+        <!-- Tab 3: Preferences & Reset -->
+        <div id="tabSettingsPreferences" class="settings-tab-pane">
+          <div class="settings-pref-group">
+            <div class="pref-item">
+              <div>
+                <strong>Chế độ Giao diện</strong>
+                <p>Chuyển đổi linh hoạt giữa giao diện Sáng và Tối (Dark Mode Linear/Vercel)</p>
+              </div>
+              <button type="button" id="btnModalThemeToggle" class="btn btn-secondary">
+                <i data-lucide="moon" class="lucide-icon"></i> Đổi Giao Diện
+              </button>
+            </div>
+            <div class="pref-item">
+              <div>
+                <strong>Đặt lại tiến độ từ vựng</strong>
+                <p>Xóa toàn bộ các từ đã tích chọn thành thạo về mặc định (0 từ)</p>
+              </div>
+              <button type="button" id="btnResetVocab" class="btn btn-outline-danger">
+                <i data-lucide="rotate-ccw" class="lucide-icon"></i> Đặt Lại Từ Vựng
+              </button>
+            </div>
+            <div class="pref-item">
+              <div>
+                <strong>Xóa lịch sử luyện dịch</strong>
+                <p>Xóa toàn bộ các bài tập và bản dịch đã lưu trong tài khoản này</p>
+              </div>
+              <button type="button" id="btnResetHistory" class="btn btn-outline-danger">
+                <i data-lucide="trash-2" class="lucide-icon"></i> Xóa Lịch Sử
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Third-party Vendors & Application Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
   <script src="/static/siriwave.umd.min.js"></script>
   <script src="/static/media-handler.js"></script>
   <script src="/static/gemini-client.js"></script>
-  <script src="/static/main.js?v=3.1"></script>
+  <script src="/static/main.js?v=3.2"></script>
 </body>
 
 </html>

@@ -45,14 +45,16 @@ class MediaHandler {
 
       this.audioWorkletNode.port.onmessage = (event) => {
         if (this.isRecording) {
-          if (this.onAudioVolume && event.data && event.data.length > 0) {
-            let sumSq = 0;
-            const len = event.data.length;
-            for (let i = 0; i < len; i++) {
-              sumSq += event.data[i] * event.data[i];
+          const inputData = event.data;
+          if (inputData && inputData.length > 0) {
+            let sum = 0;
+            for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
+            let rms = Math.sqrt(sum / inputData.length);
+            let amplitude = Math.min(Math.max(rms * 15, 0.15), 3.0);
+            if (window.siriWave) window.siriWave.setAmplitude(amplitude);
+            if (this.onAudioVolume) {
+              this.onAudioVolume(rms, "user");
             }
-            const rms = Math.sqrt(sumSq / len);
-            this.onAudioVolume(rms, "user");
           }
           const downsampled = this.downsampleBuffer(
             event.data,
@@ -163,14 +165,15 @@ class MediaHandler {
       float32Data[i] = pcmData[i] / 32768.0;
     }
 
-    if (this.onAudioVolume && float32Data.length > 0) {
-      let sumSq = 0;
-      const len = float32Data.length;
-      for (let i = 0; i < len; i++) {
-        sumSq += float32Data[i] * float32Data[i];
+    if (float32Data.length > 0) {
+      let sum = 0;
+      for (let i = 0; i < float32Data.length; i++) sum += float32Data[i] * float32Data[i];
+      let rms = Math.sqrt(sum / float32Data.length);
+      let amplitude = Math.min(Math.max(rms * 15, 0.15), 3.0);
+      if (window.siriWave) window.siriWave.setAmplitude(amplitude);
+      if (this.onAudioVolume) {
+        this.onAudioVolume(rms, "ai");
       }
-      const rms = Math.sqrt(sumSq / len);
-      this.onAudioVolume(rms, "ai");
     }
     const buffer = this.audioContext.createBuffer(1, float32Data.length, 24000);
     buffer.getChannelData(0).set(float32Data);

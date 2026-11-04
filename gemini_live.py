@@ -11,6 +11,17 @@ from tutor_system_instruction import get_system_instruction
 
 # Model aliases to guarantee resolution between human-friendly names and API endpoints
 MODEL_ALIASES = {
+    "gemini-3.8-live-extended-thinking": [
+        "gemini-3.8-live-extended-thinking",
+        "gemini-3.8-live",
+        "gemini-3.1-flash-live-preview",
+        "gemini-3-flash-live",
+    ],
+    "gemini-3.5-transcribe-live": [
+        "gemini-3.5-transcribe-live",
+        "gemini-3.1-flash-live-preview",
+        "gemini-3.8-live",
+    ],
     "gemini-3-flash-live": ["gemini-3.1-flash-live-preview", "gemini-3-flash-live"],
     "gemini-2.5-flash-native-audio": [
         "gemini-2.5-flash-native-audio-latest",

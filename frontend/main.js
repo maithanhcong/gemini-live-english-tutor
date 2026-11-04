@@ -48,7 +48,7 @@ function initVoiceVisualizer() {
     siriWaveInstance = new SiriWave({
       container: container,
       style: "ios9",
-      speed: 0.12,
+      speed: 0.14,
       amplitude: 0.15,
       cover: true,
       autostart: true,
@@ -58,29 +58,32 @@ function initVoiceVisualizer() {
         { color: "16, 185, 129" },                     // Emerald
       ],
     });
+    window.siriWave = siriWaveInstance;
+    siriWaveInstance.start();
   } catch (err) {
     console.warn("Could not init SiriWave visualizer:", err);
   }
 }
 
 function handleAudioVolumeLevel(rms, source) {
-  if (!siriWaveInstance) return;
-  // Dynamic scaling: min 0.15 (idle breathing) to max 2.8
-  const targetAmp = Math.min(2.8, Math.max(0.15, 0.15 + rms * 14.0));
-  siriWaveInstance.setAmplitude(targetAmp);
+  let amplitude = Math.min(Math.max(rms * 15, 0.15), 3.0);
+  if (window.siriWave) {
+    window.siriWave.setAmplitude(amplitude);
+  } else if (siriWaveInstance) {
+    siriWaveInstance.setAmplitude(amplitude);
+  }
 
   const statusEl = document.getElementById("visualizerStatusText");
-  if (statusEl) {
-    if (rms > 0.02) {
-      statusEl.textContent = source === "user" ? "Đang thu giọng của bạn..." : "Gia sư AI đang nói...";
-    }
+  if (statusEl && rms > 0.015) {
+    statusEl.textContent = source === "user" ? "Đang thu giọng của bạn..." : "Gia sư AI đang nói...";
   }
 
   clearTimeout(siriWaveDecayTimer);
   siriWaveDecayTimer = setTimeout(() => {
-    if (siriWaveInstance) siriWaveInstance.setAmplitude(0.15);
-    if (statusEl) statusEl.textContent = "Đang sẵn sàng kết nối";
-  }, 350);
+    if (window.siriWave) window.siriWave.setAmplitude(0.15);
+    else if (siriWaveInstance) siriWaveInstance.setAmplitude(0.15);
+    if (statusEl) statusEl.textContent = isSessionActive ? "Đang lắng nghe bạn..." : "Đang sẵn sàng kết nối";
+  }, 280);
 }
 
 const statusDiv = document.getElementById("status");
@@ -1196,6 +1199,25 @@ btnSubmitTranslation.onclick = async () => {
       compareAiText.textContent = currentPassageData.vietnamese_translation || data.vietnamese_translation;
       passageComparisonCard.classList.remove("hidden");
 
+      // 1.1 Hiển thị chấm điểm và đánh giá AI nếu có
+      const evalBox = document.getElementById("compareEvaluationBox");
+      const evalScore = document.getElementById("evalScoreText");
+      const evalFeedback = document.getElementById("evalFeedbackText");
+      const evalSuggRow = document.getElementById("evalSuggestionRow");
+      const evalSuggText = document.getElementById("evalSuggestionText");
+
+      if (data.evaluation && evalBox) {
+        if (evalScore) evalScore.textContent = data.evaluation.score || "8.5";
+        if (evalFeedback) evalFeedback.textContent = data.evaluation.feedback || "Bản dịch đã diễn đạt tốt ý nghĩa.";
+        if (data.evaluation.suggested_improvement && evalSuggText && evalSuggRow) {
+          evalSuggText.textContent = data.evaluation.suggested_improvement;
+          evalSuggRow.classList.remove("hidden");
+        } else if (evalSuggRow) {
+          evalSuggRow.classList.add("hidden");
+        }
+        evalBox.classList.remove("hidden");
+      }
+
       // Cuộn êm đến bảng đối chiếu
       passageComparisonCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
@@ -1507,6 +1529,7 @@ window.addEventListener("resize", () => {
 });
 
 // ─── INITIAL APP STARTUP ────────────────────────────────────────────────────
+initTheme();
 initVoiceVisualizer();
 refreshIcons();
 
@@ -1516,3 +1539,203 @@ checkAuthStatus().finally(() => {
   refreshIcons();
 });
 
+
+// ─── THEME SWITCHER (DARK / LIGHT MODE) ────────────────────────────────────
+function initTheme() {
+  const saved = localStorage.getItem("app_theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  setTheme(saved);
+}
+
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("app_theme", theme);
+  const isDark = theme === "dark";
+  const btnThemeToggle = document.getElementById("btnThemeToggle");
+  if (btnThemeToggle) {
+    btnThemeToggle.innerHTML = `<i data-lucide="${isDark ? 'sun' : 'moon'}" class="lucide-icon"></i>`;
+    btnThemeToggle.title = isDark ? "Chuyển sang giao diện Sáng" : "Chuyển sang giao diện Tối";
+  }
+  const btnModalThemeToggle = document.getElementById("btnModalThemeToggle");
+  if (btnModalThemeToggle) {
+    btnModalThemeToggle.innerHTML = `<i data-lucide="${isDark ? 'sun' : 'moon'}" class="lucide-icon"></i> ${isDark ? 'Chế độ Sáng' : 'Chế độ Tối'}`;
+  }
+  const currentThemeText = document.getElementById("settingsCurrentThemeText");
+  if (currentThemeText) {
+    currentThemeText.textContent = isDark ? "Tối (Dark Mode)" : "Sáng (Light Mode)";
+  }
+  refreshIcons();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(current === "dark" ? "light" : "dark");
+}
+
+const btnThemeToggle = document.getElementById("btnThemeToggle");
+if (btnThemeToggle) btnThemeToggle.onclick = toggleTheme;
+
+const btnModalThemeToggle = document.getElementById("btnModalThemeToggle");
+if (btnModalThemeToggle) btnModalThemeToggle.onclick = toggleTheme;
+
+// ─── SETTINGS MODAL CONTROLLER ─────────────────────────────────────────────
+const btnSettings = document.getElementById("btnSettings");
+const settingsModal = document.getElementById("settingsModal");
+const btnCloseSettingsModal = document.getElementById("btnCloseSettingsModal");
+
+function openSettingsModal() {
+  if (!settingsModal) return;
+  // Update Profile Tab Data
+  const usernameDisplay = document.getElementById("settingsUsernameDisplay");
+  const userIdDisplay = document.getElementById("settingsUserIdDisplay");
+  const avatarChar = document.getElementById("settingsAvatarChar");
+  const masteredCount = document.getElementById("settingsMasteredCount");
+
+  if (currentUser) {
+    if (usernameDisplay) usernameDisplay.textContent = currentUser.username;
+    if (userIdDisplay) userIdDisplay.textContent = `#${currentUser.id}`;
+    if (avatarChar) avatarChar.textContent = currentUser.username.charAt(0).toUpperCase();
+  } else {
+    if (usernameDisplay) usernameDisplay.textContent = "Khách (Chưa đăng nhập)";
+    if (userIdDisplay) userIdDisplay.textContent = "#GUEST";
+    if (avatarChar) avatarChar.textContent = "G";
+  }
+  if (masteredCount) masteredCount.textContent = `${selectedWordSet.size} từ`;
+
+  // Default to first tab
+  switchSettingsTab("tabSettingsProfile");
+  settingsModal.classList.remove("hidden");
+  refreshIcons();
+}
+
+function closeSettingsModal() {
+  if (settingsModal) settingsModal.classList.add("hidden");
+}
+
+if (btnSettings) btnSettings.onclick = openSettingsModal;
+if (btnCloseSettingsModal) btnCloseSettingsModal.onclick = closeSettingsModal;
+
+if (settingsModal) {
+  settingsModal.onclick = (e) => {
+    if (e.target === settingsModal) closeSettingsModal();
+  };
+}
+
+function switchSettingsTab(targetId) {
+  const tabBtns = document.querySelectorAll(".settings-tab-btn");
+  const tabPanes = document.querySelectorAll(".settings-tab-pane");
+
+  tabBtns.forEach((btn) => {
+    if (btn.dataset.tab === targetId) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  tabPanes.forEach((pane) => {
+    if (pane.id === targetId) {
+      pane.classList.add("active");
+    } else {
+      pane.classList.remove("active");
+    }
+  });
+  refreshIcons();
+}
+
+document.querySelectorAll(".settings-tab-btn").forEach((btn) => {
+  btn.onclick = () => switchSettingsTab(btn.dataset.tab);
+});
+
+// Change Password Handler
+const formChangePassword = document.getElementById("formChangePassword");
+if (formChangePassword) {
+  formChangePassword.onsubmit = async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+      notyf.error("Vui lòng đăng nhập để thực hiện đổi mật khẩu!");
+      return;
+    }
+    const oldPass = document.getElementById("inputOldPassword").value;
+    const newPass = document.getElementById("inputNewPassword").value;
+    const confirmPass = document.getElementById("inputConfirmPassword").value;
+
+    if (newPass !== confirmPass) {
+      notyf.error("Mật khẩu mới và xác nhận mật khẩu không trùng khớp!");
+      return;
+    }
+
+    const btnSubmit = document.getElementById("btnSubmitChangePassword");
+    btnSubmit.disabled = true;
+
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ old_password: oldPass, new_password: newPass }),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === "success") {
+        notyf.success(data.message || "Đổi mật khẩu thành công!");
+        formChangePassword.reset();
+        closeSettingsModal();
+      } else {
+        notyf.error(data.detail || data.message || "Không thể đổi mật khẩu.");
+      }
+    } catch (err) {
+      notyf.error("Lỗi kết nối khi đổi mật khẩu: " + err.message);
+    } finally {
+      btnSubmit.disabled = false;
+    }
+  };
+}
+
+// Reset Vocab Handler
+const btnResetVocab = document.getElementById("btnResetVocab");
+if (btnResetVocab) {
+  btnResetVocab.onclick = async () => {
+    if (!confirm("Bạn có chắc chắn muốn đặt lại toàn bộ từ vựng đã tích về 0 không?")) return;
+    try {
+      const res = await fetch("/api/user/reset-vocab", {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === "success") {
+        selectedWordSet.clear();
+        updateMasteredCount();
+        renderTopics();
+        updateSyncBanners();
+        notyf.success(data.message || "Đã đặt lại tiến độ từ vựng về mặc định!");
+        closeSettingsModal();
+      } else {
+        notyf.error(data.detail || data.message || "Không thể đặt lại từ vựng.");
+      }
+    } catch (err) {
+      notyf.error("Lỗi: " + err.message);
+    }
+  };
+}
+
+// Reset History Handler
+const btnResetHistory = document.getElementById("btnResetHistory");
+if (btnResetHistory) {
+  btnResetHistory.onclick = async () => {
+    if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử bài tập luyện dịch không?")) return;
+    try {
+      const res = await fetch("/api/user/reset-history", {
+        method: "POST",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok && data.status === "success") {
+        if (passageHistoryList) passageHistoryList.innerHTML = "";
+        notyf.success(data.message || "Đã xóa toàn bộ lịch sử bài dịch!");
+        closeSettingsModal();
+      } else {
+        notyf.error(data.detail || data.message || "Không thể xóa lịch sử.");
+      }
+    } catch (err) {
+      notyf.error("Lỗi: " + err.message);
+    }
+  };
+}

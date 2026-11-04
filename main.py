@@ -99,6 +99,11 @@ class RegisterRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -169,6 +174,45 @@ async def auth_logout(request: Request, response: Response):
         database.delete_session(token)
     response.delete_cookie(key="session_token")
     return {"status": "success", "message": "Đã đăng xuất thành công."}
+
+
+@app.post("/api/auth/change-password")
+async def auth_change_password(req: ChangePasswordRequest, request: Request):
+    """Đổi mật khẩu người dùng sau khi xác thực mật khẩu hiện tại."""
+    user = await get_current_user_optional(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập để đổi mật khẩu.")
+    
+    ok, msg = database.change_user_password(user["id"], req.old_password, req.new_password)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    return {"status": "success", "message": msg}
+
+
+@app.post("/api/user/reset-vocab")
+async def api_reset_vocab(request: Request):
+    """Đặt lại toàn bộ tiến độ từ vựng của người dùng về mặc định (0 từ)."""
+    user = await get_current_user_optional(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập để đặt lại từ vựng.")
+    
+    ok = database.reset_user_vocab(user["id"])
+    if not ok:
+        raise HTTPException(status_code=500, detail="Không thể đặt lại từ vựng.")
+    return {"status": "success", "message": "Đã đặt lại tiến độ từ vựng về mặc định (0 từ)."}
+
+
+@app.post("/api/user/reset-history")
+async def api_reset_history(request: Request):
+    """Xóa toàn bộ lịch sử bài tập luyện dịch của người dùng."""
+    user = await get_current_user_optional(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập để xóa lịch sử bài dịch.")
+    
+    ok = database.reset_user_history(user["id"])
+    if not ok:
+        raise HTTPException(status_code=500, detail="Không thể xóa lịch sử bài dịch.")
+    return {"status": "success", "message": "Đã xóa toàn bộ lịch sử bài dịch thành công."}
 
 
 @app.websocket("/ws")
@@ -506,12 +550,24 @@ async def submit_translation_api(req: SubmitTranslationRequest, request: Request
                     req.my_translation,
                 )
             )
+        # Gọi AI đánh giá và chấm điểm bản dịch của học viên
+        evaluation = None
+        try:
+            evaluation = await passage_service.evaluate_translation_async(
+                english_passage=req.english_passage,
+                reference_vietnamese=req.vietnamese_translation,
+                student_translation=req.my_translation
+            )
+        except Exception as eval_err:
+            logger.warning(f"[Submit Translation] AI Evaluation error: {eval_err}")
+
         return {
             "status": "success",
             "submission_id": inserted_id,
             "user_id": user_id,
             "vietnamese_translation": req.vietnamese_translation,
-            "message": "Nộp bài và lưu vào CSDL thành công!",
+            "evaluation": evaluation,
+            "message": "Nộp bài và chấm điểm thành công!",
         }
     except Exception as e:
         logger.error(f"Error submitting translation: {e}")
