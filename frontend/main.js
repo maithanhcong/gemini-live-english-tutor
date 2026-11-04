@@ -2,13 +2,24 @@
 
 // 1. Lucide Icons SVG Refresh Utility
 function refreshIcons() {
-  if (window.lucide && typeof window.lucide.createIcons === "function") {
-    try {
+  try {
+    if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
       window.lucide.createIcons();
-    } catch (e) {
-      console.debug("Lucide icon create error:", e);
     }
+  } catch (e) {
+    console.debug("[Lucide Icons] createIcons error:", e);
   }
+}
+
+// 1.1 Safe HTML Escaper Utility
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 // 2. Global Notyf Toast Notification Instance (Top-right on Desktop, Bottom-center on Mobile)
@@ -1529,16 +1540,53 @@ window.addEventListener("resize", () => {
   }
 });
 
-// ─── INITIAL APP STARTUP ────────────────────────────────────────────────────
-initTheme();
-initVoiceVisualizer();
-refreshIcons();
+// ─── INITIAL APP STARTUP & RESILIENT DOM INIT ───────────────────────────────
+function initApplication() {
+  try {
+    initTheme();
+  } catch (err) {
+    console.warn("[Init] Theme error:", err);
+  }
 
-checkAuthStatus().finally(() => {
-  updateSyncBanners();
-  syncVocabFromExcel();
-  refreshIcons();
-});
+  try {
+    const tabLive = document.getElementById("navTabLive");
+    const tabTrans = document.getElementById("navTabTranslation");
+    const tabStudio = document.getElementById("navTabStudio");
+    if (tabLive) tabLive.onclick = (e) => { e.preventDefault(); switchMainTab("live"); };
+    if (tabTrans) tabTrans.onclick = (e) => { e.preventDefault(); switchMainTab("translation"); };
+    if (tabStudio) tabStudio.onclick = (e) => { e.preventDefault(); switchMainTab("studio"); };
+  } catch (err) {
+    console.warn("[Init] Tab binding error:", err);
+  }
+
+  try {
+    initVoiceVisualizer();
+  } catch (err) {
+    console.warn("[Init] SiriWave error:", err);
+  }
+
+  try {
+    refreshIcons();
+  } catch (err) {
+    console.warn("[Init] Lucide error:", err);
+  }
+
+  try {
+    checkAuthStatus().finally(() => {
+      updateSyncBanners();
+      syncVocabFromExcel();
+      refreshIcons();
+    });
+  } catch (err) {
+    console.warn("[Init] Auth sync error:", err);
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApplication);
+} else {
+  initApplication();
+}
 
 
 // ─── THEME SWITCHER (DARK / LIGHT MODE) ────────────────────────────────────
@@ -1592,14 +1640,14 @@ function openSettingsDropdown() {
 
   if (currentUser) {
     if (usernameDisplay) usernameDisplay.textContent = currentUser.username;
-    if (userIdDisplay) userIdDisplay.textContent = #;
+    if (userIdDisplay) userIdDisplay.textContent = `#${currentUser.id}`;
     if (avatarChar) avatarChar.textContent = currentUser.username.charAt(0).toUpperCase();
   } else {
     if (usernameDisplay) usernameDisplay.textContent = "Khách (Chưa đăng nhập)";
     if (userIdDisplay) userIdDisplay.textContent = "#GUEST";
     if (avatarChar) avatarChar.textContent = "G";
   }
-  if (masteredCount) masteredCount.textContent = ${selectedWordSet.size} từ;
+  if (masteredCount) masteredCount.textContent = `${selectedWordSet.size} từ`;
 
   switchSettingsTab("tabSettingsProfile");
   settingsDropdown.classList.remove("hidden");
