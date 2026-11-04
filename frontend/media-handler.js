@@ -45,6 +45,15 @@ class MediaHandler {
 
       this.audioWorkletNode.port.onmessage = (event) => {
         if (this.isRecording) {
+          if (this.onAudioVolume && event.data && event.data.length > 0) {
+            let sumSq = 0;
+            const len = event.data.length;
+            for (let i = 0; i < len; i++) {
+              sumSq += event.data[i] * event.data[i];
+            }
+            const rms = Math.sqrt(sumSq / len);
+            this.onAudioVolume(rms, "user");
+          }
           const downsampled = this.downsampleBuffer(
             event.data,
             this.audioContext.sampleRate,
@@ -154,6 +163,15 @@ class MediaHandler {
       float32Data[i] = pcmData[i] / 32768.0;
     }
 
+    if (this.onAudioVolume && float32Data.length > 0) {
+      let sumSq = 0;
+      const len = float32Data.length;
+      for (let i = 0; i < len; i++) {
+        sumSq += float32Data[i] * float32Data[i];
+      }
+      const rms = Math.sqrt(sumSq / len);
+      this.onAudioVolume(rms, "ai");
+    }
     const buffer = this.audioContext.createBuffer(1, float32Data.length, 24000);
     buffer.getChannelData(0).set(float32Data);
 

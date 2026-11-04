@@ -54,3 +54,6 @@ desktop.ini
 *.log
 scratch/
 .system_generated/
+
+# Reference Repositories (External Sources)
+.references/

@@ -1,5 +1,88 @@
 // --- Main Application Logic & Gemini Live Integration ---
 
+// 1. Lucide Icons SVG Refresh Utility
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === "function") {
+    try {
+      window.lucide.createIcons();
+    } catch (e) {
+      console.debug("Lucide icon create error:", e);
+    }
+  }
+}
+
+// 2. Global Notyf Toast Notification Instance (Top-right on Desktop, Bottom-center on Mobile)
+const notyf = typeof Notyf !== "undefined"
+  ? new Notyf({
+      duration: 3200,
+      dismissible: true,
+      position: {
+        x: window.innerWidth < 768 ? "center" : "right",
+        y: window.innerWidth < 768 ? "bottom" : "top",
+      },
+      types: [
+        {
+          type: "success",
+          background: "#059669",
+        },
+        {
+          type: "error",
+          background: "#dc2626",
+        },
+      ],
+    })
+  : {
+      success: (msg) => console.log("[Notyf Success]", msg),
+      error: (msg) => console.error("[Notyf Error]", msg),
+    };
+
+// 3. SiriWave Voice Visualizer Controller
+let siriWaveInstance = null;
+let siriWaveDecayTimer = null;
+
+function initVoiceVisualizer() {
+  const container = document.getElementById("voice-visualizer");
+  if (!container || typeof SiriWave === "undefined") return;
+  container.innerHTML = "";
+  try {
+    siriWaveInstance = new SiriWave({
+      container: container,
+      style: "ios9",
+      speed: 0.12,
+      amplitude: 0.15,
+      cover: true,
+      autostart: true,
+      curveDefinition: [
+        { color: "56, 189, 248", supportLine: true },  // Sky blue
+        { color: "99, 102, 241" },                     // Indigo
+        { color: "16, 185, 129" },                     // Emerald
+      ],
+    });
+  } catch (err) {
+    console.warn("Could not init SiriWave visualizer:", err);
+  }
+}
+
+function handleAudioVolumeLevel(rms, source) {
+  if (!siriWaveInstance) return;
+  // Dynamic scaling: min 0.15 (idle breathing) to max 2.8
+  const targetAmp = Math.min(2.8, Math.max(0.15, 0.15 + rms * 14.0));
+  siriWaveInstance.setAmplitude(targetAmp);
+
+  const statusEl = document.getElementById("visualizerStatusText");
+  if (statusEl) {
+    if (rms > 0.02) {
+      statusEl.textContent = source === "user" ? "Đang thu giọng của bạn..." : "Gia sư AI đang nói...";
+    }
+  }
+
+  clearTimeout(siriWaveDecayTimer);
+  siriWaveDecayTimer = setTimeout(() => {
+    if (siriWaveInstance) siriWaveInstance.setAmplitude(0.15);
+    if (statusEl) statusEl.textContent = "Đang sẵn sàng kết nối";
+  }, 350);
+}
+
 const statusDiv = document.getElementById("status");
 const interactionStatusDiv = document.getElementById("interaction-status");
 const authSection = document.getElementById("auth-section");
@@ -132,7 +215,10 @@ function setLoggedInUser(user, masteredCount = 0) {
   if (userLoggedInBox) userLoggedInBox.classList.remove("hidden");
   if (headerUsername) headerUsername.textContent = user.username || "Tài khoản";
   if (userAvatarChar) userAvatarChar.textContent = (user.username || "U").charAt(0).toUpperCase();
-  if (headerMasteredBadge) headerMasteredBadge.textContent = `🎯 ${masteredCount} từ đã học`;
+  if (headerMasteredBadge) {
+    headerMasteredBadge.innerHTML = `<i data-lucide="target" class="lucide-icon"></i> ${masteredCount} từ đã học`;
+    refreshIcons();
+  }
 }
 
 function setLoggedOutUser() {
@@ -225,7 +311,8 @@ function updateSyncBanners() {
     sheetCountTag.textContent = `${count} từ đã chọn`;
   }
   if (headerMasteredBadge && currentUser) {
-    headerMasteredBadge.textContent = `🎯 ${count} từ đã học`;
+    headerMasteredBadge.innerHTML = `<i data-lucide="target" class="lucide-icon"></i> ${count} từ đã học`;
+    refreshIcons();
   }
 }
 
@@ -290,12 +377,19 @@ try {
 
 // Media & Live Client
 const mediaHandler = new MediaHandler();
+mediaHandler.onAudioVolume = handleAudioVolumeLevel;
+
 const geminiClient = new GeminiClient({
   onOpen: () => {
     statusDiv.textContent = "Connected";
     statusDiv.className = "status connected";
     authSection.classList.add("hidden");
     appSection.classList.remove("hidden");
+
+    if (siriWaveInstance) {
+      siriWaveInstance.start();
+    }
+    refreshIcons();
 
     updateSyncBanners();
 
@@ -326,6 +420,9 @@ const geminiClient = new GeminiClient({
     statusDiv.className = "status disconnected";
     if (interactionStatusDiv) {
       interactionStatusDiv.className = "interaction-status hidden";
+    }
+    if (siriWaveInstance) {
+      siriWaveInstance.stop();
     }
     showSessionEnd();
   },
@@ -408,7 +505,8 @@ disconnectBtn.onclick = () => {
 micBtn.onclick = async () => {
   if (mediaHandler.isRecording) {
     mediaHandler.stopAudio();
-    micBtn.textContent = "Start Mic";
+    micBtn.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> Start Mic`;
+    refreshIcons();
   } else {
     try {
       await mediaHandler.startAudio((data) => {
@@ -416,23 +514,25 @@ micBtn.onclick = async () => {
           geminiClient.send(data);
         }
       });
-      micBtn.textContent = "Stop Mic";
+      micBtn.innerHTML = `<i data-lucide="mic-off" class="lucide-icon"></i> Stop Mic`;
+      refreshIcons();
     } catch (e) {
-      alert("Could not start audio capture: " + e.message);
+      notyf.error("Không thể ghi âm microphone: " + e.message);
     }
   }
 };
 
 cameraBtn.onclick = async () => {
-  if (cameraBtn.textContent === "Stop Camera") {
+  if (cameraBtn.textContent.includes("Stop Camera")) {
     mediaHandler.stopVideo(videoPreview);
-    cameraBtn.textContent = "Start Camera";
-    screenBtn.textContent = "Share Screen";
+    cameraBtn.innerHTML = `<i data-lucide="video" class="lucide-icon"></i> Start Camera`;
+    screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
     videoPlaceholder.classList.remove("hidden");
+    refreshIcons();
   } else {
     if (mediaHandler.videoStream) {
       mediaHandler.stopVideo(videoPreview);
-      screenBtn.textContent = "Share Screen";
+      screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
     }
 
     try {
@@ -441,25 +541,27 @@ cameraBtn.onclick = async () => {
           geminiClient.sendImage(base64Data);
         }
       });
-      cameraBtn.textContent = "Stop Camera";
-      screenBtn.textContent = "Share Screen";
+      cameraBtn.innerHTML = `<i data-lucide="video-off" class="lucide-icon"></i> Stop Camera`;
+      screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
       videoPlaceholder.classList.add("hidden");
+      refreshIcons();
     } catch (e) {
-      alert("Could not access camera: " + e.message);
+      notyf.error("Không thể truy cập camera: " + e.message);
     }
   }
 };
 
 screenBtn.onclick = async () => {
-  if (screenBtn.textContent === "Stop Sharing") {
+  if (screenBtn.textContent.includes("Stop Sharing")) {
     mediaHandler.stopVideo(videoPreview);
-    screenBtn.textContent = "Share Screen";
-    cameraBtn.textContent = "Start Camera";
+    screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
+    cameraBtn.innerHTML = `<i data-lucide="video" class="lucide-icon"></i> Start Camera`;
     videoPlaceholder.classList.remove("hidden");
+    refreshIcons();
   } else {
     if (mediaHandler.videoStream) {
       mediaHandler.stopVideo(videoPreview);
-      cameraBtn.textContent = "Start Camera";
+      cameraBtn.innerHTML = `<i data-lucide="video" class="lucide-icon"></i> Start Camera`;
     }
 
     try {
@@ -471,15 +573,17 @@ screenBtn.onclick = async () => {
           }
         },
         () => {
-          screenBtn.textContent = "Share Screen";
+          screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
           videoPlaceholder.classList.remove("hidden");
+          refreshIcons();
         }
       );
-      screenBtn.textContent = "Stop Sharing";
-      cameraBtn.textContent = "Start Camera";
+      screenBtn.innerHTML = `<i data-lucide="monitor-off" class="lucide-icon"></i> Stop Sharing`;
+      cameraBtn.innerHTML = `<i data-lucide="video" class="lucide-icon"></i> Start Camera`;
       videoPlaceholder.classList.add("hidden");
+      refreshIcons();
     } catch (e) {
-      alert("Could not share screen: " + e.message);
+      notyf.error("Không thể chia sẻ màn hình: " + e.message);
     }
   }
 };
@@ -507,11 +611,12 @@ function resetUI() {
   mediaHandler.stopVideo(videoPreview);
   videoPlaceholder.classList.remove("hidden");
 
-  micBtn.textContent = "Start Mic";
-  cameraBtn.textContent = "Start Camera";
-  screenBtn.textContent = "Share Screen";
+  micBtn.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> Start Mic`;
+  cameraBtn.innerHTML = `<i data-lucide="video" class="lucide-icon"></i> Start Camera`;
+  screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
   chatLog.innerHTML = "";
   connectBtn.disabled = false;
+  refreshIcons();
 }
 
 function showSessionEnd() {
@@ -534,6 +639,7 @@ navTabLive.onclick = () => {
 
   // Synchronize vocabulary state to backend / Live session
   syncMasteredWordsToLive();
+  refreshIcons();
 };
 
 navTabTranslation.onclick = () => {
@@ -546,6 +652,7 @@ navTabTranslation.onclick = () => {
   if (syncedTopics.length === 0) {
     syncVocabFromExcel();
   }
+  refreshIcons();
 };
 
 // ─── TRANSLATION WORKSPACE: EXCEL SYNC & VOCABULARY SELECTION ───────────────
@@ -559,7 +666,8 @@ chkLearnedOnly.onchange = () => {
 
 async function syncVocabFromExcel() {
   btnSyncVocab.disabled = true;
-  btnSyncVocab.innerHTML = `<span class="btn-icon">⏳</span> Đang đồng bộ...`;
+  btnSyncVocab.innerHTML = `<span class="btn-icon"><i data-lucide="loader-2" class="lucide-icon spin"></i></span> Đang đồng bộ...`;
+  refreshIcons();
 
   try {
     const learnedOnly = chkLearnedOnly.checked;
@@ -605,15 +713,17 @@ async function syncVocabFromExcel() {
 
       renderTopics();
       updateSelectedCount();
+      notyf.success(`Đã đồng bộ ${data.total_words} từ cốt lõi (${data.learned_count} từ đã học)!`);
     } else {
-      alert("Lỗi đồng bộ dữ liệu: " + (data.message || "Unknown error"));
+      notyf.error("Lỗi đồng bộ dữ liệu: " + (data.message || "Unknown error"));
     }
   } catch (err) {
     console.error("Sync error:", err);
-    alert("Không thể kết nối đến máy chủ để đọc dữ liệu từ vựng.");
+    notyf.error("Không thể kết nối đến máy chủ để đọc dữ liệu từ vựng.");
   } finally {
     btnSyncVocab.disabled = false;
-    btnSyncVocab.innerHTML = `<span class="btn-icon">🔄</span> Đồng bộ từ Excel`;
+    btnSyncVocab.innerHTML = `<span class="btn-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span> Đồng bộ từ Excel`;
+    refreshIcons();
   }
 }
 
@@ -625,6 +735,8 @@ function renderTopics() {
     topicsContainer.innerHTML = `<div class="empty-state"><p>Không tìm thấy từ vựng nào phù hợp.</p></div>`;
     return;
   }
+
+  const fragment = document.createDocumentFragment();
 
   syncedTopics.forEach((topic, tIdx) => {
     // Filter words matching search
@@ -659,7 +771,7 @@ function renderTopics() {
     // Arrow indicator
     const arrow = document.createElement("span");
     arrow.className = "topic-arrow";
-    arrow.innerHTML = "▶";
+    arrow.innerHTML = `<i data-lucide="chevron-right" class="topic-chevron"></i>`;
 
     // Parent Checkbox (Cha)
     const chkTopic = document.createElement("input");
@@ -811,8 +923,11 @@ function renderTopics() {
 
     topicGroup.appendChild(topicHeader);
     topicGroup.appendChild(topicBody);
-    topicsContainer.appendChild(topicGroup);
+    fragment.appendChild(topicGroup);
   });
+
+  topicsContainer.appendChild(fragment);
+  refreshIcons();
 }
 
 function updateSelectedCount() {
@@ -878,7 +993,7 @@ async function requestGeneratePassage(randomChange = false) {
     autoSelectDefaultWords();
   }
   if (selectedWordSet.size === 0) {
-    alert("Vui lòng tích chọn ít nhất 1 từ vựng trong danh sách trước khi tạo bài tập.");
+    notyf.error("Vui lòng tích chọn ít nhất 1 từ vựng trong danh sách trước khi tạo bài tập.");
     return;
   }
 
@@ -917,13 +1032,15 @@ async function requestGeneratePassage(randomChange = false) {
     if (data.status === "success" && data.data) {
       currentPassageData = data.data;
       displayGeneratedPassage(currentPassageData);
+      notyf.success("Đoạn văn AI đã sẵn sàng để luyện dịch!");
+      refreshIcons();
     } else {
-      alert("Lỗi khi sinh đoạn văn: " + (data.message || "Unknown error"));
+      notyf.error("Lỗi khi tạo đoạn văn: " + (data.message || "Unknown error"));
       passageEmptyPlaceholder.classList.remove("hidden");
     }
   } catch (err) {
     console.error("Passage generation error:", err);
-    alert("Không thể kết nối đến máy chủ sinh đoạn văn: " + err.message);
+    notyf.error("Không thể kết nối đến máy chủ: " + err.message);
     passageEmptyPlaceholder.classList.remove("hidden");
   } finally {
     passageLoading.classList.add("hidden");
@@ -957,8 +1074,9 @@ function displayGeneratedPassage(data) {
   const sCount = data.sentence_count || selectedSentenceCount;
   const metaBadge = document.createElement("span");
   metaBadge.className = "target-meta-pill";
-  metaBadge.textContent = `🎯 ${lvlName} (${sCount} câu)`;
+  metaBadge.innerHTML = `<i data-lucide="target" class="lucide-icon"></i> ${lvlName} (${sCount} câu)`;
   passageUsedWords.appendChild(metaBadge);
+  refreshIcons();
 
   // English text
   passageEnglishText.textContent = data.english_passage || "";
@@ -988,13 +1106,14 @@ btnSubmitTranslation.onclick = async () => {
   if (!currentPassageData) return;
   const myTranslation = txtUserTranslation.value.trim();
   if (!myTranslation) {
-    alert("Vui lòng nhập bản dịch của bạn vào ô thực hành trước khi nộp bài!");
+    notyf.error("Vui lòng nhập bản dịch của bạn vào ô thực hành trước khi nộp bài!");
     txtUserTranslation.focus();
     return;
   }
 
   btnSubmitTranslation.disabled = true;
-  btnSubmitTranslation.innerHTML = `<span class="btn-icon">⏳</span> Đang chấm và đối chiếu...`;
+  btnSubmitTranslation.innerHTML = `<span class="btn-icon"><i data-lucide="loader-2" class="lucide-icon spin"></i></span> Đang chấm và đối chiếu...`;
+  refreshIcons();
   saveStatusMsg.className = "save-status-msg";
   saveStatusMsg.textContent = "";
 
@@ -1028,17 +1147,21 @@ btnSubmitTranslation.onclick = async () => {
       });
 
       saveStatusMsg.className = "save-status-msg success";
-      saveStatusMsg.textContent = "✅ Đã nộp bài và đối chiếu thành công!";
+      saveStatusMsg.innerHTML = `<i data-lucide="check-circle-2" class="lucide-icon"></i> Đã nộp bài và đối chiếu thành công!`;
+      notyf.success("Đã nộp bài và đối chiếu đáp án thành công!");
     } else {
       saveStatusMsg.className = "save-status-msg error";
-      saveStatusMsg.textContent = "❌ Lỗi: " + (data.message || "Không thể nộp bài");
+      saveStatusMsg.innerHTML = `<i data-lucide="alert-circle" class="lucide-icon"></i> Lỗi: ${data.message || "Không thể nộp bài"}`;
+      notyf.error(data.message || "Không thể nộp bài");
     }
   } catch (err) {
     saveStatusMsg.className = "save-status-msg error";
-    saveStatusMsg.textContent = "❌ Lỗi kết nối: " + err.message;
+    saveStatusMsg.innerHTML = `<i data-lucide="alert-circle" class="lucide-icon"></i> Lỗi kết nối: ${err.message}`;
+    notyf.error("Lỗi kết nối: " + err.message);
   } finally {
     btnSubmitTranslation.disabled = false;
-    btnSubmitTranslation.innerHTML = `<span class="btn-icon">🚀</span> Nộp bài & Đối chiếu đáp án`;
+    btnSubmitTranslation.innerHTML = `<span class="btn-icon"><i data-lucide="send" class="lucide-icon"></i></span> Nộp bài & Đối chiếu đáp án`;
+    refreshIcons();
   }
 };
 
@@ -1128,6 +1251,7 @@ function openAuthModal(register = false) {
   if (authUsername) authUsername.value = "";
   if (authPassword) authPassword.value = "";
   if (authModal) authModal.classList.remove("hidden");
+  refreshIcons();
   setTimeout(() => { if (authUsername) authUsername.focus(); }, 100);
 }
 
@@ -1150,6 +1274,7 @@ function switchAuthTab(register) {
   }
   if (authErrorMsg) authErrorMsg.classList.add("hidden");
   if (authSuccessMsg) authSuccessMsg.classList.add("hidden");
+  refreshIcons();
 }
 
 if (btnOpenAuthModal) btnOpenAuthModal.onclick = () => openAuthModal(false);
@@ -1171,10 +1296,12 @@ if (authForm) {
 
     if (!username || username.length < 3) {
       showAuthError("Tên đăng nhập phải có ít nhất 3 ký tự.");
+      notyf.error("Tên đăng nhập phải có ít nhất 3 ký tự.");
       return;
     }
     if (!password || password.length < 4) {
       showAuthError("Mật khẩu phải có ít nhất 4 ký tự.");
+      notyf.error("Mật khẩu phải có ít nhất 4 ký tự.");
       return;
     }
 
@@ -1198,14 +1325,17 @@ if (authForm) {
         }
         setLoggedInUser(data.user, data.mastered_count || 0);
         closeAuthModal();
+        notyf.success(isRegisterMode ? "Đăng ký tài khoản thành công!" : `Đăng nhập thành công! Chào mừng ${data.user?.username || "học viên"}`);
         // Xóa sạch trạng thái cũ và tải lại chính xác trạng thái từ vựng riêng của người dùng mới này
         selectedWordSet.clear();
         await syncVocabFromExcel();
       } else {
         showAuthError(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
+        notyf.error(data.message || "Đã xảy ra lỗi. Vui lòng thử lại.");
       }
     } catch (err) {
       showAuthError("Không thể kết nối đến máy chủ: " + err.message);
+      notyf.error("Không thể kết nối đến máy chủ: " + err.message);
     } finally {
       btnSubmitAuth.disabled = false;
       btnSubmitAuthText.textContent = origText;
@@ -1232,6 +1362,7 @@ if (btnLogout) {
     }
     setLoggedOutUser();
     selectedWordSet.clear();
+    notyf.success("Đã đăng xuất tài khoản.");
     await syncVocabFromExcel();
   };
 }
@@ -1316,8 +1447,12 @@ window.addEventListener("resize", () => {
 });
 
 // ─── INITIAL APP STARTUP ────────────────────────────────────────────────────
+initVoiceVisualizer();
+refreshIcons();
+
 checkAuthStatus().finally(() => {
   updateSyncBanners();
   syncVocabFromExcel();
+  refreshIcons();
 });
 
