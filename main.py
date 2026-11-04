@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import base64
 import json
 import logging
@@ -103,6 +103,11 @@ class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
 
+
+class LiveTranslateRequest(BaseModel):
+    text: str
+    source_lang: str = "en"
+    target_lang: str = "vi"
 
 class LoginRequest(BaseModel):
     username: str
@@ -610,6 +615,30 @@ async def save_translation_api(req: SaveTranslationRequest, request: Request):
         logger.error(f"Error saving translation: {e}")
         return {"status": "error", "message": str(e)}
 
+
+
+@app.post("/api/translate/live")
+async def live_translate_api(req: LiveTranslateRequest):
+    """Phòng Dịch Thuật AI Song Ngữ: Dịch trực tiếp hai chiều Anh <-> Việt và phân tích ngữ pháp."""
+    if not req.text or not req.text.strip():
+        return {
+            "status": "success",
+            "translation": "",
+            "grammar_notes": "",
+            "key_words": [],
+            "alternative_phrasings": [],
+            "model_used": "none"
+        }
+    try:
+        data = await passage_service.translate_live_studio_async(
+            text=req.text,
+            source_lang=req.source_lang,
+            target_lang=req.target_lang
+        )
+        return data
+    except Exception as e:
+        logger.error(f"Error in live translation: {e}")
+        return {"status": "error", "message": str(e)}
 
 
 # ─── Twilio Endpoints ─────────────────────────────────────────────────────────

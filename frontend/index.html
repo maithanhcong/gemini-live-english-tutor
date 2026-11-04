@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -38,6 +38,9 @@
           <button id="navTabTranslation" class="nav-tab">
             <span class="tab-icon"><i data-lucide="book-open" class="lucide-icon"></i></span> Luyện Dịch Song Ngữ
           </button>
+          <button id="navTabStudio" class="nav-tab">
+            <span class="tab-icon"><i data-lucide="languages" class="lucide-icon"></i></span> Phòng Dịch Thuật AI
+          </button>
         </nav>
         <div class="header-status-wrapper">
           <div id="status" class="status disconnected">Disconnected</div>
@@ -49,9 +52,121 @@
           <button type="button" id="btnThemeToggle" class="btn btn-icon-round" title="Chuyển chế độ Sáng / Tối">
             <i data-lucide="moon" class="lucide-icon"></i>
           </button>
-          <button type="button" id="btnSettings" class="btn btn-icon-round" title="Cài đặt & Quản lý tài khoản">
-            <i data-lucide="settings" class="lucide-icon"></i>
-          </button>
+          <div class="settings-anchor-wrapper" id="settingsAnchorWrapper">
+            <button type="button" id="btnSettings" class="btn btn-icon-round" title="Cài đặt & Quản lý tài khoản">
+              <i data-lucide="settings" class="lucide-icon"></i>
+            </button>
+
+            <!-- Dropdown Popover Settings -->
+            <div id="settingsDropdown" class="settings-dropdown hidden">
+              <div class="settings-dropdown-header">
+                <div class="settings-dropdown-title">
+                  <i data-lucide="settings" class="lucide-icon"></i>
+                  <span>Cài Đặt &amp; Quản Lý</span>
+                </div>
+                <button type="button" class="btn-close-dropdown" id="btnCloseSettingsModal" title="Đóng">
+                  <i data-lucide="x" class="lucide-icon"></i>
+                </button>
+              </div>
+
+              <!-- Tabs bên trong Settings Popover -->
+              <div class="settings-tabs-nav">
+                <button type="button" class="settings-tab-btn active" data-tab="tabSettingsProfile">
+                  <i data-lucide="user" class="lucide-icon"></i> Tài khoản
+                </button>
+                <button type="button" class="settings-tab-btn" data-tab="tabSettingsPassword">
+                  <i data-lucide="key-round" class="lucide-icon"></i> Mật khẩu
+                </button>
+                <button type="button" class="settings-tab-btn" data-tab="tabSettingsPreferences">
+                  <i data-lucide="sliders" class="lucide-icon"></i> Tùy chọn
+                </button>
+              </div>
+
+              <div class="settings-dropdown-body">
+                <!-- Tab 1: Profile Info -->
+                <div id="tabSettingsProfile" class="settings-tab-pane active">
+                  <div class="profile-card">
+                    <div class="profile-avatar-large">
+                      <span id="settingsAvatarChar">U</span>
+                    </div>
+                    <div class="profile-info-grid">
+                      <div class="profile-info-row">
+                        <span class="info-label">Tài khoản:</span>
+                        <strong id="settingsUsernameDisplay">Khách (Chưa đăng nhập)</strong>
+                      </div>
+                      <div class="profile-info-row">
+                        <span class="info-label">Mã học viên:</span>
+                        <span id="settingsUserIdDisplay">#GUEST</span>
+                      </div>
+                      <div class="profile-info-row">
+                        <span class="info-label">Đã thành thạo:</span>
+                        <span class="badge-count" id="settingsMasteredCount">0 từ</span>
+                      </div>
+                      <div class="profile-info-row">
+                        <span class="info-label">Giao diện:</span>
+                        <span id="settingsCurrentThemeText">Sáng (Light Mode)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tab 2: Change Password -->
+                <div id="tabSettingsPassword" class="settings-tab-pane">
+                  <form id="formChangePassword" class="settings-form">
+                    <div class="form-group">
+                      <label for="inputOldPassword">Mật khẩu hiện tại</label>
+                      <input type="password" id="inputOldPassword" placeholder="Nhập mật khẩu cũ" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="inputNewPassword">Mật khẩu mới</label>
+                      <input type="password" id="inputNewPassword" placeholder="Tối thiểu 4 ký tự" required minlength="4" />
+                    </div>
+                    <div class="form-group">
+                      <label for="inputConfirmPassword">Xác nhận mật khẩu</label>
+                      <input type="password" id="inputConfirmPassword" placeholder="Nhập lại mật khẩu mới" required minlength="4" />
+                    </div>
+                    <div id="changePasswordStatusMsg" class="form-status-msg hidden"></div>
+                    <button type="submit" id="btnSubmitChangePassword" class="btn btn-primary btn-block">
+                      <span class="btn-icon"><i data-lucide="save" class="lucide-icon"></i></span> Lưu Mật Khẩu
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Tab 3: Preferences & Reset -->
+                <div id="tabSettingsPreferences" class="settings-tab-pane">
+                  <div class="settings-pref-group">
+                    <div class="pref-item">
+                      <div>
+                        <strong>Giao diện Sáng / Tối</strong>
+                        <p>Dark mode tương phản cao Linear/Vercel</p>
+                      </div>
+                      <button type="button" id="btnModalThemeToggle" class="btn btn-secondary btn-sm">
+                        <i data-lucide="moon" class="lucide-icon"></i> Đổi Giao Diện
+                      </button>
+                    </div>
+                    <div class="pref-item">
+                      <div>
+                        <strong>Đặt lại từ vựng</strong>
+                        <p>Xóa toàn bộ từ đã tích về mặc định (0 từ)</p>
+                      </div>
+                      <button type="button" id="btnResetVocab" class="btn btn-outline-danger btn-sm">
+                        <i data-lucide="rotate-ccw" class="lucide-icon"></i> Đặt Lại
+                      </button>
+                    </div>
+                    <div class="pref-item">
+                      <div>
+                        <strong>Xóa lịch sử bài dịch</strong>
+                        <p>Xóa sạch các bài tập và bản dịch đã lưu</p>
+                      </div>
+                      <button type="button" id="btnResetHistory" class="btn btn-outline-danger btn-sm">
+                        <i data-lucide="trash-2" class="lucide-icon"></i> Xóa Hết
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- User Authentication Profile & Actions -->
@@ -450,6 +565,156 @@
         </div>
       </div>
     </section>
+    <!-- TAB 3: Phòng Dịch Thuật AI Song Ngữ (AI Translator Studio) -->
+    <section id="tabContentStudio" class="tab-page hidden">
+      <div class="studio-container">
+        <!-- Studio Header Banner -->
+        <div class="studio-header-card">
+          <div class="studio-header-info">
+            <div class="badge-pill">
+              <i data-lucide="sparkles" class="lucide-icon"></i> Gemini 3.5 Live Translate Engine
+            </div>
+            <h2>Phòng Dịch Thuật AI Song Ngữ</h2>
+            <p>Dịch thuật ngữ cảnh siêu tốc hai chiều Anh &ndash; Việt kèm bóc tách ngữ pháp, thành ngữ và từ vựng chuyên sâu</p>
+          </div>
+          <!-- Language Direction Switcher Bar -->
+          <div class="studio-direction-bar">
+            <div class="direction-lang" id="studioSourceLangBadge">
+              <span class="lang-flag" id="studioSourceFlag">🇺🇸</span>
+              <span class="lang-title" id="studioSourceTitle">Tiếng Anh (English)</span>
+            </div>
+            <button type="button" id="btnSwapStudioLang" class="btn btn-icon-round btn-swap-lang" title="Đảo chiều dịch (Anh <-> Việt)">
+              <i data-lucide="arrow-left-right" class="lucide-icon"></i>
+            </button>
+            <div class="direction-lang" id="studioTargetLangBadge">
+              <span class="lang-flag" id="studioTargetFlag">🇻🇳</span>
+              <span class="lang-title" id="studioTargetTitle">Tiếng Việt (Vietnamese)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Studio Dual-Pane Translator Grid -->
+        <div class="studio-dual-grid">
+          <!-- Left Pane: Source Input -->
+          <div class="studio-pane studio-source-pane">
+            <div class="pane-header">
+              <div class="pane-title">
+                <i data-lucide="edit-3" class="lucide-icon"></i>
+                <span id="sourcePaneTitle">Văn bản gốc (English)</span>
+              </div>
+              <div class="pane-actions">
+                <button type="button" id="btnStudioMic" class="btn btn-sm btn-subtle" title="Nhập liệu bằng giọng nói (STT)">
+                  <i data-lucide="mic" class="lucide-icon"></i>
+                  <span class="btn-label-mobile-hidden">Nói micro</span>
+                </button>
+                <button type="button" id="btnStudioClear" class="btn btn-sm btn-subtle" title="Xóa nội dung">
+                  <i data-lucide="trash-2" class="lucide-icon"></i>
+                </button>
+              </div>
+            </div>
+            <div class="pane-body">
+              <textarea
+                id="studioSourceText"
+                class="studio-textarea"
+                placeholder="Nhập hoặc dán văn bản cần dịch vào đây (hoặc nhấn nút Nói micro)..."
+                rows="7"
+              ></textarea>
+            </div>
+            <div class="pane-footer">
+              <div class="studio-char-counter">
+                <span id="studioCharCount">0</span> ký tự
+              </div>
+              <button type="button" id="btnDoTranslate" class="btn btn-primary btn-do-translate">
+                <i data-lucide="sparkles" class="lucide-icon"></i>
+                <span>Dịch Ngay (Gemini 3.5)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Pane: Translation Output -->
+          <div class="studio-pane studio-target-pane">
+            <div class="pane-header">
+              <div class="pane-title">
+                <i data-lucide="check-circle" class="lucide-icon"></i>
+                <span id="targetPaneTitle">Bản dịch AI (Tiếng Việt)</span>
+              </div>
+              <div class="pane-actions">
+                <button type="button" id="btnStudioSpeak" class="btn btn-sm btn-subtle" title="Phát âm bản dịch (TTS)">
+                  <i data-lucide="volume-2" class="lucide-icon"></i>
+                  <span class="btn-label-mobile-hidden">Đọc</span>
+                </button>
+                <button type="button" id="btnStudioCopy" class="btn btn-sm btn-subtle" title="Sao chép bản dịch">
+                  <i data-lucide="copy" class="lucide-icon"></i>
+                  <span class="btn-label-mobile-hidden">Sao chép</span>
+                </button>
+              </div>
+            </div>
+            <div class="pane-body">
+              <div id="studioTargetPlaceholder" class="studio-target-placeholder">
+                <i data-lucide="languages" class="placeholder-icon"></i>
+                <p>Bản dịch ngữ cảnh thời gian thực sẽ hiển thị tại đây</p>
+                <span class="placeholder-sub">Hệ thống phân tích cấu trúc ngữ pháp, từ vựng và gợi ý các lối diễn đạt tự nhiên</span>
+              </div>
+              <div id="studioTargetOutput" class="studio-target-output hidden"></div>
+              <div id="studioLoadingIndicator" class="studio-loading-indicator hidden">
+                <div class="spinner-dot-pulse"></div>
+                <span>Đang dịch và phân tích ngữ pháp qua Gemini 3.5 Live Translate...</span>
+              </div>
+            </div>
+            <div class="pane-footer">
+              <div class="studio-model-badge" id="studioModelBadge">
+                <i data-lucide="cpu" class="lucide-icon"></i>
+                <span id="studioModelName">Gemini 3.5 Live Translate</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Studio Grammar & Vocabulary Insights Card -->
+        <div id="studioInsightsCard" class="studio-insights-card hidden">
+          <div class="insights-header">
+            <div class="insights-title">
+              <i data-lucide="brain-circuit" class="lucide-icon"></i>
+              <span>Phân Tích Ngữ Pháp &amp; Từ Vựng Chuyên Sâu</span>
+            </div>
+            <span class="badge-subtle" id="insightsBadge">AI Linguist Analysis</span>
+          </div>
+
+          <div class="insights-body">
+            <!-- Grammar Notes -->
+            <div class="insight-block">
+              <div class="insight-block-header">
+                <i data-lucide="bookmark" class="lucide-icon"></i>
+                <strong>Cấu trúc ngữ pháp &amp; Ngữ cảnh:</strong>
+              </div>
+              <p id="studioGrammarNotes" class="insight-text">---</p>
+            </div>
+
+            <!-- Key Words Grid -->
+            <div class="insight-block" id="studioKeyWordsBlock">
+              <div class="insight-block-header">
+                <i data-lucide="layers" class="lucide-icon"></i>
+                <strong>Từ vựng cốt lõi &amp; Cụm từ (Collocations):</strong>
+              </div>
+              <div id="studioKeyWordsList" class="studio-keywords-grid">
+                <!-- Dynamically rendered word cards -->
+              </div>
+            </div>
+
+            <!-- Alternative Phrasings -->
+            <div class="insight-block" id="studioAltPhrasingsBlock">
+              <div class="insight-block-header">
+                <i data-lucide="shuffle" class="lucide-icon"></i>
+                <strong>Cách diễn đạt thay thế (Alternative Phrasings):</strong>
+              </div>
+              <ul id="studioAltPhrasingsList" class="studio-alt-list">
+                <!-- Dynamically rendered alternatives -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- App Footer -->
     <footer class="app-footer">
@@ -505,118 +770,6 @@
 
       <div class="auth-footer-notice">
         <span><i data-lucide="shield-check" class="lucide-icon"></i> Dữ liệu tích từ vựng & bài tập dịch của bạn được bảo mật và phân chia hoàn toàn riêng biệt.</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Settings & Account Management -->
-  <div id="settingsModal" class="modal-overlay hidden">
-    <div class="modal-card settings-modal-card">
-      <div class="modal-header">
-        <div class="modal-title-group">
-          <div class="modal-icon"><i data-lucide="settings" class="lucide-icon"></i></div>
-          <h3>Cài Đặt & Quản Lý Tài Khoản</h3>
-        </div>
-        <button type="button" class="btn-close-modal" id="btnCloseSettingsModal" title="Đóng">
-          <i data-lucide="x" class="lucide-icon"></i>
-        </button>
-      </div>
-
-      <!-- Tabs bên trong Settings Modal -->
-      <div class="settings-tabs-nav">
-        <button type="button" class="settings-tab-btn active" data-tab="tabSettingsProfile">
-          <i data-lucide="user" class="lucide-icon"></i> Tài khoản
-        </button>
-        <button type="button" class="settings-tab-btn" data-tab="tabSettingsPassword">
-          <i data-lucide="key-round" class="lucide-icon"></i> Đổi mật khẩu
-        </button>
-        <button type="button" class="settings-tab-btn" data-tab="tabSettingsPreferences">
-          <i data-lucide="sliders" class="lucide-icon"></i> Tùy chọn & Dữ liệu
-        </button>
-      </div>
-
-      <div class="modal-body settings-modal-body">
-        <!-- Tab 1: Profile Info -->
-        <div id="tabSettingsProfile" class="settings-tab-pane active">
-          <div class="profile-card">
-            <div class="profile-avatar-large">
-              <span id="settingsAvatarChar">U</span>
-            </div>
-            <div class="profile-info-grid">
-              <div class="profile-info-row">
-                <span class="info-label">Tên tài khoản:</span>
-                <strong id="settingsUsernameDisplay">Khách (Chưa đăng nhập)</strong>
-              </div>
-              <div class="profile-info-row">
-                <span class="info-label">Mã học viên:</span>
-                <span id="settingsUserIdDisplay">#GUEST</span>
-              </div>
-              <div class="profile-info-row">
-                <span class="info-label">Số từ đã thành thạo:</span>
-                <span class="badge-count" id="settingsMasteredCount">0 từ</span>
-              </div>
-              <div class="profile-info-row">
-                <span class="info-label">Giao diện hiện tại:</span>
-                <span id="settingsCurrentThemeText">Sáng (Light Mode)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 2: Change Password -->
-        <div id="tabSettingsPassword" class="settings-tab-pane">
-          <form id="formChangePassword" class="settings-form">
-            <div class="form-group">
-              <label for="inputOldPassword">Mật khẩu hiện tại</label>
-              <input type="password" id="inputOldPassword" placeholder="Nhập mật khẩu cũ của bạn" required />
-            </div>
-            <div class="form-group">
-              <label for="inputNewPassword">Mật khẩu mới</label>
-              <input type="password" id="inputNewPassword" placeholder="Tối thiểu 4 ký tự" required minlength="4" />
-            </div>
-            <div class="form-group">
-              <label for="inputConfirmPassword">Xác nhận mật khẩu mới</label>
-              <input type="password" id="inputConfirmPassword" placeholder="Nhập lại mật khẩu mới" required minlength="4" />
-            </div>
-            <div id="changePasswordStatusMsg" class="form-status-msg hidden"></div>
-            <button type="submit" id="btnSubmitChangePassword" class="btn btn-primary btn-block">
-              <span class="btn-icon"><i data-lucide="save" class="lucide-icon"></i></span> Lưu Thay Đổi Mật Khẩu
-            </button>
-          </form>
-        </div>
-
-        <!-- Tab 3: Preferences & Reset -->
-        <div id="tabSettingsPreferences" class="settings-tab-pane">
-          <div class="settings-pref-group">
-            <div class="pref-item">
-              <div>
-                <strong>Chế độ Giao diện</strong>
-                <p>Chuyển đổi linh hoạt giữa giao diện Sáng và Tối (Dark Mode Linear/Vercel)</p>
-              </div>
-              <button type="button" id="btnModalThemeToggle" class="btn btn-secondary">
-                <i data-lucide="moon" class="lucide-icon"></i> Đổi Giao Diện
-              </button>
-            </div>
-            <div class="pref-item">
-              <div>
-                <strong>Đặt lại tiến độ từ vựng</strong>
-                <p>Xóa toàn bộ các từ đã tích chọn thành thạo về mặc định (0 từ)</p>
-              </div>
-              <button type="button" id="btnResetVocab" class="btn btn-outline-danger">
-                <i data-lucide="rotate-ccw" class="lucide-icon"></i> Đặt Lại Từ Vựng
-              </button>
-            </div>
-            <div class="pref-item">
-              <div>
-                <strong>Xóa lịch sử luyện dịch</strong>
-                <p>Xóa toàn bộ các bài tập và bản dịch đã lưu trong tài khoản này</p>
-              </div>
-              <button type="button" id="btnResetHistory" class="btn btn-outline-danger">
-                <i data-lucide="trash-2" class="lucide-icon"></i> Xóa Lịch Sử
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>

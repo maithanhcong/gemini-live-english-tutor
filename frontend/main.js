@@ -1,4 +1,4 @@
-// --- Main Application Logic & Gemini Live Integration ---
+﻿// --- Main Application Logic & Gemini Live Integration ---
 
 // 1. Lucide Icons SVG Refresh Utility
 function refreshIcons() {
@@ -679,30 +679,31 @@ restartBtn.onclick = () => {
   resetUI();
 };
 
-// ─── TAB SWITCHING LOGIC ────────────────────────────────────────────────────
-navTabLive.onclick = () => {
-  navTabLive.classList.add("active");
-  navTabTranslation.classList.remove("active");
-  tabContentLive.classList.remove("hidden");
-  tabContentTranslation.classList.add("hidden");
+// ─── TAB SWITCHING LOGIC (3 TABS: LIVE, TRANSLATION, STUDIO) ────────────────
+const navTabStudio = document.getElementById("navTabStudio");
+const tabContentStudio = document.getElementById("tabContentStudio");
 
-  // Synchronize vocabulary state to backend / Live session
-  syncMasteredWordsToLive();
-  refreshIcons();
-};
+function switchMainTab(target) {
+  // target: 'live' | 'translation' | 'studio'
+  if (navTabLive) navTabLive.classList.toggle("active", target === "live");
+  if (navTabTranslation) navTabTranslation.classList.toggle("active", target === "translation");
+  if (navTabStudio) navTabStudio.classList.toggle("active", target === "studio");
 
-navTabTranslation.onclick = () => {
-  navTabTranslation.classList.add("active");
-  navTabLive.classList.remove("active");
-  tabContentTranslation.classList.remove("hidden");
-  tabContentLive.classList.add("hidden");
+  if (tabContentLive) tabContentLive.classList.toggle("hidden", target !== "live");
+  if (tabContentTranslation) tabContentTranslation.classList.toggle("hidden", target !== "translation");
+  if (tabContentStudio) tabContentStudio.classList.toggle("hidden", target !== "studio");
 
-  // Auto sync if first time opened
-  if (syncedTopics.length === 0) {
+  if (target === "live") {
+    syncMasteredWordsToLive();
+  } else if (target === "translation" && syncedTopics.length === 0) {
     syncVocabFromExcel();
   }
   refreshIcons();
-};
+}
+
+if (navTabLive) navTabLive.onclick = () => switchMainTab("live");
+if (navTabTranslation) navTabTranslation.onclick = () => switchMainTab("translation");
+if (navTabStudio) navTabStudio.onclick = () => switchMainTab("studio");
 
 // ─── TRANSLATION WORKSPACE: EXCEL SYNC & VOCABULARY SELECTION ───────────────
 btnSyncVocab.onclick = () => {
@@ -1577,14 +1578,13 @@ if (btnThemeToggle) btnThemeToggle.onclick = toggleTheme;
 const btnModalThemeToggle = document.getElementById("btnModalThemeToggle");
 if (btnModalThemeToggle) btnModalThemeToggle.onclick = toggleTheme;
 
-// ─── SETTINGS MODAL CONTROLLER ─────────────────────────────────────────────
+// ─── SETTINGS DROPDOWN POPOVER CONTROLLER ──────────────────────────────────
 const btnSettings = document.getElementById("btnSettings");
-const settingsModal = document.getElementById("settingsModal");
+const settingsDropdown = document.getElementById("settingsDropdown") || document.getElementById("settingsModal");
 const btnCloseSettingsModal = document.getElementById("btnCloseSettingsModal");
 
-function openSettingsModal() {
-  if (!settingsModal) return;
-  // Update Profile Tab Data
+function openSettingsDropdown() {
+  if (!settingsDropdown) return;
   const usernameDisplay = document.getElementById("settingsUsernameDisplay");
   const userIdDisplay = document.getElementById("settingsUserIdDisplay");
   const avatarChar = document.getElementById("settingsAvatarChar");
@@ -1592,34 +1592,66 @@ function openSettingsModal() {
 
   if (currentUser) {
     if (usernameDisplay) usernameDisplay.textContent = currentUser.username;
-    if (userIdDisplay) userIdDisplay.textContent = `#${currentUser.id}`;
+    if (userIdDisplay) userIdDisplay.textContent = #;
     if (avatarChar) avatarChar.textContent = currentUser.username.charAt(0).toUpperCase();
   } else {
     if (usernameDisplay) usernameDisplay.textContent = "Khách (Chưa đăng nhập)";
     if (userIdDisplay) userIdDisplay.textContent = "#GUEST";
     if (avatarChar) avatarChar.textContent = "G";
   }
-  if (masteredCount) masteredCount.textContent = `${selectedWordSet.size} từ`;
+  if (masteredCount) masteredCount.textContent = ${selectedWordSet.size} từ;
 
-  // Default to first tab
   switchSettingsTab("tabSettingsProfile");
-  settingsModal.classList.remove("hidden");
+  settingsDropdown.classList.remove("hidden");
   refreshIcons();
 }
 
-function closeSettingsModal() {
-  if (settingsModal) settingsModal.classList.add("hidden");
+function closeSettingsDropdown() {
+  if (settingsDropdown) settingsDropdown.classList.add("hidden");
 }
 
-if (btnSettings) btnSettings.onclick = openSettingsModal;
-if (btnCloseSettingsModal) btnCloseSettingsModal.onclick = closeSettingsModal;
+function toggleSettingsDropdown() {
+  if (!settingsDropdown) return;
+  if (settingsDropdown.classList.contains("hidden")) {
+    openSettingsDropdown();
+  } else {
+    closeSettingsDropdown();
+  }
+}
 
-if (settingsModal) {
-  settingsModal.onclick = (e) => {
-    if (e.target === settingsModal) closeSettingsModal();
+// Backward compatibility aliases
+const openSettingsModal = openSettingsDropdown;
+const closeSettingsModal = closeSettingsDropdown;
+
+if (btnSettings) {
+  btnSettings.onclick = (e) => {
+    e.stopPropagation();
+    toggleSettingsDropdown();
   };
 }
 
+if (btnCloseSettingsModal) {
+  btnCloseSettingsModal.onclick = (e) => {
+    e.stopPropagation();
+    closeSettingsDropdown();
+  };
+}
+
+// Click outside to close dropdown
+document.addEventListener("click", (e) => {
+  if (settingsDropdown && !settingsDropdown.classList.contains("hidden")) {
+    if (!settingsDropdown.contains(e.target) && !btnSettings.contains(e.target)) {
+      closeSettingsDropdown();
+    }
+  }
+});
+
+// Escape key to close
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && settingsDropdown && !settingsDropdown.classList.contains("hidden")) {
+    closeSettingsDropdown();
+  }
+});
 function switchSettingsTab(targetId) {
   const tabBtns = document.querySelectorAll(".settings-tab-btn");
   const tabPanes = document.querySelectorAll(".settings-tab-pane");
@@ -1738,4 +1770,311 @@ if (btnResetHistory) {
       notyf.error("Lỗi: " + err.message);
     }
   };
+}
+
+
+
+// ─── TAB 3: AI TRANSLATOR STUDIO CONTROLLER ─────────────────────────────────
+let studioSourceLang = "en";
+let studioTargetLang = "vi";
+let studioRecognition = null;
+let isStudioListening = false;
+
+const studioSourceText = document.getElementById("studioSourceText");
+const studioCharCount = document.getElementById("studioCharCount");
+const btnDoTranslate = document.getElementById("btnDoTranslate");
+const btnSwapStudioLang = document.getElementById("btnSwapStudioLang");
+const btnStudioClear = document.getElementById("btnStudioClear");
+const btnStudioMic = document.getElementById("btnStudioMic");
+const btnStudioSpeak = document.getElementById("btnStudioSpeak");
+const btnStudioCopy = document.getElementById("btnStudioCopy");
+const studioTargetOutput = document.getElementById("studioTargetOutput");
+const studioTargetPlaceholder = document.getElementById("studioTargetPlaceholder");
+const studioLoadingIndicator = document.getElementById("studioLoadingIndicator");
+const studioModelName = document.getElementById("studioModelName");
+const studioInsightsCard = document.getElementById("studioInsightsCard");
+const studioGrammarNotes = document.getElementById("studioGrammarNotes");
+const studioKeyWordsList = document.getElementById("studioKeyWordsList");
+const studioAltPhrasingsList = document.getElementById("studioAltPhrasingsList");
+const sourcePaneTitle = document.getElementById("sourcePaneTitle");
+const targetPaneTitle = document.getElementById("targetPaneTitle");
+const studioSourceFlag = document.getElementById("studioSourceFlag");
+const studioSourceTitle = document.getElementById("studioSourceTitle");
+const studioTargetFlag = document.getElementById("studioTargetFlag");
+const studioTargetTitle = document.getElementById("studioTargetTitle");
+
+// Character Counter
+if (studioSourceText && studioCharCount) {
+  studioSourceText.addEventListener("input", () => {
+    studioCharCount.textContent = studioSourceText.value.length;
+  });
+}
+
+// Clear Button
+if (btnStudioClear) {
+  btnStudioClear.onclick = () => {
+    if (studioSourceText) studioSourceText.value = "";
+    if (studioCharCount) studioCharCount.textContent = "0";
+    if (studioTargetOutput) {
+      studioTargetOutput.textContent = "";
+      studioTargetOutput.classList.add("hidden");
+    }
+    if (studioTargetPlaceholder) studioTargetPlaceholder.classList.remove("hidden");
+    if (studioInsightsCard) studioInsightsCard.classList.add("hidden");
+  };
+}
+
+// Swap Languages (EN <-> VI)
+if (btnSwapStudioLang) {
+  btnSwapStudioLang.onclick = () => {
+    const temp = studioSourceLang;
+    studioSourceLang = studioTargetLang;
+    studioTargetLang = temp;
+
+    // Update labels & flags
+    if (studioSourceLang === "en") {
+      if (studioSourceFlag) studioSourceFlag.textContent = "🇺🇸";
+      if (studioSourceTitle) studioSourceTitle.textContent = "Tiếng Anh (English)";
+      if (studioTargetFlag) studioTargetFlag.textContent = "🇻🇳";
+      if (studioTargetTitle) studioTargetTitle.textContent = "Tiếng Việt (Vietnamese)";
+      if (sourcePaneTitle) sourcePaneTitle.textContent = "Văn bản gốc (English)";
+      if (targetPaneTitle) targetPaneTitle.textContent = "Bản dịch AI (Tiếng Việt)";
+      if (studioSourceText) studioSourceText.placeholder = "Nhập văn bản tiếng Anh cần dịch (hoặc nói micro)...";
+    } else {
+      if (studioSourceFlag) studioSourceFlag.textContent = "🇻🇳";
+      if (studioSourceTitle) studioSourceTitle.textContent = "Tiếng Việt (Vietnamese)";
+      if (studioTargetFlag) studioTargetFlag.textContent = "🇺🇸";
+      if (studioTargetTitle) studioTargetTitle.textContent = "Tiếng Anh (English)";
+      if (sourcePaneTitle) sourcePaneTitle.textContent = "Văn bản gốc (Tiếng Việt)";
+      if (targetPaneTitle) targetPaneTitle.textContent = "Bản dịch AI (English)";
+      if (studioSourceText) studioSourceText.placeholder = "Nhập văn bản tiếng Việt cần dịch (hoặc nói micro)...";
+    }
+
+    // Swap text contents if target text already exists
+    if (studioTargetOutput && studioTargetOutput.textContent.trim()) {
+      const prevTarget = studioTargetOutput.textContent.trim();
+      studioSourceText.value = prevTarget;
+      studioCharCount.textContent = prevTarget.length;
+      studioTargetOutput.textContent = "";
+      studioTargetOutput.classList.add("hidden");
+      if (studioTargetPlaceholder) studioTargetPlaceholder.classList.remove("hidden");
+      if (studioInsightsCard) studioInsightsCard.classList.add("hidden");
+      // Trigger new translation in new direction
+      executeLiveTranslation();
+    }
+    refreshIcons();
+  };
+}
+
+// Execute Live Translation
+async function executeLiveTranslation() {
+  const text = studioSourceText ? studioSourceText.value.trim() : "";
+  if (!text) {
+    notyf.error("Vui lòng nhập hoặc nói văn bản cần dịch!");
+    return;
+  }
+
+  // UI loading state
+  if (btnDoTranslate) btnDoTranslate.disabled = true;
+  if (studioTargetPlaceholder) studioTargetPlaceholder.classList.add("hidden");
+  if (studioTargetOutput) studioTargetOutput.classList.add("hidden");
+  if (studioLoadingIndicator) studioLoadingIndicator.classList.remove("hidden");
+  if (studioInsightsCard) studioInsightsCard.classList.add("hidden");
+
+  try {
+    const res = await fetch("/api/translate/live", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(currentUser && currentUser.token ? { "Authorization": `Bearer ${currentUser.token}` } : {})
+      },
+      body: JSON.stringify({
+        text: text,
+        source_lang: studioSourceLang,
+        target_lang: studioTargetLang
+      })
+    });
+
+    const data = await res.json();
+    if (data.status === "error") {
+      notyf.error(data.message || "Lỗi dịch thuật từ AI.");
+      if (studioTargetPlaceholder) studioTargetPlaceholder.classList.remove("hidden");
+      return;
+    }
+
+    // Render translation
+    if (studioTargetOutput) {
+      studioTargetOutput.textContent = data.translation || "(Không có kết quả dịch)";
+      studioTargetOutput.classList.remove("hidden");
+    }
+
+    if (studioModelName) {
+      studioModelName.textContent = data.model_used || "Gemini 3.5 Live Translate";
+    }
+
+    // Render Grammar & Insights
+    if (data.grammar_notes || (data.key_words && data.key_words.length > 0) || (data.alternative_phrasings && data.alternative_phrasings.length > 0)) {
+      if (studioGrammarNotes) {
+        studioGrammarNotes.textContent = data.grammar_notes || "Cấu trúc câu tự nhiên, chuẩn ngữ cảnh bản xứ.";
+      }
+
+      // Key words
+      if (studioKeyWordsList) {
+        studioKeyWordsList.innerHTML = "";
+        const words = data.key_words || [];
+        if (words.length > 0) {
+          const kwBlock = document.getElementById("studioKeyWordsBlock");
+          if (kwBlock) kwBlock.classList.remove("hidden");
+          words.forEach(w => {
+            const card = document.createElement("div");
+            card.className = "studio-keyword-card";
+            card.innerHTML = `
+              <div class="keyword-top">
+                <span class="keyword-word">${escapeHtml(w.word || "")}</span>
+                ${w.pos ? `<span class="keyword-pos">${escapeHtml(w.pos)}</span>` : ""}
+              </div>
+              ${w.ipa ? `<span class="keyword-ipa">${escapeHtml(w.ipa)}</span>` : ""}
+              <div class="keyword-meaning">${escapeHtml(w.meaning || "")}</div>
+            `;
+            studioKeyWordsList.appendChild(card);
+          });
+        } else {
+          const kwBlock = document.getElementById("studioKeyWordsBlock");
+          if (kwBlock) kwBlock.classList.add("hidden");
+        }
+      }
+
+      // Alternative phrasings
+      if (studioAltPhrasingsList) {
+        studioAltPhrasingsList.innerHTML = "";
+        const alts = data.alternative_phrasings || [];
+        if (alts.length > 0) {
+          const altBlock = document.getElementById("studioAltPhrasingsBlock");
+          if (altBlock) altBlock.classList.remove("hidden");
+          alts.forEach(alt => {
+            const li = document.createElement("li");
+            li.className = "studio-alt-item";
+            li.innerHTML = `<i data-lucide="check" class="lucide-icon"></i> <span>${escapeHtml(alt)}</span>`;
+            studioAltPhrasingsList.appendChild(li);
+          });
+        } else {
+          const altBlock = document.getElementById("studioAltPhrasingsBlock");
+          if (altBlock) altBlock.classList.add("hidden");
+        }
+      }
+
+      if (studioInsightsCard) studioInsightsCard.classList.remove("hidden");
+    }
+
+    refreshIcons();
+  } catch (err) {
+    notyf.error("Lỗi kết nối khi gửi bản dịch: " + err.message);
+    if (studioTargetPlaceholder) studioTargetPlaceholder.classList.remove("hidden");
+  } finally {
+    if (studioLoadingIndicator) studioLoadingIndicator.classList.add("hidden");
+    if (btnDoTranslate) btnDoTranslate.disabled = false;
+  }
+}
+
+if (btnDoTranslate) {
+  btnDoTranslate.onclick = executeLiveTranslation;
+}
+
+// Copy to Clipboard
+if (btnStudioCopy) {
+  btnStudioCopy.onclick = () => {
+    const text = studioTargetOutput ? studioTargetOutput.textContent.trim() : "";
+    if (!text) {
+      notyf.error("Chưa có bản dịch để sao chép!");
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        notyf.success("Đã sao chép bản dịch vào bộ nhớ tạm!");
+      }).catch(() => {
+        notyf.error("Không thể tự động sao chép.");
+      });
+    } else {
+      notyf.error("Trình duyệt không hỗ trợ clipboard API.");
+    }
+  };
+}
+
+// TTS Text-To-Speech Playback
+if (btnStudioSpeak) {
+  btnStudioSpeak.onclick = () => {
+    const text = studioTargetOutput ? studioTargetOutput.textContent.trim() : "";
+    if (!text) {
+      notyf.error("Chưa có nội dung để đọc phát âm!");
+      return;
+    }
+    if (!window.speechSynthesis) {
+      notyf.error("Trình duyệt không hỗ trợ phát âm giọng nói (SpeechSynthesis)!");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = studioTargetLang === "vi" ? "vi-VN" : "en-US";
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+    notyf.success(`Đang đọc bản dịch (${studioTargetLang.toUpperCase()})...`);
+  };
+}
+
+// Voice STT Input (SpeechRecognition)
+if (btnStudioMic) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    studioRecognition = new SpeechRecognition();
+    studioRecognition.continuous = false;
+    studioRecognition.interimResults = false;
+
+    studioRecognition.onstart = () => {
+      isStudioListening = true;
+      btnStudioMic.classList.add("btn-recording-pulse");
+      btnStudioMic.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> <span>Đang nghe...</span>`;
+      refreshIcons();
+    };
+
+    studioRecognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript && studioSourceText) {
+        const currentVal = studioSourceText.value.trim();
+        studioSourceText.value = currentVal ? `${currentVal} ${transcript}` : transcript;
+        if (studioCharCount) studioCharCount.textContent = studioSourceText.value.length;
+        notyf.success("Đã nhận diện giọng nói!");
+      }
+    };
+
+    studioRecognition.onerror = (e) => {
+      console.warn("STT Error:", e.error);
+      if (e.error !== "no-speech") {
+        notyf.error("Lỗi nhận diện âm thanh: " + e.error);
+      }
+    };
+
+    studioRecognition.onend = () => {
+      isStudioListening = false;
+      btnStudioMic.classList.remove("btn-recording-pulse");
+      btnStudioMic.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> <span class="btn-label-mobile-hidden">Nói micro</span>`;
+      refreshIcons();
+    };
+
+    btnStudioMic.onclick = () => {
+      if (isStudioListening) {
+        studioRecognition.stop();
+      } else {
+        studioRecognition.lang = studioSourceLang === "en" ? "en-US" : "vi-VN";
+        try {
+          studioRecognition.start();
+        } catch (err) {
+          console.warn("Start STT failed:", err);
+        }
+      }
+    };
+  } else {
+    btnStudioMic.onclick = () => {
+      notyf.error("Trình duyệt không hỗ trợ SpeechRecognition. Vui lòng dùng Chrome hoặc Edge.");
+    };
+  }
 }

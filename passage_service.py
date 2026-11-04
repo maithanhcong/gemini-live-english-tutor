@@ -1,4 +1,4 @@
-"""
+﻿"""
 passage_service.py
 Quản lý đồng bộ từ vựng từ Excel / SQLite và sinh đoạn văn luyện dịch (Anh - Việt):
 - Tận dụng toàn diện cơ chế Failover xoay vòng 4 API Key.
@@ -559,4 +559,99 @@ async def evaluate_translation_async(english_passage: str, reference_vietnamese:
         "score": 8,
         "feedback": "Bản dịch đã chuyển tải tốt ý nghĩa chính của đoạn văn.",
         "suggested_improvement": reference_vietnamese
+    }
+
+
+
+async def translate_live_studio_async(text: str, source_lang: str = "en", target_lang: str = "vi") -> dict:
+    """
+    Phòng Dịch Thuật AI Song Ngữ (AI Translator Studio):
+    Dịch văn bản hai chiều Anh <-> Việt bằng các model chuyên biệt Gemini 3.5 Live Translate / Flash.
+    Đồng thời phân tích cấu trúc ngữ pháp, thành ngữ (idioms/collocations), và từ vựng cốt lõi.
+    Cơ chế: Round-Robin 4 API Key với failover tự động.
+    """
+    clean_text = text.strip() if text else ""
+    if not clean_text:
+        return {
+            "status": "success",
+            "translation": "",
+            "grammar_notes": "",
+            "key_words": [],
+            "alternative_phrasings": [],
+            "model_used": "none"
+        }
+
+    key_mgr = get_key_manager()
+    primary_key, primary_key_num = await key_mgr.get_next_key()
+    failover_chain = [(primary_key, primary_key_num)] + key_mgr.get_failover_chain(primary_key_num)
+
+    lang_direction = "English to Vietnamese" if source_lang == "en" else "Vietnamese to English"
+
+    prompt = (
+        f"You are a professional, highly nuanced AI translator and bilingual English-Vietnamese linguist.\n"
+        f"Translate the following text from {lang_direction}.\n"
+        f"Input text:\n\"\"\"{clean_text}\"\"\"\n\n"
+        f"Requirements:\n"
+        f"1. Provide a natural, contextually accurate, high-quality translation.\n"
+        f"2. Provide concise grammatical insights, explaining idioms, phrasal verbs, or cultural nuances used in Vietnamese.\n"
+        f"3. Extract 2-5 key vocabulary items or collocations with their phonetic pronunciation (IPA), part of speech, and Vietnamese definition.\n"
+        f"4. Provide 1-2 alternative natural phrasings.\n\n"
+        f"Return ONLY a valid JSON object with the following schema (no markdown formatting, no code fences):\n"
+        f"{{\n"
+        f"  \"translation\": \"Bản dịch hoàn chỉnh ở đây\",\n"
+        f"  \"grammar_notes\": \"Phân tích ngữ pháp, cấu trúc câu hoặc ngữ cảnh tự nhiên bằng tiếng Việt\",\n"
+        f"  \"key_words\": [\n"
+        f"    {{\"word\": \"word/collocation\", \"ipa\": \"/phonetic/\", \"pos\": \"noun/verb/adj\", \"meaning\": \"nghĩa tiếng Việt ngắn gọn\"}}\n"
+        f"  ],\n"
+        f"  \"alternative_phrasings\": [\n"
+        f"    \"Gợi ý cách diễn đạt thay thế 1\",\n"
+        f"    \"Gợi ý cách diễn đạt thay thế 2\"\n"
+        f"  ]\n"
+        f"}}"
+    )
+
+    async with httpx.AsyncClient(timeout=25.0) as client:
+        for key, key_num in failover_chain:
+            key_label = f"Key {key_num} (...{key[-6:]})"
+            for model_name in TRANSLATION_MODELS:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.25,
+                        "maxOutputTokens": 2048,
+                        "responseMimeType": "application/json"
+                    }
+                }
+                try:
+                    logger.info(f"[Live Translator Studio] Calling {model_name} via {key_label}...")
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        res_json = resp.json()
+                        raw_text = res_json["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        if raw_text.startswith("```"):
+                            lines = raw_text.splitlines()
+                            if lines[0].startswith("```"): lines = lines[1:]
+                            if lines and lines[-1].startswith("```"): lines = lines[:-1]
+                            raw_text = "\n".join(lines).strip()
+                        parsed = json.loads(raw_text)
+                        parsed["status"] = "success"
+                        parsed["model_used"] = f"Gemini 3.5 Live Translate ({model_name})"
+                        parsed["key_used"] = key_num
+                        logger.info(f"[Live Translator Studio] Translated successfully via {model_name} & {key_label}!")
+                        return parsed
+                    elif is_quota_error(resp.status_code, resp.text):
+                        logger.warning(f"[Live Translator Studio] Key {key_num} quota exceeded -> Next key in failover chain...")
+                        break
+                except Exception as ex:
+                    logger.warning(f"[Live Translator Studio] Error with {model_name} on {key_label}: {ex}")
+                    continue
+
+    return {
+        "status": "partial",
+        "translation": clean_text,
+        "grammar_notes": "Đã ghi nhận văn bản. Vui lòng thử lại sau giây lát khi dịch vụ AI ổn định.",
+        "key_words": [],
+        "alternative_phrasings": [],
+        "model_used": "offline-fallback"
     }
