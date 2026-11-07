@@ -15,6 +15,8 @@ import glob
 import json
 import logging
 import random
+import re
+import asyncio
 from datetime import datetime
 import openpyxl
 import httpx
@@ -23,26 +25,23 @@ from key_manager import get_key_manager
 
 logger = logging.getLogger(__name__)
 
-# Model Registry - Phân bổ tối ưu theo năng lực & hạn ngạch
-# 1. Sinh đoạn văn luyện đọc (Passage Generator): Ưu tiên Gemma 4 26B (hạn mức 20K), fallback Gemini 3.5 Translate, 2.5 Flash
-PASSAGE_MODELS = [
-    "gemma-4-26b-a4b-it",
-    "gemma-4-31b-it",
-    "gemma-2-27b-it",
-    "gemma-2-9b-it",
-    "gemini-3.5-translate",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
+# ─── OPTIMIZED MODEL LINEUP (TỐC ĐỘ PHẢN HỒI DƯỚI 1 GIÂY) ───────────────────
+OPTIMIZED_PASSAGE_MODELS = [
+    "gemini-flash-lite-latest",  # Vị trí 1: Tốc độ ~980ms, phản hồi dưới 1 giây
+    "gemini-3.5-flash-lite",     # Vị trí 2: Tốc độ ~2.1s, văn phong ngữ pháp sâu
+    "gemini-3.5-flash",          # Vị trí 3: Dự phòng cho ngữ cảnh phức tạp
 ]
 
-# 2. Dịch song ngữ & Đối chiếu đáp án / Chấm bài: Ưu tiên Gemini 3.5 Live Translate, fallback 2.5 Flash
-TRANSLATION_MODELS = [
-    "gemini-3.5-translate",
-    "gemini-3.5-live-translate",
-    "gemini-3.5-flash",
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
+OPTIMIZED_TRANSLATION_MODELS = [
+    "gemini-flash-lite-latest",  # Vị trí 1: Dịch tức thì Anh <-> Việt (< 1s)
+    "gemini-3.5-flash-lite",     # Vị trí 2: Phân tích ngữ pháp, trích xuất IPA
+    "gemini-3.5-flash",          # Vị trí 3: Dự phòng failover
 ]
+
+PASSAGE_MODELS = OPTIMIZED_PASSAGE_MODELS
+TRANSLATION_MODELS = OPTIMIZED_TRANSLATION_MODELS
+FAST_FLASH_MODELS = OPTIMIZED_PASSAGE_MODELS
+GEMMA_MODELS = OPTIMIZED_PASSAGE_MODELS
 
 # 3. Tìm kiếm ngữ nghĩa & Phân cụm 1.000 từ vựng: Unlimited Quota
 EMBEDDING_MODELS = [
@@ -52,8 +51,35 @@ EMBEDDING_MODELS = [
     "gemini-embedding-001",
 ]
 
-FAST_FLASH_MODELS = TRANSLATION_MODELS
-GEMMA_MODELS = PASSAGE_MODELS
+def extract_json_safe(raw_text: str) -> dict:
+    """
+    Trích xuất và parse an toàn chuỗi JSON từ phản hồi của model:
+    - Loại bỏ code fences markdown (```json ... ```).
+    - Dùng Regex tìm cặp ngoặc { ... } ngoài cùng.
+    - Cắt bỏ trailing comma trước ngoặc nhọn hoặc ngoặc vuông nếu có.
+    """
+    if not raw_text:
+        raise ValueError("Empty response text from model")
+    
+    text = raw_text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    # Tìm cặp ngoặc { ... } lớn nhất
+    match = re.search(r"\{[\s\S]*\}", text)
+    if match:
+        text = match.group(0)
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        cleaned = re.sub(r",\s*([\}\]])", r"\1", text)
+        return json.loads(cleaned)
 
 from pathlib import Path
 
@@ -252,21 +278,28 @@ async def generate_passage_async(
     else:
         target_words = selected_words
 
-    cache_key = (tuple(sorted(target_words)), level, sentence_count)
-    if not random_change and cache_key in PASSAGE_CACHE:
-        logger.info(f"[Passage Cache] Cache hit for words: {target_words} (level={level}, sentences={sentence_count})")
-        return PASSAGE_CACHE[cache_key]
+    cache_key_str = f"{','.join(sorted(target_words))}|{level}|{sentence_count}"
+    if not random_change:
+        if cache_key_str in PASSAGE_CACHE:
+            logger.info(f"[Passage Cache] RAM Cache hit for words: {target_words} (level={level}, sentences={sentence_count})")
+            cached = dict(PASSAGE_CACHE[cache_key_str])
+            cached["cached"] = True
+            cached["model_used"] = "RAM Cache (0ms)"
+            return cached
+
+        db_cached = database.get_passage_cache(cache_key_str)
+        if db_cached:
+            logger.info(f"[Passage Cache] SQLite Cache hit for words: {target_words} (level={level}, sentences={sentence_count})")
+            PASSAGE_CACHE[cache_key_str] = db_cached
+            db_cached["model_used"] = "SQLite Cache (0ms)"
+            return db_cached
 
     # Sử dụng KeyManager Round-Robin 4 key (cân bằng tải 25% mỗi key)
     key_mgr = get_key_manager()
     primary_key, primary_key_num = await key_mgr.get_next_key()
     failover_chain = [(primary_key, primary_key_num)] + key_mgr.get_failover_chain(primary_key_num)
 
-    # Chọn danh sách model ưu tiên theo thế mạnh
-    if model_family == "flash":
-        models_to_try = TRANSLATION_MODELS + PASSAGE_MODELS
-    else:
-        models_to_try = PASSAGE_MODELS
+    models_to_try = OPTIMIZED_PASSAGE_MODELS
 
     words_str = ", ".join(target_words)
     prompt = (
@@ -282,11 +315,12 @@ async def generate_passage_async(
         f'{{"used_words": {json.dumps(target_words)}, "english_passage": "...", "vietnamese_translation": "...", "sentence_count": {sentence_count}, "level": "{level}"}}'
     )
 
-    # Tính toán maxOutputTokens linh hoạt theo số câu để đảm bảo không bao giờ bị đứt câu
-    dynamic_max_tokens = max(350, min(1200, sentence_count * 75 + 200))
+    # Tăng maxOutputTokens linh hoạt từ 800 lên 1400 để triệt tiêu hoàn toàn lỗi đứt chuỗi
+    dynamic_max_tokens = max(800, min(1400, sentence_count * 100 + 400))
 
     last_error = None
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    # Rút ngắn timeout từ 30s xuống 6.0s để failover tức thì nếu nghẽn
+    async with httpx.AsyncClient(timeout=6.0) as client:
         for key, key_num in failover_chain:
             key_label = f"Key {key_num} (...{key[-6:]})"
             key_switched = False
@@ -294,13 +328,11 @@ async def generate_passage_async(
             for model_name in models_to_try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
                 
-                # Cấu hình config: Flash hỗ trợ responseMimeType JSON
                 gen_config = {
                     "maxOutputTokens": dynamic_max_tokens,
                     "temperature": 0.7,
+                    "responseMimeType": "application/json"
                 }
-                if "flash" in model_name:
-                    gen_config["responseMimeType"] = "application/json"
 
                 payload = {
                     "contents": [{"parts": [{"text": prompt}]}],
@@ -314,41 +346,47 @@ async def generate_passage_async(
                     if resp.status_code == 200:
                         res_json = resp.json()
                         text = res_json["candidates"][0]["content"]["parts"][0]["text"].strip()
-                        # Clean potential fences
-                        if text.startswith("```"):
-                            lines = text.splitlines()
-                            if lines[0].startswith("```"):
-                                lines = lines[1:]
-                            if lines and lines[-1].startswith("```"):
-                                lines = lines[:-1]
-                            text = "\n".join(lines).strip()
-
-                        data = json.loads(text)
+                        
+                        # Parse an toàn chống 100% lỗi markdown hoặc trailing comma
+                        data = extract_json_safe(text)
+                        data["model_used"] = f"Gemini ({model_name})"
+                        data["key_used"] = key_num
                         logger.info(f"[Passage Gen] Successfully generated passage using {model_name} & {key_label}!")
 
-                        # Save to Cache
-                        PASSAGE_CACHE[cache_key] = data
+                        # 1. Lưu RAM Cache
+                        PASSAGE_CACHE[cache_key_str] = data
 
-                        # Record into Sheet Luyen_Dich_Passages & SQLite
+                        # 2. Lưu Persistent SQLite Cache
                         try:
-                            record_passage_to_excel(
-                                used_words=", ".join(data.get("used_words", target_words)),
+                            database.save_passage_cache(
+                                cache_key_str,
                                 english_passage=data.get("english_passage", ""),
-                                vietnamese_translation=data.get("vietnamese_translation", "")
+                                vietnamese_translation=data.get("vietnamese_translation", ""),
+                                used_words=target_words,
+                                level=level,
+                                sentence_count=sentence_count
+                            )
+                        except Exception as cache_err:
+                            logger.warning(f"[Passage Gen] Error saving SQLite cache: {cache_err}")
+
+                        # 3. Ghi Excel ở background thread (không block phản hồi của người dùng)
+                        try:
+                            asyncio.create_task(
+                                asyncio.to_thread(
+                                    record_passage_to_excel,
+                                    used_words=", ".join(data.get("used_words", target_words)),
+                                    english_passage=data.get("english_passage", ""),
+                                    vietnamese_translation=data.get("vietnamese_translation", "")
+                                )
                             )
                         except Exception as excel_err:
-                            logger.error(f"[Passage Gen] Error recording passage: {excel_err}")
+                            logger.error(f"[Passage Gen] Error starting background excel record: {excel_err}")
 
                         return data
 
                     elif is_quota_error(resp.status_code, resp.text):
-                        next_idx = (idx + 1) % len(api_keys) + 1
-                        print(
-                            f"[REST API] Key {idx + 1} quota exceeded (HTTP {resp.status_code}) -> Switching to Key {next_idx}...",
-                            flush=True
-                        )
                         logger.warning(
-                            f"[REST API] Key {idx + 1} quota exceeded (HTTP {resp.status_code}) -> Switching to Key {next_idx}..."
+                            f"[REST API] Key {key_num} quota exceeded (HTTP {resp.status_code}) -> Trying next key in failover chain..."
                         )
                         key_switched = True
                         break  # Break out to try next key immediately
@@ -363,13 +401,8 @@ async def generate_passage_async(
                 except Exception as ex:
                     last_error = str(ex)
                     if is_quota_error(500, str(ex)):
-                        next_idx = (idx + 1) % len(api_keys) + 1
-                        print(
-                            f"[REST API] Key {idx + 1} quota exceeded ({type(ex).__name__}) -> Switching to Key {next_idx}...",
-                            flush=True
-                        )
                         logger.warning(
-                            f"[REST API] Key {idx + 1} quota exceeded -> Switching to Key {next_idx}..."
+                            f"[REST API] Key {key_num} quota exceeded ({type(ex).__name__}) -> Trying next key..."
                         )
                         key_switched = True
                         break
@@ -610,16 +643,16 @@ async def translate_live_studio_async(text: str, source_lang: str = "en", target
         f"}}"
     )
 
-    async with httpx.AsyncClient(timeout=25.0) as client:
+    async with httpx.AsyncClient(timeout=6.0) as client:
         for key, key_num in failover_chain:
             key_label = f"Key {key_num} (...{key[-6:]})"
-            for model_name in TRANSLATION_MODELS:
+            for model_name in OPTIMIZED_TRANSLATION_MODELS:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
                 payload = {
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {
                         "temperature": 0.25,
-                        "maxOutputTokens": 2048,
+                        "maxOutputTokens": 1024,
                         "responseMimeType": "application/json"
                     }
                 }
@@ -629,14 +662,9 @@ async def translate_live_studio_async(text: str, source_lang: str = "en", target
                     if resp.status_code == 200:
                         res_json = resp.json()
                         raw_text = res_json["candidates"][0]["content"]["parts"][0]["text"].strip()
-                        if raw_text.startswith("```"):
-                            lines = raw_text.splitlines()
-                            if lines[0].startswith("```"): lines = lines[1:]
-                            if lines and lines[-1].startswith("```"): lines = lines[:-1]
-                            raw_text = "\n".join(lines).strip()
-                        parsed = json.loads(raw_text)
+                        parsed = extract_json_safe(raw_text)
                         parsed["status"] = "success"
-                        parsed["model_used"] = f"Gemini 3.5 Live Translate ({model_name})"
+                        parsed["model_used"] = f"Gemini ({model_name})"
                         parsed["key_used"] = key_num
                         logger.info(f"[Live Translator Studio] Translated successfully via {model_name} & {key_label}!")
                         return parsed

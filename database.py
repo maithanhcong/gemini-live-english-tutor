@@ -21,7 +21,9 @@ logger = logging.getLogger(__name__)
 DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "study_progress.db"))
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=15.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -115,6 +117,19 @@ def init_db(excel_words=None):
         english_passage TEXT,
         vietnamese_translation TEXT,
         my_translation TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # 6. Bảng Passage Cache (Persistent AI Cache tăng tốc phản hồi)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS passage_cache (
+        cache_key TEXT PRIMARY KEY,
+        english_passage TEXT NOT NULL,
+        vietnamese_translation TEXT NOT NULL,
+        used_words TEXT,
+        level TEXT,
+        sentence_count INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
@@ -520,3 +535,48 @@ def sync_selection_to_excel(selected_words_set: set[str], excel_paths: list[str]
             logger.info(f"[Database Sync] Synchronized selection to Excel column I: {path}")
         except Exception as e:
             logger.error(f"[Database Sync] Failed to update Excel {path}: {e}")
+
+# ─── PASSAGE PERSISTENT CACHE (TỐI ƯU HÓA ĐỘ TRỄ 0MS) ────────────────────────
+def get_passage_cache(cache_key: str) -> dict | None:
+    """Truy xuất đoạn văn đã lưu trong SQLite persistent cache."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT english_passage, vietnamese_translation, used_words, level, sentence_count FROM passage_cache WHERE cache_key = ?",
+            (cache_key,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            used_words_list = [w.strip() for w in (row["used_words"] or "").split(",") if w.strip()]
+            return {
+                "english_passage": row["english_passage"],
+                "vietnamese_translation": row["vietnamese_translation"],
+                "used_words": used_words_list,
+                "level": row["level"],
+                "sentence_count": row["sentence_count"],
+                "cached": True,
+            }
+    except Exception as e:
+        logger.warning(f"[Cache] Error reading passage_cache: {e}")
+    return None
+
+def save_passage_cache(cache_key: str, english_passage: str, vietnamese_translation: str, used_words, level: str, sentence_count: int):
+    """Lưu đoạn văn sinh mới vào SQLite persistent cache."""
+    try:
+        words_str = ", ".join(used_words) if isinstance(used_words, (list, set, tuple)) else str(used_words or "")
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO passage_cache (cache_key, english_passage, vietnamese_translation, used_words, level, sentence_count)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (cache_key, english_passage, vietnamese_translation, words_str, level, sentence_count)
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.warning(f"[Cache] Error saving passage_cache: {e}")
+

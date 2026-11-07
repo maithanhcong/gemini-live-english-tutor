@@ -1141,6 +1141,7 @@ async function requestGeneratePassage(randomChange = false) {
   saveStatusMsg.textContent = "";
 
   const selectedList = Array.from(selectedWordSet);
+  const startTime = performance.now();
 
   try {
     const res = await fetch("/api/passage/generate", {
@@ -1154,10 +1155,11 @@ async function requestGeneratePassage(randomChange = false) {
       }),
     });
 
+    const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(1);
     const data = await res.json();
     if (data.status === "success" && data.data) {
       currentPassageData = data.data;
-      displayGeneratedPassage(currentPassageData);
+      displayGeneratedPassage(currentPassageData, elapsedSec);
       notyf.success("Đoạn văn AI đã sẵn sàng để luyện dịch!");
       refreshIcons();
     } else {
@@ -1179,7 +1181,7 @@ async function requestGeneratePassage(randomChange = false) {
   }
 }
 
-function displayGeneratedPassage(data) {
+function displayGeneratedPassage(data, elapsedSec) {
   if (!data) return;
   // Target pills
   if (passageUsedWords) passageUsedWords.innerHTML = "";
@@ -1208,6 +1210,19 @@ function displayGeneratedPassage(data) {
   metaBadge.className = "target-meta-pill";
   metaBadge.innerHTML = `<i data-lucide="target" class="lucide-icon"></i> ${lvlName} (${sCount} câu)`;
   passageUsedWords.appendChild(metaBadge);
+
+  // Latency Speed Badge
+  const speedBadge = document.getElementById("passageSpeedBadge");
+  if (speedBadge) {
+    if (elapsedSec) {
+      const modelLabel = data.cached ? "SQLite Cache" : (data.model_used || "Gemini Flash-Lite");
+      speedBadge.innerHTML = `<i data-lucide="zap" class="lucide-icon"></i> ⚡ ${elapsedSec}s • ${modelLabel}`;
+      speedBadge.classList.remove("hidden");
+    } else {
+      speedBadge.classList.add("hidden");
+    }
+  }
+
   refreshIcons();
 
   // English text
@@ -1943,6 +1958,8 @@ if (btnStudioClear) {
     }
     if (studioTargetPlaceholder) studioTargetPlaceholder.classList.remove("hidden");
     if (studioInsightsCard) studioInsightsCard.classList.add("hidden");
+    const studioSpeedBadge = document.getElementById("studioSpeedBadge");
+    if (studioSpeedBadge) studioSpeedBadge.classList.add("hidden");
   };
 }
 
@@ -1996,6 +2013,10 @@ async function executeLiveTranslation() {
     return;
   }
 
+  const startTime = performance.now();
+  const studioSpeedBadge = document.getElementById("studioSpeedBadge");
+  if (studioSpeedBadge) studioSpeedBadge.classList.add("hidden");
+
   // UI loading state
   if (btnDoTranslate) btnDoTranslate.disabled = true;
   if (studioTargetPlaceholder) studioTargetPlaceholder.classList.add("hidden");
@@ -2017,6 +2038,7 @@ async function executeLiveTranslation() {
       })
     });
 
+    const elapsedSec = ((performance.now() - startTime) / 1000).toFixed(1);
     const data = await res.json();
     if (data.status === "error") {
       notyf.error(data.message || "Lỗi dịch thuật từ AI.");
@@ -2031,7 +2053,12 @@ async function executeLiveTranslation() {
     }
 
     if (studioModelName) {
-      studioModelName.textContent = data.model_used || "Gemini 3.5 Live Translate";
+      studioModelName.textContent = data.model_used || "Gemini Flash-Lite";
+    }
+
+    if (studioSpeedBadge) {
+      studioSpeedBadge.innerHTML = `<i data-lucide="zap" class="lucide-icon"></i> ⚡ ${elapsedSec}s`;
+      studioSpeedBadge.classList.remove("hidden");
     }
 
     // Render Grammar & Insights
