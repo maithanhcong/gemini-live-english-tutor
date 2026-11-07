@@ -139,8 +139,10 @@ body {
 }
 
 /* Touch responsiveness optimization for iOS / Safari */
-button, a, input, select, textarea {
+button, .nav-tab, .btn, a, input, select, textarea, [role="button"] {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   touch-action: manipulation;
+  cursor: pointer;
 }
 
 /* Accessibility focus-visible state for all interactive controls */

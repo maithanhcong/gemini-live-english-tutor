@@ -1,34 +1,29 @@
 // --- Main Application Logic & Gemini Live Integration ---
 
-// Global Runtime Error Handler for Tablet / iPad Remote Diagnostics
-window.addEventListener("error", (event) => {
-  console.error("[App Runtime Error]:", event.message, "at", event.filename, "line:", event.lineno);
-});
-
-window.addEventListener("unhandledrejection", (event) => {
-  console.error("[Unhandled Promise Rejection]:", event.reason);
-});
-
-// Immediate Safe Lucide Icon Creation
-try {
-  if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
-    window.lucide.createIcons();
-  }
-} catch (e) {
-  console.debug("[Lucide Pre-init Error]:", e);
-}
-
-
-// 1. Lucide Icons SVG Refresh Utility
-function refreshIcons() {
-  try {
-    if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
-      window.lucide.createIcons();
+// Safe Lucide Icons Creation Wrapper (Resolves Race Condition on Safari/WebKit)
+function safeCreateIcons() {
+  if (typeof lucide !== "undefined" && lucide && typeof lucide.createIcons === "function") {
+    try {
+      lucide.createIcons();
+    } catch (err) {
+      console.warn("[Lucide] Render warning:", err);
     }
-  } catch (e) {
-    console.debug("[Lucide Icons] createIcons error:", e);
+  } else if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
+    try {
+      window.lucide.createIcons();
+    } catch (err) {
+      console.warn("[Lucide] Render warning:", err);
+    }
   }
 }
+
+// Global alias for compatibility
+const refreshIcons = safeCreateIcons;
+
+// Ensure icons render safely once window load completes
+window.addEventListener("load", () => {
+  safeCreateIcons();
+});
 
 // 1.1 Safe HTML Escaper Utility
 function escapeHtml(str) {

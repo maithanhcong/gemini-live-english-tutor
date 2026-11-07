@@ -5,16 +5,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gia Sư Tiếng Anh 1:1 & Luyện Dịch Song Ngữ - Gemini Live</title>
+
+  <!-- On-Screen Debugger for iPad/Tablet Visual Error Capture -->
+  <script>
+    window.addEventListener('error', function(e) {
+      var box = document.getElementById('debug-error-box');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'debug-error-box';
+        box.style = 'position:fixed;bottom:10px;left:10px;right:10px;background:#ef4444;color:#fff;padding:12px;border-radius:8px;font-size:12px;z-index:999999;word-break:break-all;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+        document.body ? document.body.appendChild(box) : document.documentElement.appendChild(box);
+      }
+      box.innerHTML = '<b>[JS Error]:</b> ' + e.message + '<br><small>' + (e.filename || '') + ':' + e.lineno + '</small>';
+    });
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
-  <!-- Local Lucide Icons SVG -->
-  <script src="/static/lucide.min.js?v=1.70"></script>
+  <!-- Lucide Icons UMD Bundle (Local with CDN fallback) -->
+  <script src="/static/lucide.min.js?v=3.7.0"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
   <!-- Local Notyf Toast Notification CSS -->
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.0" />
-  <link rel="stylesheet" href="/static/style.css?v=3.6" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.7.0" />
+  <link rel="stylesheet" href="/static/style.css?v=3.7.0" />
 </head>
 
 <body>
@@ -774,23 +790,12 @@
     </div>
   </div>
 
-  <!-- Immediate Inline Lucide Icons Trigger (Guarantees SVGs render even before main.js loads) -->
-  <script>
-    try {
-      if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
-        window.lucide.createIcons();
-      }
-    } catch (e) {
-      console.debug("Inline lucide init:", e);
-    }
-  </script>
-
   <!-- Third-party Vendors & Application Scripts (Locally Hosted) -->
-  <script src="/static/notyf.min.js?v=3.0"></script>
-  <script src="/static/siriwave.umd.min.js"></script>
-  <script src="/static/media-handler.js?v=3.6"></script>
-  <script src="/static/gemini-client.js?v=3.6"></script>
-  <script src="/static/main.js?v=3.6"></script>
+  <script src="/static/notyf.min.js?v=3.7.0"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.7.0"></script>
+  <script src="/static/media-handler.js?v=3.7.0"></script>
+  <script src="/static/gemini-client.js?v=3.7.0"></script>
+  <script src="/static/main.js?v=3.7.0"></script>
 </body>
 
 </html>
