@@ -1,4 +1,23 @@
-﻿// --- Main Application Logic & Gemini Live Integration ---
+// --- Main Application Logic & Gemini Live Integration ---
+
+// Global Runtime Error Handler for Tablet / iPad Remote Diagnostics
+window.addEventListener("error", (event) => {
+  console.error("[App Runtime Error]:", event.message, "at", event.filename, "line:", event.lineno);
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("[Unhandled Promise Rejection]:", event.reason);
+});
+
+// Immediate Safe Lucide Icon Creation
+try {
+  if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
+    window.lucide.createIcons();
+  }
+} catch (e) {
+  console.debug("[Lucide Pre-init Error]:", e);
+}
+
 
 // 1. Lucide Icons SVG Refresh Utility
 function refreshIcons() {
@@ -519,7 +538,8 @@ function appendMessage(type, text) {
 }
 
 // Connect Button Handler
-connectBtn.onclick = async () => {
+if (connectBtn) {
+  connectBtn.onclick = async () => {
   console.log("[Live] Requesting mic & audio setup...");
   statusDiv.textContent = "Connecting...";
   connectBtn.disabled = true;
@@ -556,33 +576,40 @@ connectBtn.onclick = async () => {
     connectBtn.disabled = false;
   }
 };
+}
 
 // Controls
-disconnectBtn.onclick = () => {
-  geminiClient.disconnect();
-};
+if (disconnectBtn) {
+  disconnectBtn.onclick = () => {
+    if (geminiClient) geminiClient.disconnect();
+  };
+}
 
-micBtn.onclick = async () => {
-  if (mediaHandler.isRecording) {
-    mediaHandler.stopAudio();
-    micBtn.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> Start Mic`;
-    refreshIcons();
-  } else {
-    try {
-      await mediaHandler.startAudio((data) => {
-        if (geminiClient.isConnected()) {
-          geminiClient.send(data);
-        }
-      });
-      micBtn.innerHTML = `<i data-lucide="mic-off" class="lucide-icon"></i> Stop Mic`;
+if (micBtn) {
+  micBtn.onclick = async () => {
+    if (!mediaHandler) return;
+    if (mediaHandler.isRecording) {
+      mediaHandler.stopAudio();
+      micBtn.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> Start Mic`;
       refreshIcons();
-    } catch (e) {
-      notyf.error("Không thể ghi âm microphone: " + e.message);
+    } else {
+      try {
+        await mediaHandler.startAudio((data) => {
+          if (geminiClient && geminiClient.isConnected()) {
+            geminiClient.send(data);
+          }
+        });
+        micBtn.innerHTML = `<i data-lucide="mic-off" class="lucide-icon"></i> Stop Mic`;
+        refreshIcons();
+      } catch (e) {
+        if (typeof notyf !== "undefined") notyf.error("Không thể ghi âm microphone: " + e.message);
+      }
     }
-  }
-};
+  };
+}
 
-cameraBtn.onclick = async () => {
+if (cameraBtn) {
+  cameraBtn.onclick = async () => {
   if (cameraBtn.textContent.includes("Stop Camera")) {
     mediaHandler.stopVideo(videoPreview);
     cameraBtn.innerHTML = `<i data-lucide="video" class="lucide-icon"></i> Start Camera`;
@@ -611,7 +638,10 @@ cameraBtn.onclick = async () => {
   }
 };
 
-screenBtn.onclick = async () => {
+}
+
+if (screenBtn) {
+  screenBtn.onclick = async () => {
   if (screenBtn.textContent.includes("Stop Sharing")) {
     mediaHandler.stopVideo(videoPreview);
     screenBtn.innerHTML = `<i data-lucide="monitor" class="lucide-icon"></i> Share Screen`;
@@ -648,10 +678,14 @@ screenBtn.onclick = async () => {
   }
 };
 
-sendBtn.onclick = sendText;
-textInput.onkeypress = (e) => {
-  if (e.key === "Enter") sendText();
-};
+}
+
+if (sendBtn) sendBtn.onclick = sendText;
+if (textInput) {
+  textInput.onkeypress = (e) => {
+    if (e.key === "Enter") sendText();
+  };
+}
 
 function sendText() {
   const text = textInput.value.trim();
@@ -686,9 +720,11 @@ function showSessionEnd() {
   mediaHandler.stopVideo(videoPreview);
 }
 
-restartBtn.onclick = () => {
-  resetUI();
-};
+if (restartBtn) {
+  restartBtn.onclick = () => {
+    resetUI();
+  };
+}
 
 // ─── TAB SWITCHING LOGIC (3 TABS: LIVE, TRANSLATION, STUDIO) ────────────────
 const navTabStudio = document.getElementById("navTabStudio");
@@ -996,15 +1032,15 @@ function renderTopics() {
 }
 
 function updateSelectedCount() {
-  const count = selectedWordSet.size;
-  statSelectedCount.textContent = count;
+  const count = selectedWordSet ? selectedWordSet.size : 0;
+  if (statSelectedCount) statSelectedCount.textContent = count;
   if (mobileSelectedCountHighlight) {
     mobileSelectedCountHighlight.textContent = `Đang chọn: ${count} từ`;
   }
   if (sheetCountTag) {
     sheetCountTag.textContent = `${count} từ đã chọn`;
   }
-  btnGeneratePassage.disabled = count === 0;
+  if (btnGeneratePassage) btnGeneratePassage.disabled = count === 0;
   if (btnRandomToolbar) btnRandomToolbar.disabled = count === 0;
   if (btnDoneMobileVocab) btnDoneMobileVocab.disabled = count === 0;
   // Cụm nút trên Mobile luôn giữ màu sắc nổi bật, sẵn sàng bấm (bấm khi 0 từ sẽ tự động chọn từ)
@@ -1132,8 +1168,9 @@ async function requestGeneratePassage(randomChange = false) {
 }
 
 function displayGeneratedPassage(data) {
+  if (!data) return;
   // Target pills
-  passageUsedWords.innerHTML = "";
+  if (passageUsedWords) passageUsedWords.innerHTML = "";
   const words = data.used_words || [];
   words.forEach((w) => {
     const pill = document.createElement("span");
@@ -1162,14 +1199,13 @@ function displayGeneratedPassage(data) {
   refreshIcons();
 
   // English text
-  passageEnglishText.textContent = data.english_passage || "";
+  if (passageEnglishText) passageEnglishText.textContent = data.english_passage || "";
 
-  // Reset practice input & hide comparison card (bản dịch đáp án hoàn toàn ẩn lúc này)
-  txtUserTranslation.value = "";
-  saveStatusMsg.textContent = "";
+  // Reset practice input & hide comparison card
+  if (txtUserTranslation) txtUserTranslation.value = "";
+  if (saveStatusMsg) saveStatusMsg.textContent = "";
   if (passageComparisonCard) passageComparisonCard.classList.add("hidden");
-
-  passageCard.classList.remove("hidden");
+  if (passageCard) passageCard.classList.remove("hidden");
 }
 
 // Speak English Passage aloud using browser SpeechSynthesis
@@ -1554,6 +1590,16 @@ window.addEventListener("resize", () => {
 
 // ─── INITIAL APP STARTUP & RESILIENT DOM INIT ───────────────────────────────
 function initApplication() {
+  // 1. Render all static icons immediately
+  try {
+    if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
+      window.lucide.createIcons();
+    }
+  } catch (err) {
+    console.warn("[Init] Early Lucide render error:", err);
+  }
+
+  // 2. Initialize Theme
   try {
     initTheme();
   } catch (err) {
