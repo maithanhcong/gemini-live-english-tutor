@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gia Sư Tiếng Anh 1:1 & Luyện Dịch Song Ngữ - Gemini Live</title>
 
-  <!-- On-Screen Debugger for iPad/Tablet Visual Error Capture -->
+  <!-- Upgraded On-Screen Debugger for iPad/Safari Detailed Error Trace -->
   <script>
-    window.addEventListener('error', function(e) {
+    window.onerror = function(msg, url, line, col, err) {
       var box = document.getElementById('debug-error-box');
       if (!box) {
         box = document.createElement('div');
@@ -16,8 +16,8 @@
         box.style = 'position:fixed;bottom:10px;left:10px;right:10px;background:#ef4444;color:#fff;padding:12px;border-radius:8px;font-size:12px;z-index:999999;word-break:break-all;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
         document.body ? document.body.appendChild(box) : document.documentElement.appendChild(box);
       }
-      box.innerHTML = '<b>[JS Error]:</b> ' + e.message + '<br><small>' + (e.filename || '') + ':' + e.lineno + '</small>';
-    });
+      box.innerHTML = '<b>[JS Error]:</b> ' + msg + '<br><small>' + (url || '') + ':' + line + ':' + col + '</small>' + (err && err.stack ? '<br><pre style="font-size:10px;margin-top:4px;white-space:pre-wrap;">' + err.stack.slice(0, 300) + '</pre>' : '');
+    };
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,12 +25,9 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
-  <!-- Lucide Icons UMD Bundle (Local with CDN fallback) -->
-  <script src="/static/lucide.min.js?v=3.7.0"></script>
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js" defer></script>
-  <!-- Local Notyf Toast Notification CSS -->
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.7.0" />
-  <link rel="stylesheet" href="/static/style.css?v=3.7.0" />
+  <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
+  <link rel="stylesheet" href="/static/style.css?v=3.8.0" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.8.0" />
 </head>
 
 <body>
@@ -790,12 +787,13 @@
     </div>
   </div>
 
-  <!-- Third-party Vendors & Application Scripts (Locally Hosted) -->
-  <script src="/static/notyf.min.js?v=3.7.0"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.7.0"></script>
-  <script src="/static/media-handler.js?v=3.7.0"></script>
-  <script src="/static/gemini-client.js?v=3.7.0"></script>
-  <script src="/static/main.js?v=3.7.0"></script>
+  <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
+  <script src="/static/lucide.min.js?v=3.8.0"></script>
+  <script src="/static/notyf.min.js?v=3.8.0"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.8.0"></script>
+  <script src="/static/media-handler.js?v=3.8.0"></script>
+  <script src="/static/gemini-client.js?v=3.8.0"></script>
+  <script src="/static/main.js?v=3.8.0"></script>
 </body>
 
 </html>

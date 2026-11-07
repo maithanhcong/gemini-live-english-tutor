@@ -2,18 +2,35 @@
 
 // Safe Lucide Icons Creation Wrapper (Resolves Race Condition on Safari/WebKit)
 function safeCreateIcons() {
-  if (typeof lucide !== "undefined" && lucide && typeof lucide.createIcons === "function") {
-    try {
-      lucide.createIcons();
-    } catch (err) {
-      console.warn("[Lucide] Render warning:", err);
-    }
-  } else if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
+  if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
     try {
       window.lucide.createIcons();
+      return true;
     } catch (err) {
       console.warn("[Lucide] Render warning:", err);
+      return false;
     }
+  } else if (typeof lucide !== "undefined" && lucide && typeof lucide.createIcons === "function") {
+    try {
+      lucide.createIcons();
+      return true;
+    } catch (err) {
+      console.warn("[Lucide] Render warning:", err);
+      return false;
+    }
+  } else {
+    // Retry shortly if the script was still parsing on WebKit/Safari
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
+        try { window.lucide.createIcons(); } catch (e) {}
+      }
+    }, 100);
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.lucide && typeof window.lucide.createIcons === "function") {
+        try { window.lucide.createIcons(); } catch (e) {}
+      }
+    }, 400);
+    return false;
   }
 }
 
@@ -1741,7 +1758,7 @@ if (btnCloseSettingsModal) {
 // Click outside to close dropdown
 document.addEventListener("click", (e) => {
   if (settingsDropdown && !settingsDropdown.classList.contains("hidden")) {
-    if (!settingsDropdown.contains(e.target) && !btnSettings.contains(e.target)) {
+    if (!settingsDropdown.contains(e.target) && (!btnSettings || !btnSettings.contains(e.target))) {
       closeSettingsDropdown();
     }
   }
