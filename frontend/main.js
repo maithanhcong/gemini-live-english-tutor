@@ -491,7 +491,7 @@ const geminiClient = new GeminiClient({
     if (isSessionActive) {
       showSessionEnd();
     } else {
-      notyf.error("Không thể kết nối đến máy chủ đàm thoại Gemini Live.");
+      notyf.error("Không thể kết nối đến máy chủ đàm thoại AuraSpeak AI.");
       resetUI();
     }
     isSessionActive = false;
@@ -1135,7 +1135,7 @@ async function requestGeneratePassage(randomChange = false) {
       elementary: "Căn bản (A1)",
       intermediate: "Trung cấp (B1)",
     };
-    loadingSub.textContent = `Đang lồng ghép từ vựng đã chọn vào đoạn văn ${selectedSentenceCount} câu (Mức độ: ${lvlNames[selectedDifficulty] || "Cơ bản"}).`;
+    loadingSub.textContent = `Đang lồng ghép từ vựng đã chọn vào bài đọc ${selectedSentenceCount} câu (Mức độ: ${lvlNames[selectedDifficulty] || "Cơ bản"}).`;
   }
   if (passageComparisonCard) passageComparisonCard.classList.add("hidden");
   saveStatusMsg.textContent = "";
@@ -1160,10 +1160,10 @@ async function requestGeneratePassage(randomChange = false) {
     if (data.status === "success" && data.data) {
       currentPassageData = data.data;
       displayGeneratedPassage(currentPassageData, elapsedSec);
-      notyf.success("Đoạn văn AI đã sẵn sàng để luyện dịch!");
+      notyf.success("Bài đọc AI đã sẵn sàng để luyện dịch!");
       refreshIcons();
     } else {
-      notyf.error("Lỗi khi tạo đoạn văn: " + (data.message || "Unknown error"));
+      notyf.error("Lỗi khi tạo bài đọc: " + (data.message || "Unknown error"));
       passageEmptyPlaceholder.classList.remove("hidden");
     }
   } catch (err) {
@@ -1215,7 +1215,7 @@ function displayGeneratedPassage(data, elapsedSec) {
   const speedBadge = document.getElementById("passageSpeedBadge");
   if (speedBadge) {
     if (elapsedSec) {
-      const modelLabel = data.cached ? "SQLite Cache" : (data.model_used || "Gemini Flash-Lite");
+      const modelLabel = data.cached ? "Tức thì" : "AI Engine";
       speedBadge.innerHTML = `<i data-lucide="zap" class="lucide-icon"></i> ⚡ ${elapsedSec}s • ${modelLabel}`;
       speedBadge.classList.remove("hidden");
     } else {
@@ -2053,11 +2053,11 @@ async function executeLiveTranslation() {
     }
 
     if (studioModelName) {
-      studioModelName.textContent = data.model_used || "Gemini Flash-Lite";
+      studioModelName.textContent = "AI Translator";
     }
 
     if (studioSpeedBadge) {
-      studioSpeedBadge.innerHTML = `<i data-lucide="zap" class="lucide-icon"></i> ⚡ ${elapsedSec}s`;
+      studioSpeedBadge.innerHTML = `<i data-lucide="zap" class="lucide-icon"></i> ⚡ ${elapsedSec}s • AI Engine`;
       studioSpeedBadge.classList.remove("hidden");
     }
 
