@@ -6,6 +6,7 @@ class MediaHandler {
     this.audioContext = null;
     this.mediaStream = null;
     this.audioWorkletNode = null;
+    this.scriptNode = null;
     this.videoStream = null;
     this.videoInterval = null;
     this.nextStartTime = 0;
@@ -17,11 +18,19 @@ class MediaHandler {
 
   async initializeAudio() {
     if (!this.audioContext) {
-      this.audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
-      await this.audioContext.audioWorklet.addModule(
-        "/static/pcm-processor.js"
-      );
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      try {
+        this.audioContext = new AudioCtx({ sampleRate: 16000 });
+      } catch (e) {
+        this.audioContext = new AudioCtx();
+      }
+      if (this.audioContext.audioWorklet && typeof this.audioContext.audioWorklet.addModule === "function") {
+        try {
+          await this.audioContext.audioWorklet.addModule("/static/pcm-processor.js?v=3.8.2");
+        } catch (e) {
+          console.warn("[Audio] Could not load audioWorklet module:", e);
+        }
+      }
     }
     if (this.audioContext.state === "suspended") {
       await this.audioContext.resume();
@@ -33,45 +42,88 @@ class MediaHandler {
 
     try {
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          channelCount: 1,
+          sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
       });
       const source = this.audioContext.createMediaStreamSource(
         this.mediaStream
       );
-      this.audioWorkletNode = new AudioWorkletNode(
-        this.audioContext,
-        "pcm-processor"
-      );
 
-      this.audioWorkletNode.port.onmessage = (event) => {
-        if (this.isRecording) {
-          const inputData = event.data;
+      if (this.audioContext.audioWorklet && typeof this.audioContext.audioWorklet.addModule === "function") {
+        // Nhánh 1: Trình duyệt hỗ trợ AudioWorklet hiện đại
+        this.audioWorkletNode = new AudioWorkletNode(
+          this.audioContext,
+          "pcm-processor"
+        );
+
+        this.audioWorkletNode.port.onmessage = (event) => {
+          if (this.isRecording) {
+            const inputData = event.data;
+            if (inputData && inputData.length > 0) {
+              let sum = 0;
+              for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
+              let rms = Math.sqrt(sum / inputData.length);
+              let amplitude = Math.min(Math.max(rms * 15, 0.15), 3.0);
+              if (window.siriWave) window.siriWave.setAmplitude(amplitude);
+              if (this.onAudioVolume) {
+                this.onAudioVolume(rms, "user");
+              }
+            }
+            const downsampled = this.downsampleBuffer(
+              event.data,
+              this.audioContext.sampleRate,
+              16000
+            );
+            const pcm16 = this.convertFloat32ToInt16(downsampled);
+            onAudioData(pcm16);
+          }
+        };
+
+        source.connect(this.audioWorkletNode);
+        // Mute local feedback
+        const muteGain = this.audioContext.createGain();
+        muteGain.gain.value = 0;
+        this.audioWorkletNode.connect(muteGain);
+        muteGain.connect(this.audioContext.destination);
+      } else {
+        // Nhánh 2: WebKit Fallback (ScriptProcessorNode tương thích 100% với Safari/iPadOS)
+        console.warn("[Audio] audioWorklet not available, falling back to ScriptProcessorNode");
+        const bufferSize = 4096;
+        this.scriptNode = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
+        this.scriptNode.onaudioprocess = (event) => {
+          if (!this.isRecording) return;
+          const inputData = event.inputBuffer.getChannelData(0);
           if (inputData && inputData.length > 0) {
             let sum = 0;
             for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
-            let rms = Math.sqrt(sum / inputData.length);
-            let amplitude = Math.min(Math.max(rms * 15, 0.15), 3.0);
-            if (window.siriWave) window.siriWave.setAmplitude(amplitude);
+            const rms = Math.sqrt(sum / inputData.length);
+            const amplitude = Math.min(Math.max(rms * 15, 0.15), 3.0);
+            if (window.siriWave) {
+              window.siriWave.setAmplitude(amplitude);
+            }
             if (this.onAudioVolume) {
               this.onAudioVolume(rms, "user");
             }
           }
           const downsampled = this.downsampleBuffer(
-            event.data,
+            inputData,
             this.audioContext.sampleRate,
             16000
           );
           const pcm16 = this.convertFloat32ToInt16(downsampled);
           onAudioData(pcm16);
-        }
-      };
+        };
 
-      source.connect(this.audioWorkletNode);
-      // Mute local feedback
-      const muteGain = this.audioContext.createGain();
-      muteGain.gain.value = 0;
-      this.audioWorkletNode.connect(muteGain);
-      muteGain.connect(this.audioContext.destination);
+        source.connect(this.scriptNode);
+        const muteGain = this.audioContext.createGain();
+        muteGain.gain.value = 0;
+        this.scriptNode.connect(muteGain);
+        muteGain.connect(this.audioContext.destination);
+      }
 
       this.isRecording = true;
     } catch (e) {
@@ -87,8 +139,12 @@ class MediaHandler {
       this.mediaStream = null;
     }
     if (this.audioWorkletNode) {
-      this.audioWorkletNode.disconnect();
+      try { this.audioWorkletNode.disconnect(); } catch (e) {}
       this.audioWorkletNode = null;
+    }
+    if (this.scriptNode) {
+      try { this.scriptNode.disconnect(); } catch (e) {}
+      this.scriptNode = null;
     }
   }
 
@@ -154,7 +210,14 @@ class MediaHandler {
   }
 
   playAudio(arrayBuffer) {
-    if (!this.audioContext) return;
+    if (!this.audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      try {
+        this.audioContext = new AudioCtx({ sampleRate: 16000 });
+      } catch (e) {
+        this.audioContext = new AudioCtx();
+      }
+    }
     if (this.audioContext.state === "suspended") {
       this.audioContext.resume();
     }
