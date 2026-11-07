@@ -717,13 +717,17 @@ if (navTabTranslation) navTabTranslation.onclick = () => switchMainTab("translat
 if (navTabStudio) navTabStudio.onclick = () => switchMainTab("studio");
 
 // ─── TRANSLATION WORKSPACE: EXCEL SYNC & VOCABULARY SELECTION ───────────────
-btnSyncVocab.onclick = () => {
-  syncVocabFromExcel();
-};
+if (btnSyncVocab) {
+  btnSyncVocab.onclick = () => {
+    syncVocabFromExcel();
+  };
+}
 
-chkLearnedOnly.onchange = () => {
-  syncVocabFromExcel();
-};
+if (chkLearnedOnly) {
+  chkLearnedOnly.onchange = () => {
+    syncVocabFromExcel();
+  };
+}
 
 async function syncVocabFromExcel() {
   btnSyncVocab.disabled = true;
@@ -1016,19 +1020,23 @@ function updateSelectedCount() {
 }
 
 // Quick Select / Deselect All Handlers
-linkSelectAll.onclick = () => {
-  syncedTopics.forEach((t) => {
-    t.words.forEach((w) => selectedWordSet.add(w.word));
-  });
-  renderTopics();
-  updateSelectedCount();
-};
+if (linkSelectAll) {
+  linkSelectAll.onclick = () => {
+    syncedTopics.forEach((t) => {
+      t.words.forEach((w) => selectedWordSet.add(w.word));
+    });
+    renderTopics();
+    updateSelectedCount();
+  };
+}
 
-linkDeselectAll.onclick = () => {
-  selectedWordSet.clear();
-  renderTopics();
-  updateSelectedCount();
-};
+if (linkDeselectAll) {
+  linkDeselectAll.onclick = () => {
+    selectedWordSet.clear();
+    renderTopics();
+    updateSelectedCount();
+  };
+}
 
 if (linkExpandAll) {
   linkExpandAll.onclick = () => {
@@ -1165,29 +1173,32 @@ function displayGeneratedPassage(data) {
 }
 
 // Speak English Passage aloud using browser SpeechSynthesis
-btnSpeakPassage.onclick = () => {
-  const text = passageEnglishText.textContent.trim();
-  if (!text || !window.speechSynthesis) return;
+if (btnSpeakPassage) {
+  btnSpeakPassage.onclick = () => {
+    const text = passageEnglishText ? passageEnglishText.textContent.trim() : "";
+    if (!text || !window.speechSynthesis) return;
 
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.95; // Slightly slower for clear learning
-  window.speechSynthesis.speak(utterance);
-};
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.95; // Slightly slower for clear learning
+    window.speechSynthesis.speak(utterance);
+  };
+}
 
 // ─── SUBMIT TRANSLATION & COMPARE (NỘP BÀI & ĐỐI CHIẾU ĐÁP ÁN) ───────────────
-btnSubmitTranslation.onclick = async () => {
-  if (!currentPassageData) return;
-  const myTranslation = txtUserTranslation.value.trim();
-  if (!myTranslation) {
-    notyf.error("Vui lòng nhập bản dịch của bạn vào ô thực hành trước khi nộp bài!");
-    txtUserTranslation.focus();
-    return;
-  }
+if (btnSubmitTranslation) {
+  btnSubmitTranslation.onclick = async () => {
+    if (!currentPassageData) return;
+    const myTranslation = txtUserTranslation ? txtUserTranslation.value.trim() : "";
+    if (!myTranslation) {
+      notyf.error("Vui lòng nhập bản dịch của bạn vào ô thực hành trước khi nộp bài!");
+      if (txtUserTranslation) txtUserTranslation.focus();
+      return;
+    }
 
-  btnSubmitTranslation.disabled = true;
-  btnSubmitTranslation.innerHTML = `<span class="btn-icon"><i data-lucide="loader-2" class="lucide-icon spin"></i></span> Đang chấm và đối chiếu...`;
+    btnSubmitTranslation.disabled = true;
+    btnSubmitTranslation.innerHTML = `<span class="btn-icon"><i data-lucide="loader-2" class="lucide-icon spin"></i></span> Đang chấm và đối chiếu...`;
   refreshIcons();
   saveStatusMsg.className = "save-status-msg";
   saveStatusMsg.textContent = "";
@@ -1258,9 +1269,10 @@ btnSubmitTranslation.onclick = async () => {
     refreshIcons();
   }
 };
+}
 
 // Event Listeners for Passage Generation
-btnGeneratePassage.onclick = () => requestGeneratePassage(false);
+if (btnGeneratePassage) btnGeneratePassage.onclick = () => requestGeneratePassage(false);
 if (btnRandomToolbar) btnRandomToolbar.onclick = () => requestGeneratePassage(true);
 if (btnRandomPassage) btnRandomPassage.onclick = () => requestGeneratePassage(true);
 if (btnNextRandomPassage) btnNextRandomPassage.onclick = () => requestGeneratePassage(true);
@@ -2069,60 +2081,73 @@ if (btnStudioSpeak) {
   };
 }
 
-// Voice STT Input (SpeechRecognition)
+// Voice STT Input (SpeechRecognition - Lazy & Safe WebKit Init)
 if (btnStudioMic) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (SpeechRecognition) {
-    studioRecognition = new SpeechRecognition();
-    studioRecognition.continuous = false;
-    studioRecognition.interimResults = false;
+  btnStudioMic.onclick = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      notyf.error("Trình duyệt không hỗ trợ nhận diện giọng nói (SpeechRecognition). Vui lòng dùng Chrome, Edge hoặc Safari mới nhất.");
+      return;
+    }
 
-    studioRecognition.onstart = () => {
-      isStudioListening = true;
-      btnStudioMic.classList.add("btn-recording-pulse");
-      btnStudioMic.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> <span>Đang nghe...</span>`;
-      refreshIcons();
-    };
-
-    studioRecognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript && studioSourceText) {
-        const currentVal = studioSourceText.value.trim();
-        studioSourceText.value = currentVal ? `${currentVal} ${transcript}` : transcript;
-        if (studioCharCount) studioCharCount.textContent = studioSourceText.value.length;
-        notyf.success("Đã nhận diện giọng nói!");
+    if (isStudioListening) {
+      if (studioRecognition) {
+        try {
+          studioRecognition.stop();
+        } catch (e) {
+          console.debug("STT stop error:", e);
+        }
       }
-    };
+      return;
+    }
 
-    studioRecognition.onerror = (e) => {
-      console.warn("STT Error:", e.error);
-      if (e.error !== "no-speech") {
-        notyf.error("Lỗi nhận diện âm thanh: " + e.error);
+    try {
+      if (!studioRecognition) {
+        studioRecognition = new SpeechRecognition();
+        studioRecognition.continuous = false;
+        studioRecognition.interimResults = false;
+
+        studioRecognition.onstart = () => {
+          isStudioListening = true;
+          btnStudioMic.classList.add("btn-recording-pulse");
+          btnStudioMic.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> <span>Đang nghe...</span>`;
+          refreshIcons();
+        };
+
+        studioRecognition.onresult = (event) => {
+          const transcript = event.results && event.results[0] && event.results[0][0] && event.results[0][0].transcript;
+          if (transcript && studioSourceText) {
+            const currentVal = studioSourceText.value.trim();
+            studioSourceText.value = currentVal ? `${currentVal} ${transcript}` : transcript;
+            if (studioCharCount) studioCharCount.textContent = studioSourceText.value.length;
+            notyf.success("Đã nhận diện giọng nói!");
+          }
+        };
+
+        studioRecognition.onerror = (e) => {
+          console.warn("STT Error:", e.error);
+          if (e.error !== "no-speech") {
+            notyf.error("Lỗi nhận diện âm thanh: " + (e.error || "Không rõ"));
+          }
+        };
+
+        studioRecognition.onend = () => {
+          isStudioListening = false;
+          btnStudioMic.classList.remove("btn-recording-pulse");
+          btnStudioMic.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> <span class="btn-label-mobile-hidden">Nói micro</span>`;
+          refreshIcons();
+        };
       }
-    };
 
-    studioRecognition.onend = () => {
+      studioRecognition.lang = studioSourceLang === "en" ? "en-US" : "vi-VN";
+      studioRecognition.start();
+    } catch (err) {
+      console.warn("Start STT failed:", err);
       isStudioListening = false;
       btnStudioMic.classList.remove("btn-recording-pulse");
       btnStudioMic.innerHTML = `<i data-lucide="mic" class="lucide-icon"></i> <span class="btn-label-mobile-hidden">Nói micro</span>`;
       refreshIcons();
-    };
-
-    btnStudioMic.onclick = () => {
-      if (isStudioListening) {
-        studioRecognition.stop();
-      } else {
-        studioRecognition.lang = studioSourceLang === "en" ? "en-US" : "vi-VN";
-        try {
-          studioRecognition.start();
-        } catch (err) {
-          console.warn("Start STT failed:", err);
-        }
-      }
-    };
-  } else {
-    btnStudioMic.onclick = () => {
-      notyf.error("Trình duyệt không hỗ trợ SpeechRecognition. Vui lòng dùng Chrome hoặc Edge.");
-    };
-  }
+      notyf.error("Không thể bật micro nhận diện giọng nói: " + (err.message || err));
+    }
+  };
 }
