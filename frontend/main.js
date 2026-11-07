@@ -1479,7 +1479,11 @@ if (authForm) {
         }
         setLoggedInUser(data.user, data.mastered_count || 0);
         closeAuthModal();
-        notyf.success(isRegisterMode ? "Đăng ký tài khoản thành công!" : `Đăng nhập thành công! Chào mừng ${data.user?.username || "học viên"}`);
+        const username = (data.user && data.user.username) ? data.user.username : "học viên";
+        const successMsg = isRegisterMode 
+          ? "Đăng ký tài khoản thành công!" 
+          : "Đăng nhập thành công! Chào mừng " + username;
+        notyf.success(successMsg);
         // Xóa sạch trạng thái cũ và tải lại chính xác trạng thái từ vựng riêng của người dùng mới này
         selectedWordSet.clear();
         await syncVocabFromExcel();
