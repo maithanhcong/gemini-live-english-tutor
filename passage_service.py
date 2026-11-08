@@ -231,12 +231,45 @@ LEVEL_ALIASES = {
 
 LEVEL_DESCRIPTIONS = DIFFICULTY_PROMPTS
 
+def sample_recency_weighted(words: list[str], k: int, user_id: int = None) -> list[str]:
+    """
+    Thuật toán chọn mẫu không hoàn lại có trọng số thời gian (A-RES / Efraimidis-Spirakis)
+    kết hợp suy giảm lũy thừa thứ hạng (Rank-Decay) và xác suất nền (Epsilon = 0.25).
+    - Sắp xếp từ được tích theo selected_at giảm dần: từ mới tích nhất có rank = 1, tiếp theo là 2, 3...
+    - Trọng số: W_i = 1 / (rank^0.65) + 0.25 (từ mới có xác suất cao nhất, từ cũ vẫn có ít nhất 25% xác suất cơ sở).
+    - Khóa A-RES: K_i = U_i ^ (1 / W_i) với U_i ~ Uniform(0, 1). Bốc K từ có K_i lớn nhất.
+    """
+    if not words:
+        return []
+    if len(words) <= k:
+        return list(words)
+
+    # 1. Lấy mốc thời gian selected_at từ DB
+    word_records = database.get_words_with_recency(words, user_id=user_id)
+    # Sắp xếp từ mới chọn nhất lên đầu (selected_at DESC)
+    sorted_by_recency = sorted(word_records, key=lambda x: x[1], reverse=True)
+
+    # 2. Gán trọng số suy giảm theo Rank: W_i = (1 / rank^0.65) + 0.25
+    weighted_items = []
+    for rank_idx, (word, _) in enumerate(sorted_by_recency, start=1):
+        weight = (1.0 / (rank_idx ** 0.65)) + 0.25
+        # 3. Thuật toán A-RES: Key K_i = U_i ^ (1 / W_i) với U_i ~ Uniform(0, 1)
+        u = random.random()
+        u = max(1e-9, min(0.999999999, u))
+        key = u ** (1.0 / weight)
+        weighted_items.append((word, key))
+
+    # 4. Sắp xếp theo Key giảm dần và bốc K từ độc nhất (không hoàn lại)
+    weighted_items.sort(key=lambda x: x[1], reverse=True)
+    return [item[0] for item in weighted_items[:k]]
+
 async def generate_passage_async(
     selected_words: list[str],
     random_change: bool = False,
     model_family: str = "flash",
     level: str = "a0",
-    sentence_count: int = 3
+    sentence_count: int = 3,
+    user_id: int = None
 ):
     """
     Async sinh đoạn văn luyện dịch từ danh sách từ đã chọn với tùy chọn 5 cấp độ chi tiết:
@@ -245,6 +278,7 @@ async def generate_passage_async(
     - a2: Sơ cấp (Giao tiếp hàng ngày)
     - b1_minus: Tiền trung cấp (Mở rộng ngữ cảnh)
     - b1: Trung cấp vững (Đa dạng cấu trúc)
+    Áp dụng thuật toán Recency-Weighted Sampling (A-RES) ưu tiên các từ vừa tích gần đây.
     """
     if not selected_words:
         raise ValueError("Danh sách từ vựng được chọn không được để trống.")
@@ -273,8 +307,8 @@ async def generate_passage_async(
         target_sample_size = random.randint(6, 12)
 
     sample_size = min(len(selected_words), target_sample_size)
-    if random_change or len(selected_words) > sample_size:
-        target_words = random.sample(selected_words, sample_size)
+    if len(selected_words) > sample_size:
+        target_words = sample_recency_weighted(selected_words, sample_size, user_id=user_id)
     else:
         target_words = selected_words
 
@@ -681,5 +715,100 @@ async def translate_live_studio_async(text: str, source_lang: str = "en", target
         "grammar_notes": "Đã ghi nhận văn bản. Vui lòng thử lại sau giây lát khi dịch vụ AI ổn định.",
         "key_words": [],
         "alternative_phrasings": [],
+        "model_used": "offline-fallback"
+    }
+
+async def generate_unchecked_quiz_async(candidate_words: list[str], count: int = 3) -> dict:
+    """
+    Sinh bài trắc nghiệm củng cố (Quiz) từ tập từ chưa học/chưa tích bằng gemini-flash-lite-latest.
+    Mục tiêu: Củng cố phản xạ trước khi học bài mới.
+    """
+    if not candidate_words:
+        return {"status": "error", "message": "Không có từ vựng mục tiêu để tạo quiz."}
+
+    count = max(1, min(len(candidate_words), count))
+    target_sample = candidate_words[:count]
+    words_str = ", ".join(target_sample)
+
+    prompt = (
+        f"Bạn là chuyên gia khảo thí ngôn ngữ tiếng Anh. Hãy tạo một bài trắc nghiệm củng cố (Quiz) gồm đúng {count} câu hỏi điền từ vào chỗ trống cho các từ vựng mục tiêu sau: {words_str}.\n\n"
+        f"Yêu cầu cho từng câu hỏi:\n"
+        f"1. target_word: Là một trong các từ mục tiêu được giao ({words_str}).\n"
+        f"2. ipa: Phiên âm quốc tế IPA chuẩn của target_word (ví dụ: /rɪˈlʌktənt/).\n"
+        f"3. question: Một câu tiếng Anh ngữ cảnh tự nhiên có đúng 1 chỗ trống dạng '________' mà target_word là đáp án đúng tự nhiên nhất.\n"
+        f"4. options: Mảng đúng 4 lựa chọn [A. <word1>, B. <word2>, C. <word3>, D. <word4>]. Đáp án đúng phải là 1 trong 4 lựa chọn đó, 3 lựa chọn còn lại là các từ tiếng Anh hợp lý cùng từ loại để gây nhiễu.\n"
+        f"5. correct_answer: Chuỗi đáp án đúng đầy đủ (ví dụ: 'A. reluctant' hoặc 'B. confident').\n"
+        f"6. explanation_vi: Giải thích ngữ nghĩa ngắn gọn bằng tiếng Việt (nghĩa của từ và tại sao phù hợp với ngữ cảnh câu).\n\n"
+        f"Trả về DUY NHẤT một chuỗi JSON hợp lệ theo cấu trúc sau (không kèm markdown, không code block fences):\n"
+        f"{{\n"
+        f"  \"quiz\": [\n"
+        f"    {{\n"
+        f"      \"id\": 1,\n"
+        f"      \"target_word\": \"reluctant\",\n"
+        f"      \"ipa\": \"/rɪˈlʌktənt/\",\n"
+        f"      \"question\": \"He was ________ to admit that he had made a critical mistake.\",\n"
+        f"      \"options\": [\"A. reluctant\", \"B. confident\", \"C. eager\", \"D. immediate\"],\n"
+        f"      \"correct_answer\": \"A. reluctant\",\n"
+        f"      \"explanation_vi\": \"'Reluctant' mang nghĩa lưỡng lự, miễn cưỡng; phù hợp ngữ cảnh câu.\"\n"
+        f"    }}\n"
+        f"  ]\n"
+        f"}}"
+    )
+
+    key_mgr = get_key_manager()
+    primary_key, primary_key_num = await key_mgr.get_next_key()
+    failover_chain = [(primary_key, primary_key_num)] + key_mgr.get_failover_chain(primary_key_num)
+
+    async with httpx.AsyncClient(timeout=6.0) as client:
+        for key, key_num in failover_chain:
+            key_label = f"Key {key_num} (...{key[-6:]})"
+            for model_name in OPTIMIZED_PASSAGE_MODELS:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.3,
+                        "maxOutputTokens": 1024,
+                        "responseMimeType": "application/json"
+                    }
+                }
+                try:
+                    logger.info(f"[Quiz Gen] Requesting {count} questions via {model_name} & {key_label}...")
+                    resp = await client.post(url, json=payload)
+                    if resp.status_code == 200:
+                        res_json = resp.json()
+                        raw_text = res_json["candidates"][0]["content"]["parts"][0]["text"].strip()
+                        parsed = extract_json_safe(raw_text)
+                        quiz_items = parsed.get("quiz", [])
+                        if quiz_items:
+                            return {
+                                "status": "success",
+                                "quiz": quiz_items,
+                                "model_used": f"Gemini ({model_name})",
+                                "key_used": key_num
+                            }
+                    elif is_quota_error(resp.status_code, resp.text):
+                        logger.warning(f"[Quiz Gen] Key {key_num} quota exceeded -> Next key in failover chain...")
+                        break
+                except Exception as ex:
+                    logger.warning(f"[Quiz Gen] Error with {model_name} on {key_label}: {ex}")
+                    continue
+
+    # Offline / Emergency Fallback Quiz
+    logger.warning("[Quiz Gen] Falling back to offline quiz template.")
+    fallback_quiz = []
+    for idx, w in enumerate(target_sample, start=1):
+        fallback_quiz.append({
+            "id": idx,
+            "target_word": w,
+            "ipa": "/.../",
+            "question": f"Choose the best word to complete: We must ________ our daily goals.",
+            "options": [f"A. {w}", "B. complete", "C. observe", "D. discuss"],
+            "correct_answer": f"A. {w}",
+            "explanation_vi": f"'{w}' là từ vựng mục tiêu bạn chưa tích chọn."
+        })
+    return {
+        "status": "success",
+        "quiz": fallback_quiz,
         "model_used": "offline-fallback"
     }

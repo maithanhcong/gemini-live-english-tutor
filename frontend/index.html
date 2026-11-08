@@ -26,8 +26,8 @@
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
-  <link rel="stylesheet" href="/static/style.css?v=3.9.1" />
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.1" />
+  <link rel="stylesheet" href="/static/style.css?v=3.9.2" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.2" />
 </head>
 
 <body>
@@ -60,32 +60,56 @@
           <div id="interaction-status" class="interaction-status hidden"></div>
         </div>
 
-        <!-- Header Quick Tools: Theme Toggle & Settings Modal -->
-        <div class="header-tools-group">
+        <!-- Header Quick Actions & Account Cluster -->
+        <div class="header-right-actions" id="headerRightActions">
           <button type="button" id="btnThemeToggle" class="btn btn-icon-round" title="Chuyển chế độ Sáng / Tối">
             <i data-lucide="moon" class="lucide-icon"></i>
           </button>
-          <div class="settings-anchor-wrapper" id="settingsAnchorWrapper">
-            <button type="button" id="btnSettings" class="btn btn-icon-round" title="Cài đặt & Quản lý tài khoản">
-              <i data-lucide="settings" class="lucide-icon"></i>
+
+          <!-- Trạng thái 1: Chưa đăng nhập (Guest) -->
+          <div id="userGuestBox" class="user-guest-cluster">
+            <button type="button" id="btnOpenAuthModal" class="btn btn-ghost-auth">
+              <span class="btn-icon"><i data-lucide="log-in" class="lucide-icon"></i></span> Đăng Nhập
+            </button>
+            <button type="button" id="btnOpenRegisterModal" class="btn btn-primary-gradient-auth">
+              <span class="btn-icon"><i data-lucide="user-plus" class="lucide-icon"></i></span> Đăng Ký
+            </button>
+          </div>
+
+          <!-- Trạng thái 2: Đã đăng nhập (User Profile Pill & Popover Dropdown) -->
+          <div id="userLoggedInBox" class="user-profile-anchor hidden">
+            <button type="button" id="btnSettings" class="user-profile-pill" title="Cài đặt & Tài khoản">
+              <span class="user-avatar-circle" id="userAvatarChar">U</span>
+              <div class="user-profile-meta">
+                <span class="user-name" id="headerUsername">Tài khoản</span>
+                <span class="user-mastered-badge" id="headerMasteredBadge"><i data-lucide="target" class="lucide-icon"></i> 0 từ đã học</span>
+              </div>
+              <i data-lucide="chevron-down" class="lucide-icon chevron-icon"></i>
             </button>
 
-            <!-- Dropdown Popover Settings -->
-            <div id="settingsDropdown" class="settings-dropdown hidden">
-              <div class="settings-dropdown-header">
-                <div class="settings-dropdown-title">
-                  <i data-lucide="settings" class="lucide-icon"></i>
-                  <span>Cài Đặt &amp; Quản Lý</span>
+            <!-- Dropdown Popover (Absolute, z-index 1200) -->
+            <div id="settingsDropdown" class="settings-dropdown user-popover-dropdown hidden">
+              <!-- Top Header: Tóm tắt thông tin tài khoản -->
+              <div class="user-popover-header">
+                <div class="popover-avatar-large">
+                  <span id="settingsAvatarChar">U</span>
+                </div>
+                <div class="popover-user-meta">
+                  <strong id="settingsUsernameDisplay">Khách (Chưa đăng nhập)</strong>
+                  <div class="popover-tags-row">
+                    <span class="popover-id-tag" id="settingsUserIdDisplay">#GUEST</span>
+                    <span class="popover-badge-tag" id="settingsMasteredCount">0 từ</span>
+                  </div>
                 </div>
                 <button type="button" class="btn-close-dropdown" id="btnCloseSettingsModal" title="Đóng">
                   <i data-lucide="x" class="lucide-icon"></i>
                 </button>
               </div>
 
-              <!-- Tabs bên trong Settings Popover -->
+              <!-- Tabs bên trong Popover -->
               <div class="settings-tabs-nav">
                 <button type="button" class="settings-tab-btn active" data-tab="tabSettingsProfile">
-                  <i data-lucide="user" class="lucide-icon"></i> Tài khoản
+                  <i data-lucide="user" class="lucide-icon"></i> Hồ sơ
                 </button>
                 <button type="button" class="settings-tab-btn" data-tab="tabSettingsPassword">
                   <i data-lucide="key-round" class="lucide-icon"></i> Mật khẩu
@@ -99,25 +123,14 @@
                 <!-- Tab 1: Profile Info -->
                 <div id="tabSettingsProfile" class="settings-tab-pane active">
                   <div class="profile-card">
-                    <div class="profile-avatar-large">
-                      <span id="settingsAvatarChar">U</span>
-                    </div>
                     <div class="profile-info-grid">
-                      <div class="profile-info-row">
-                        <span class="info-label">Tài khoản:</span>
-                        <strong id="settingsUsernameDisplay">Khách (Chưa đăng nhập)</strong>
-                      </div>
-                      <div class="profile-info-row">
-                        <span class="info-label">Mã học viên:</span>
-                        <span id="settingsUserIdDisplay">#GUEST</span>
-                      </div>
-                      <div class="profile-info-row">
-                        <span class="info-label">Đã thành thạo:</span>
-                        <span class="badge-count" id="settingsMasteredCount">0 từ</span>
-                      </div>
                       <div class="profile-info-row">
                         <span class="info-label">Giao diện:</span>
                         <span id="settingsCurrentThemeText">Sáng (Light Mode)</span>
+                      </div>
+                      <div class="profile-info-row">
+                        <span class="info-label">Trạng thái:</span>
+                        <span class="badge-status-online"><i data-lucide="shield-check" class="lucide-icon"></i> Đang hoạt động</span>
                       </div>
                     </div>
                   </div>
@@ -178,31 +191,15 @@
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- User Authentication Profile & Actions -->
-        <div class="header-user-section" id="headerUserSection">
-          <!-- Khi chưa đăng nhập (Guest) -->
-          <div id="userGuestBox" class="user-guest-box">
-            <button id="btnOpenAuthModal" class="btn btn-outline-auth">
-              <span class="btn-icon"><i data-lucide="user" class="lucide-icon"></i></span> Đăng Nhập
-            </button>
-          </div>
-          <!-- Khi đã đăng nhập (Logged In) -->
-          <div id="userLoggedInBox" class="user-logged-box hidden">
-            <div class="user-avatar-badge" title="Tài khoản hiện tại">
-              <span class="user-avatar-circle" id="userAvatarChar">U</span>
-              <div class="user-details">
-                <span class="user-name" id="headerUsername">Tài khoản</span>
-                <span class="user-mastered-badge" id="headerMasteredBadge"><i data-lucide="target" class="lucide-icon"></i> 0 từ đã học</span>
+              <!-- Phần đáy: Nút Đăng xuất màu đỏ tinh tế (text-rose-500) -->
+              <div class="popover-footer">
+                <button type="button" id="btnLogout" class="btn-dropdown-logout" title="Đăng Xuất">
+                  <i data-lucide="log-out" class="lucide-icon"></i>
+                  <span>Đăng Xuất Tài Khoản</span>
+                </button>
               </div>
             </div>
-            <button id="btnLogout" class="btn btn-logout-icon" title="Đăng Xuất">
-              <span class="btn-icon"><i data-lucide="log-out" class="lucide-icon"></i></span>
-              <span class="btn-text">Thoát</span>
-            </button>
           </div>
         </div>
       </div>
@@ -210,19 +207,84 @@
 
     <!-- TAB 1: Đàm thoại trực tiếp (AuraSpeak Live) -->
     <section id="tabContentLive" class="tab-page active">
-      <div class="auth-section" id="auth-section">
-        <div class="tutor-hero-card">
+      <!-- Bảng Điều Khiển Học Tập (Learning Dashboard) -->
+      <div class="auth-section dashboard-container" id="auth-section">
+        <!-- Hero Banner -->
+        <div class="dashboard-hero-card">
           <div class="badge-pill"><i data-lucide="sparkles" class="lucide-icon"></i> Đồng hành học tập thông minh</div>
-          <h2>Luyện Phản Xạ Tiếng Anh Trực Tiếp</h2>
-          <p>Hệ thống tích hợp phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị:</p>
+          <h2 class="dashboard-title">AuraSpeak — Luyện Nói Phản Xạ &amp; Dịch Thuật AI</h2>
+          <p class="dashboard-subtitle">Hệ thống tích hợp phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị.</p>
 
+          <!-- Thanh Tiến Độ Lộ Trình (Mastery Progress Bar) -->
+          <div class="dashboard-progress-card">
+            <div class="progress-card-header">
+              <div class="progress-title-group">
+                <i data-lucide="award" class="lucide-icon progress-icon"></i>
+                <div>
+                  <strong>Tiến Độ 1.000 Từ Cốt Lõi</strong>
+                  <span class="progress-sub">Tự động loại trừ các từ đã thuộc để tối ưu phản xạ</span>
+                </div>
+              </div>
+              <div class="progress-stats-badge">
+                <span id="dashboardProgressText">0 / 1.000 từ (0%)</span>
+              </div>
+            </div>
+            <div class="progress-track-wrapper">
+              <div class="progress-track">
+                <div id="dashboardProgressBar" class="progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cụm 3 Thẻ Hành Động Nhanh (Quick Action Cards) -->
+          <div class="quick-action-cards-grid">
+            <!-- Thẻ 1: Luyện Đàm Thoại AI -->
+            <div class="quick-action-card card-action-live">
+              <div class="action-card-top">
+                <div class="action-icon-pill icon-live"><i data-lucide="mic" class="lucide-icon"></i></div>
+                <span class="action-status-tag">Phản xạ Live</span>
+              </div>
+              <h3>🎙️ Đàm Thoại Trực Tiếp</h3>
+              <p>Trò chuyện giọng nói 2 chiều với gia sư AI, nhận diện âm thanh tức thì và chuẩn hóa phát âm tự nhiên.</p>
+              <button id="connectBtn" class="btn btn-primary btn-action-trigger">
+                <span class="btn-icon"><i data-lucide="phone-call" class="lucide-icon"></i></span> Bắt Đầu Buổi Học
+              </button>
+            </div>
+
+            <!-- Thẻ 2: Luyện Đọc Theo Từ -->
+            <div class="quick-action-card card-action-reading">
+              <div class="action-card-top">
+                <div class="action-icon-pill icon-reading"><i data-lucide="book-open" class="lucide-icon"></i></div>
+                <span class="action-status-tag">Ưu tiên từ mới</span>
+              </div>
+              <h3>📖 Luyện Đọc Theo Từ</h3>
+              <p>Tạo bài đọc tự nhiên lồng ghép các từ bạn vừa chọn với thuật toán ưu tiên từ mới tích, đối chiếu lời dịch.</p>
+              <button type="button" id="btnDashboardReadingAction" class="btn btn-secondary btn-action-trigger">
+                <span class="btn-icon"><i data-lucide="sparkles" class="lucide-icon"></i></span> Tạo Bài Đọc Ngay
+              </button>
+            </div>
+
+            <!-- Thẻ 3: Thử Thách Từ Chưa Thuộc (Micro-Quiz) -->
+            <div class="quick-action-card card-action-quiz">
+              <div class="action-card-top">
+                <div class="action-icon-pill icon-quiz"><i data-lucide="puzzle" class="lucide-icon"></i></div>
+                <span class="action-status-tag highlight">Quiz củng cố</span>
+              </div>
+              <h3>🧩 Thử Thách Từ Chưa Thuộc</h3>
+              <p>Trắc nghiệm phản xạ 3–5 từ vựng trong lộ trình mà bạn chưa tích chọn, kích hoạt trí nhớ tức thì.</p>
+              <button type="button" id="btnDashboardQuizAction" class="btn btn-accent-quiz btn-action-trigger">
+                <span class="btn-icon"><i data-lucide="zap" class="lucide-icon"></i></span> Thử Thách Quiz
+              </button>
+            </div>
+          </div>
+
+          <!-- Features Grid & Sync Card -->
           <div class="features-grid">
             <div class="feature-item">
               <span class="f-icon"><i data-lucide="book-open" class="lucide-icon"></i></span>
               <div>
                 <strong>Lộ trình 1.000 từ cốt lõi:</strong>
-                <span>Chia đều 100 ngày (10 từ/ngày), bao quát đầy đủ đại từ, trợ động từ, mạo từ và chủ đề thông
-                  dụng.</span>
+                <span>Chia đều 100 ngày (10 từ/ngày), bao quát đầy đủ đại từ, trợ động từ, mạo từ và chủ đề thông dụng.</span>
               </div>
             </div>
             <div class="feature-item">
@@ -245,15 +307,8 @@
             <span class="sync-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span>
             <div>
               <strong>Đồng bộ từ vựng với Tab Luyện Dịch:</strong>
-              <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, AuraSpeak AI chỉ
-                luyện các từ còn lại.</span>
+              <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, AuraSpeak AI chỉ luyện các từ còn lại.</span>
             </div>
-          </div>
-
-          <div class="hero-action">
-            <button id="connectBtn" class="btn btn-primary btn-large">
-              <span class="btn-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Bắt Đầu Buổi Học (Connect)
-            </button>
           </div>
         </div>
       </div>
@@ -803,13 +858,80 @@
     </div>
   </div>
 
+  <!-- Micro-Quiz Modal (Unchecked Words Challenge) -->
+  <div id="quizModal" class="auth-modal-overlay hidden">
+    <div class="quiz-modal-card">
+      <button id="btnCloseQuizModal" class="auth-close-btn" title="Đóng"><i data-lucide="x" class="lucide-icon"></i></button>
+      <div class="quiz-header">
+        <div class="badge-pill"><i data-lucide="puzzle" class="lucide-icon"></i> Thử Thách Từ Chưa Thuộc</div>
+        <h3 id="quizTitle">Micro-Quiz Củng Cố Phản Xạ</h3>
+        <div class="quiz-step-indicator" id="quizStepIndicator">Câu hỏi 1 / 3</div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="quizLoadingState" class="quiz-loading-state hidden">
+        <div class="spinner-small"></div>
+        <span>AI đang soạn câu hỏi trắc nghiệm từ vựng...</span>
+      </div>
+
+      <!-- Question Active Container -->
+      <div id="quizActiveContainer" class="quiz-active-container">
+        <div class="quiz-target-info">
+          <span class="quiz-target-badge"><i data-lucide="target" class="lucide-icon"></i> Từ mục tiêu: <strong id="quizTargetWord">...</strong></span>
+          <span class="quiz-ipa-badge" id="quizTargetIpa">/.../</span>
+        </div>
+
+        <div class="quiz-question-box">
+          <p id="quizQuestionText">He was ________ to admit that he had made a critical mistake.</p>
+        </div>
+
+        <!-- 4 Option Buttons Grid -->
+        <div class="quiz-options-grid" id="quizOptionsGrid"></div>
+
+        <!-- Explanation & Mark Mastered Card (Hidden until option clicked) -->
+        <div id="quizExplanationBox" class="quiz-explanation-box hidden">
+          <div class="quiz-explanation-header">
+            <span id="quizResultIcon"></span>
+            <strong id="quizResultTitle">Chính xác!</strong>
+          </div>
+          <p id="quizExplanationText">Giải thích ngữ cảnh câu và nghĩa của từ.</p>
+
+          <div class="quiz-explanation-actions">
+            <button type="button" id="btnQuizMarkMastered" class="btn btn-mark-mastered">
+              <i data-lucide="check-circle" class="lucide-icon"></i>
+              <span>Đã thuộc từ này &rarr; Tích ngay vào sổ</span>
+            </button>
+            <button type="button" id="btnQuizNext" class="btn btn-primary">
+              <span>Câu tiếp theo</span> <i data-lucide="arrow-right" class="lucide-icon"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Completed View (Hidden by default) -->
+      <div id="quizCompletedView" class="quiz-completed-view hidden">
+        <div class="quiz-complete-icon"><i data-lucide="award" class="lucide-icon"></i></div>
+        <h3>Hoàn Thành Thử Thách Quiz!</h3>
+        <p id="quizScoreText">Bạn đã trả lời đúng 3/3 câu hỏi từ vựng chưa thuộc.</p>
+        <div class="quiz-completed-actions">
+          <button type="button" id="btnQuizPlayAgain" class="btn btn-secondary">
+            <i data-lucide="refresh-cw" class="lucide-icon"></i> Làm Bộ Từ Khác
+          </button>
+          <button type="button" id="btnQuizDone" class="btn btn-primary">
+            <i data-lucide="check" class="lucide-icon"></i> Hoàn Tất
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
-  <script src="/static/lucide.min.js?v=3.9.1"></script>
-  <script src="/static/notyf.min.js?v=3.9.1"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.9.1"></script>
-  <script src="/static/media-handler.js?v=3.9.1"></script>
-  <script src="/static/gemini-client.js?v=3.9.1"></script>
-  <script src="/static/main.js?v=3.9.1"></script>
+  <script src="/static/lucide.min.js?v=3.9.2"></script>
+  <script src="/static/notyf.min.js?v=3.9.2"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.9.2"></script>
+  <script src="/static/media-handler.js?v=3.9.2"></script>
+  <script src="/static/gemini-client.js?v=3.9.2"></script>
+  <script src="/static/main.js?v=3.9.2"></script>
 </body>
 
 </html>

@@ -13,6 +13,7 @@ import sqlite3
 import logging
 import hashlib
 import secrets
+import time
 from datetime import datetime
 import openpyxl
 
@@ -74,12 +75,13 @@ def init_db(excel_words=None):
     );
     """)
 
-    # 3. Bảng User Vocab Progress (Độc lập cho từng user)
+    # 3. Bảng User Vocab Progress (Độc lập cho từng user, hỗ trợ Recency-Weighted Sampling)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS user_vocab_progress (
         user_id INTEGER NOT NULL,
         word TEXT NOT NULL,
         is_mastered INTEGER DEFAULT 0,
+        selected_at INTEGER DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, word),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -106,6 +108,7 @@ def init_db(excel_words=None):
         word TEXT PRIMARY KEY,
         topic TEXT,
         is_selected INTEGER DEFAULT 0,
+        selected_at INTEGER DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
@@ -132,6 +135,26 @@ def init_db(excel_words=None):
         sentence_count INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+    """)
+
+    # Migration: Bổ sung cột selected_at nếu chưa tồn tại
+    try:
+        cursor.execute("ALTER TABLE user_vocab_progress ADD COLUMN selected_at INTEGER DEFAULT 0;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE vocab_selection ADD COLUMN selected_at INTEGER DEFAULT 0;")
+    except sqlite3.OperationalError:
+        pass
+
+    # Index tăng tốc Recency-Weighted Sampling
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_user_vocab_recency 
+    ON user_vocab_progress(user_id, is_mastered, selected_at DESC);
+    """)
+    cursor.execute("""
+    CREATE INDEX IF NOT EXISTS idx_vocab_selection_recency 
+    ON vocab_selection(is_selected, selected_at DESC);
     """)
     conn.commit()
 
@@ -328,30 +351,34 @@ def get_user_all_selections(user_id: int) -> dict[str, bool]:
     return {r["word"]: bool(r["is_mastered"]) for r in rows}
 
 def get_user_selected_words(user_id: int) -> list[str]:
-    """Trả về danh sách từ vựng đang được tích chọn (is_mastered = 1) của riêng user_id."""
+    """Trả về danh sách từ vựng đang được tích chọn (is_mastered = 1) của riêng user_id, sắp xếp theo thứ tự chọn gần nhất."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT word FROM user_vocab_progress WHERE user_id = ? AND is_mastered = 1", (user_id,))
+    cursor.execute("SELECT word FROM user_vocab_progress WHERE user_id = ? AND is_mastered = 1 ORDER BY selected_at DESC, updated_at DESC", (user_id,))
     rows = cursor.fetchall()
     conn.close()
     return [r["word"] for r in rows]
 
 def update_user_vocab_selection(user_id: int, words: list[str], is_mastered: bool):
-    """Cập nhật trạng thái tích chọn cho một nhóm từ của user_id."""
+    """Cập nhật trạng thái tích chọn cho một nhóm từ của user_id kèm timestamp selected_at."""
     if not words:
         return
     conn = get_connection()
     cursor = conn.cursor()
     val = 1 if is_mastered else 0
+    now_epoch = int(time.time()) if is_mastered else 0
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     cursor.executemany(
         """
-        INSERT INTO user_vocab_progress (user_id, word, is_mastered, updated_at)
-        VALUES (?, ?, ?, ?)
-        ON CONFLICT(user_id, word) DO UPDATE SET is_mastered = excluded.is_mastered, updated_at = excluded.updated_at
+        INSERT INTO user_vocab_progress (user_id, word, is_mastered, selected_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(user_id, word) DO UPDATE SET 
+            is_mastered = excluded.is_mastered, 
+            selected_at = excluded.selected_at, 
+            updated_at = excluded.updated_at
         """,
-        [(user_id, w, val, now_str) for w in words]
+        [(user_id, w, val, now_epoch, now_str) for w in words]
     )
     conn.commit()
     conn.close()
@@ -360,20 +387,24 @@ def set_all_user_selections(user_id: int, selected_words: list[str]):
     """Đồng bộ toàn bộ danh sách từ được tích của user_id."""
     conn = get_connection()
     cursor = conn.cursor()
+    now_epoch = int(time.time())
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Đưa tất cả từ của user về 0
-    cursor.execute("UPDATE user_vocab_progress SET is_mastered = 0, updated_at = ? WHERE user_id = ?", (now_str, user_id))
+    cursor.execute("UPDATE user_vocab_progress SET is_mastered = 0, selected_at = 0, updated_at = ? WHERE user_id = ?", (now_str, user_id))
 
-    # Cập nhật các từ được chọn thành 1
+    # Cập nhật các từ được chọn thành 1 kèm selected_at
     if selected_words:
         cursor.executemany(
             """
-            INSERT INTO user_vocab_progress (user_id, word, is_mastered, updated_at)
-            VALUES (?, ?, 1, ?)
-            ON CONFLICT(user_id, word) DO UPDATE SET is_mastered = 1, updated_at = excluded.updated_at
+            INSERT INTO user_vocab_progress (user_id, word, is_mastered, selected_at, updated_at)
+            VALUES (?, ?, 1, ?, ?)
+            ON CONFLICT(user_id, word) DO UPDATE SET 
+                is_mastered = 1, 
+                selected_at = CASE WHEN user_vocab_progress.selected_at > 0 THEN user_vocab_progress.selected_at ELSE excluded.selected_at END,
+                updated_at = excluded.updated_at
             """,
-            [(user_id, w, now_str) for w in selected_words]
+            [(user_id, w, now_epoch, now_str) for w in selected_words]
         )
     conn.commit()
     conn.close()
@@ -428,10 +459,40 @@ def get_selected_words_list(user_id: int = None) -> list[str]:
         return get_user_selected_words(user_id)
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT word FROM vocab_selection WHERE is_selected = 1")
+    cursor.execute("SELECT word FROM vocab_selection WHERE is_selected = 1 ORDER BY selected_at DESC, updated_at DESC")
     rows = cursor.fetchall()
     conn.close()
     return [r["word"] for r in rows]
+
+def get_words_with_recency(words: list[str], user_id: int = None) -> list[tuple[str, int]]:
+    """
+    Truy vấn timestamp selected_at cho danh sách từ vựng.
+    Trả về [(word, selected_at), ...].
+    """
+    if not words:
+        return []
+    conn = get_connection()
+    cursor = conn.cursor()
+    placeholders = ",".join("?" for _ in words)
+    try:
+        if user_id:
+            cursor.execute(
+                f"SELECT word, COALESCE(selected_at, 0) as selected_at FROM user_vocab_progress WHERE user_id = ? AND word IN ({placeholders})",
+                [user_id] + words
+            )
+        else:
+            cursor.execute(
+                f"SELECT word, COALESCE(selected_at, 0) as selected_at FROM vocab_selection WHERE word IN ({placeholders})",
+                words
+            )
+        rows = cursor.fetchall()
+        ts_map = {r["word"]: int(r["selected_at"] or 0) for r in rows}
+    except Exception as e:
+        logger.warning(f"[Recency] Error fetching selected_at: {e}")
+        ts_map = {}
+    finally:
+        conn.close()
+    return [(w, ts_map.get(w, 0)) for w in words]
 
 def update_vocab_selection(words: list[str], is_selected: bool, user_id: int = None):
     if user_id:
@@ -441,14 +502,18 @@ def update_vocab_selection(words: list[str], is_selected: bool, user_id: int = N
     conn = get_connection()
     cursor = conn.cursor()
     val = 1 if is_selected else 0
+    now_epoch = int(time.time()) if is_selected else 0
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.executemany(
         """
-        INSERT INTO vocab_selection (word, is_selected, updated_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(word) DO UPDATE SET is_selected = excluded.is_selected, updated_at = excluded.updated_at
+        INSERT INTO vocab_selection (word, is_selected, selected_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(word) DO UPDATE SET 
+            is_selected = excluded.is_selected, 
+            selected_at = excluded.selected_at, 
+            updated_at = excluded.updated_at
         """,
-        [(w, val, now_str) for w in words]
+        [(w, val, now_epoch, now_str) for w in words]
     )
     conn.commit()
     conn.close()
@@ -458,16 +523,20 @@ def set_all_selections(selected_words: list[str], user_id: int = None):
         return set_all_user_selections(user_id, selected_words)
     conn = get_connection()
     cursor = conn.cursor()
+    now_epoch = int(time.time())
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    cursor.execute("UPDATE vocab_selection SET is_selected = 0, updated_at = ?", (now_str,))
+    cursor.execute("UPDATE vocab_selection SET is_selected = 0, selected_at = 0, updated_at = ?", (now_str,))
     if selected_words:
         cursor.executemany(
             """
-            INSERT INTO vocab_selection (word, is_selected, updated_at)
-            VALUES (?, 1, ?)
-            ON CONFLICT(word) DO UPDATE SET is_selected = 1, updated_at = excluded.updated_at
+            INSERT INTO vocab_selection (word, is_selected, selected_at, updated_at)
+            VALUES (?, 1, ?, ?)
+            ON CONFLICT(word) DO UPDATE SET 
+                is_selected = 1, 
+                selected_at = CASE WHEN vocab_selection.selected_at > 0 THEN vocab_selection.selected_at ELSE excluded.selected_at END,
+                updated_at = excluded.updated_at
             """,
-            [(w, now_str) for w in selected_words]
+            [(w, now_epoch, now_str) for w in selected_words]
         )
     conn.commit()
     conn.close()

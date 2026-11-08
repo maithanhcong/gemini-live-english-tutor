@@ -209,6 +209,34 @@ const userAvatarChar = document.getElementById("userAvatarChar");
 const headerUsername = document.getElementById("headerUsername");
 const headerMasteredBadge = document.getElementById("headerMasteredBadge");
 const btnLogout = document.getElementById("btnLogout");
+const btnOpenRegisterModal = document.getElementById("btnOpenRegisterModal");
+
+// Dashboard & Micro-Quiz Elements
+const dashboardProgressBar = document.getElementById("dashboardProgressBar");
+const dashboardProgressText = document.getElementById("dashboardProgressText");
+const btnDashboardReadingAction = document.getElementById("btnDashboardReadingAction");
+const btnDashboardQuizAction = document.getElementById("btnDashboardQuizAction");
+
+// Quiz Modal Elements
+const quizModal = document.getElementById("quizModal");
+const btnCloseQuizModal = document.getElementById("btnCloseQuizModal");
+const quizStepIndicator = document.getElementById("quizStepIndicator");
+const quizLoadingState = document.getElementById("quizLoadingState");
+const quizActiveContainer = document.getElementById("quizActiveContainer");
+const quizTargetWord = document.getElementById("quizTargetWord");
+const quizTargetIpa = document.getElementById("quizTargetIpa");
+const quizQuestionText = document.getElementById("quizQuestionText");
+const quizOptionsGrid = document.getElementById("quizOptionsGrid");
+const quizExplanationBox = document.getElementById("quizExplanationBox");
+const quizResultIcon = document.getElementById("quizResultIcon");
+const quizResultTitle = document.getElementById("quizResultTitle");
+const quizExplanationText = document.getElementById("quizExplanationText");
+const btnQuizMarkMastered = document.getElementById("btnQuizMarkMastered");
+const btnQuizNext = document.getElementById("btnQuizNext");
+const quizCompletedView = document.getElementById("quizCompletedView");
+const quizScoreText = document.getElementById("quizScoreText");
+const btnQuizPlayAgain = document.getElementById("btnQuizPlayAgain");
+const btnQuizDone = document.getElementById("btnQuizDone");
 
 // Mobile Bottom Sheet Elements
 const btnToggleMobileVocabDrawer = document.getElementById("btnToggleMobileVocabDrawer");
@@ -264,6 +292,7 @@ function setLoggedInUser(user, masteredCount = 0) {
     headerMasteredBadge.innerHTML = `<i data-lucide="target" class="lucide-icon"></i> ${masteredCount} từ đã học`;
     refreshIcons();
   }
+  updateSyncBanners();
 }
 
 function setLoggedOutUser() {
@@ -273,6 +302,7 @@ function setLoggedOutUser() {
   if (userLoggedInBox) userLoggedInBox.classList.add("hidden");
   if (headerUsername) headerUsername.textContent = "";
   if (headerMasteredBadge) headerMasteredBadge.textContent = "";
+  updateSyncBanners();
 }
 
 async function checkAuthStatus() {
@@ -334,17 +364,31 @@ function saveMasteredWordsToStorage() {
 }
 
 function updateSyncBanners() {
-  const count = selectedWordSet.size;
+  const count = selectedWordSet ? selectedWordSet.size : 0;
+  const pct = Math.min(100, Math.round((count / 1000) * 100));
+
+  if (dashboardProgressText) {
+    dashboardProgressText.textContent = `${count} / 1.000 từ (${pct}%)`;
+  }
+  if (dashboardProgressBar) {
+    dashboardProgressBar.style.width = `${pct}%`;
+  }
+
+  const settingsMasteredCount = document.getElementById("settingsMasteredCount");
+  if (settingsMasteredCount) {
+    settingsMasteredCount.textContent = `${count} từ`;
+  }
+
   if (liveSyncStatusText) {
     if (count > 0) {
-      liveSyncStatusText.textContent = `${count} từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, Gia sư AI chỉ luyện các từ còn lại.`;
+      liveSyncStatusText.textContent = `${count} từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, AuraSpeak AI chỉ luyện các từ còn lại.`;
     } else {
       liveSyncStatusText.textContent = `Hiện chưa có từ nào được tích chọn. Tích chọn từ ở tab Luyện Dịch để đánh dấu từ đã thành thạo.`;
     }
   }
   if (liveActiveSyncText) {
     if (count > 0) {
-      liveActiveSyncText.textContent = `Đang loại trừ ${count} từ đã thành thạo từ tab Luyện Dịch (Gia sư AI sẽ không hỏi lại)`;
+      liveActiveSyncText.textContent = `Đang loại trừ ${count} từ đã thành thạo từ tab Luyện Dịch (AuraSpeak AI sẽ không hỏi lại)`;
     } else {
       liveActiveSyncText.textContent = `Chưa có từ nào được loại trừ (Đang luyện toàn bộ lộ trình)`;
     }
@@ -1447,6 +1491,7 @@ function switchAuthTab(register) {
 }
 
 if (btnOpenAuthModal) btnOpenAuthModal.onclick = () => openAuthModal(false);
+if (btnOpenRegisterModal) btnOpenRegisterModal.onclick = () => openAuthModal(true);
 if (btnCloseAuthModal) btnCloseAuthModal.onclick = closeAuthModal;
 if (tabAuthLogin) tabAuthLogin.onclick = () => switchAuthTab(false);
 if (tabAuthRegister) tabAuthRegister.onclick = () => switchAuthTab(true);
@@ -2240,3 +2285,296 @@ if (btnStudioMic) {
     }
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DASHBOARD QUICK ACTIONS & MICRO-QUIZ LOGIC
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Dashboard Quick Action: Luyện Đọc Theo Từ
+if (btnDashboardReadingAction) {
+  btnDashboardReadingAction.onclick = function() {
+    switchMainTab("translation");
+    requestGeneratePassage(false);
+  };
+}
+
+// Micro-Quiz State Management
+let currentQuizData = null;
+let currentQuizIndex = 0;
+let quizScore = 0;
+let isQuizAnswered = false;
+
+function openQuizModal() {
+  if (!quizModal) return;
+  quizModal.classList.remove("hidden");
+  fetchAndStartQuiz();
+}
+
+function closeQuizModal() {
+  if (!quizModal) return;
+  quizModal.classList.add("hidden");
+  currentQuizData = null;
+  currentQuizIndex = 0;
+  quizScore = 0;
+  isQuizAnswered = false;
+}
+
+async function fetchAndStartQuiz() {
+  if (!quizModal) return;
+  if (quizLoadingState) quizLoadingState.classList.remove("hidden");
+  if (quizActiveContainer) quizActiveContainer.classList.add("hidden");
+  if (quizCompletedView) quizCompletedView.classList.add("hidden");
+  if (quizExplanationBox) quizExplanationBox.classList.add("hidden");
+
+  try {
+    const payload = {
+      count: 3,
+      selected_words: selectedWordSet ? Array.from(selectedWordSet) : []
+    };
+    const res = await fetch("/api/quiz/generate-unchecked", {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+
+    const data = await res.json();
+    if (data && data.status === "success" && Array.isArray(data.quiz) && data.quiz.length > 0) {
+      currentQuizData = data.quiz;
+      currentQuizIndex = 0;
+      quizScore = 0;
+      renderCurrentQuizQuestion();
+    } else {
+      const errMsg = (data && data.message) ? data.message : "Không thể tạo bộ câu hỏi quiz từ vựng.";
+      notyf.error(errMsg);
+      closeQuizModal();
+    }
+  } catch (err) {
+    console.error("Quiz generation error:", err);
+    notyf.error("Lỗi khi kết nối sinh bài quiz: " + (err.message || err));
+    closeQuizModal();
+  } finally {
+    if (quizLoadingState) quizLoadingState.classList.add("hidden");
+  }
+}
+
+function renderCurrentQuizQuestion() {
+  if (!currentQuizData || currentQuizIndex >= currentQuizData.length) {
+    showQuizCompletion();
+    return;
+  }
+
+  isQuizAnswered = false;
+  if (quizActiveContainer) quizActiveContainer.classList.remove("hidden");
+  if (quizCompletedView) quizCompletedView.classList.add("hidden");
+  if (quizExplanationBox) quizExplanationBox.classList.add("hidden");
+
+  const q = currentQuizData[currentQuizIndex];
+
+  if (quizStepIndicator) {
+    quizStepIndicator.textContent = "Câu hỏi " + (currentQuizIndex + 1) + " / " + currentQuizData.length;
+  }
+  if (quizTargetWord) {
+    quizTargetWord.textContent = q.target_word || "...";
+  }
+  if (quizTargetIpa) {
+    quizTargetIpa.textContent = q.ipa || "/.../";
+  }
+  if (quizQuestionText) {
+    quizQuestionText.textContent = q.question || "";
+  }
+
+  // Render 4 Options
+  if (quizOptionsGrid) {
+    quizOptionsGrid.innerHTML = "";
+    const options = Array.isArray(q.options) ? q.options : [];
+    options.forEach(function(optText) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-option-btn";
+      btn.textContent = optText;
+      btn.onclick = function() {
+        handleQuizOptionClick(optText, q, btn);
+      };
+      quizOptionsGrid.appendChild(btn);
+    });
+  }
+
+  // Reset "Đã thuộc từ này -> Tích ngay vào sổ" button
+  if (btnQuizMarkMastered) {
+    const targetWord = (q.target_word || "").toLowerCase().trim();
+    const alreadyMastered = selectedWordSet && selectedWordSet.has(targetWord);
+    btnQuizMarkMastered.disabled = alreadyMastered;
+    if (alreadyMastered) {
+      btnQuizMarkMastered.innerHTML = '<i data-lucide="check" class="lucide-icon"></i> <span>✓ Đã có trong sổ tay</span>';
+    } else {
+      btnQuizMarkMastered.innerHTML = '<i data-lucide="check-circle" class="lucide-icon"></i> <span>Đã thuộc từ này &rarr; Tích ngay vào sổ</span>';
+    }
+  }
+
+  // Update Next button label
+  if (btnQuizNext) {
+    const isLast = currentQuizIndex === currentQuizData.length - 1;
+    btnQuizNext.innerHTML = isLast 
+      ? '<span>Xem kết quả</span> <i data-lucide="award" class="lucide-icon"></i>' 
+      : '<span>Câu tiếp theo</span> <i data-lucide="arrow-right" class="lucide-icon"></i>';
+  }
+
+  refreshIcons();
+}
+
+function normalizeQuizAnswer(str) {
+  if (!str) return "";
+  return str.toString().trim().toLowerCase().replace(/^[a-d]\.\s*/i, "");
+}
+
+function handleQuizOptionClick(selectedText, questionObj, clickedBtn) {
+  if (isQuizAnswered) return;
+  isQuizAnswered = true;
+
+  const userClean = normalizeQuizAnswer(selectedText);
+  const correctClean = normalizeQuizAnswer(questionObj.correct_answer);
+  const targetClean = normalizeQuizAnswer(questionObj.target_word);
+
+  const isCorrect = (userClean === correctClean) || (userClean === targetClean);
+
+  // Disable all option buttons and highlight correct/wrong
+  if (quizOptionsGrid) {
+    const allBtns = quizOptionsGrid.querySelectorAll(".quiz-option-btn");
+    for (let i = 0; i < allBtns.length; i++) {
+      const btn = allBtns[i];
+      btn.disabled = true;
+      const btnClean = normalizeQuizAnswer(btn.textContent);
+      if (btnClean === correctClean || btnClean === targetClean) {
+        btn.classList.add("quiz-option-correct");
+      }
+    }
+  }
+
+  if (isCorrect) {
+    quizScore++;
+    clickedBtn.classList.add("quiz-option-correct");
+    if (quizResultIcon) {
+      quizResultIcon.innerHTML = '<i data-lucide="check-circle-2" class="lucide-icon text-emerald-500"></i>';
+    }
+    if (quizResultTitle) {
+      quizResultTitle.textContent = "Chính xác! Bạn ghi nhớ rất tốt!";
+      quizResultTitle.className = "quiz-result-title text-emerald-500";
+    }
+  } else {
+    clickedBtn.classList.add("quiz-option-wrong");
+    if (quizResultIcon) {
+      quizResultIcon.innerHTML = '<i data-lucide="alert-circle" class="lucide-icon text-rose-500"></i>';
+    }
+    if (quizResultTitle) {
+      quizResultTitle.textContent = "Chưa đúng! Đáp án chính xác là: " + (questionObj.correct_answer || "");
+      quizResultTitle.className = "quiz-result-title text-rose-500";
+    }
+  }
+
+  // Show explanation
+  if (quizExplanationText) {
+    quizExplanationText.textContent = questionObj.explanation_vi || "Hãy ghi nhớ từ vựng và ngữ cảnh này!";
+  }
+  if (quizExplanationBox) {
+    quizExplanationBox.classList.remove("hidden");
+  }
+
+  refreshIcons();
+}
+
+function showQuizCompletion() {
+  if (quizActiveContainer) quizActiveContainer.classList.add("hidden");
+  if (quizExplanationBox) quizExplanationBox.classList.add("hidden");
+  if (quizCompletedView) quizCompletedView.classList.remove("hidden");
+
+  const total = currentQuizData ? currentQuizData.length : 0;
+  if (quizScoreText) {
+    quizScoreText.textContent = "Bạn đã trả lời đúng " + quizScore + "/" + total + " câu hỏi từ vựng chưa thuộc.";
+  }
+  refreshIcons();
+}
+
+// Mark word as mastered directly from Quiz
+if (btnQuizMarkMastered) {
+  btnQuizMarkMastered.onclick = function() {
+    if (!currentQuizData || !currentQuizData[currentQuizIndex]) return;
+    const targetWord = (currentQuizData[currentQuizIndex].target_word || "").trim();
+    if (!targetWord) return;
+
+    // Add to local Set
+    selectedWordSet.add(targetWord);
+
+    // Sync across checkboxes in the UI if rendered
+    const wordRows = document.querySelectorAll(".word-row");
+    for (let i = 0; i < wordRows.length; i++) {
+      const row = wordRows[i];
+      const wName = row.querySelector(".word-name");
+      if (wName && wName.textContent.trim().toLowerCase() === targetWord.toLowerCase()) {
+        const chk = row.querySelector(".word-checkbox");
+        if (chk) chk.checked = true;
+        row.classList.add("selected");
+      }
+    }
+
+    // Update parent topics and counts
+    updateSelectedCount();
+    updateSyncBanners();
+
+    // Disable button with success label
+    btnQuizMarkMastered.disabled = true;
+    btnQuizMarkMastered.innerHTML = '<i data-lucide="check" class="lucide-icon"></i> <span>✓ Đã lưu vào sổ tay!</span>';
+    refreshIcons();
+
+    notyf.success('Đã thêm "' + targetWord + '" vào sổ tay từ vựng thành thạo!');
+  };
+}
+
+// Quiz Navigation Buttons
+if (btnQuizNext) {
+  btnQuizNext.onclick = function() {
+    currentQuizIndex++;
+    renderCurrentQuizQuestion();
+  };
+}
+
+if (btnQuizPlayAgain) {
+  btnQuizPlayAgain.onclick = function() {
+    fetchAndStartQuiz();
+  };
+}
+
+if (btnQuizDone) {
+  btnQuizDone.onclick = function() {
+    closeQuizModal();
+  };
+}
+
+if (btnDashboardQuizAction) {
+  btnDashboardQuizAction.onclick = function() {
+    openQuizModal();
+  };
+}
+
+if (btnCloseQuizModal) {
+  btnCloseQuizModal.onclick = function() {
+    closeQuizModal();
+  };
+}
+
+if (quizModal) {
+  quizModal.onclick = function(e) {
+    if (e.target === quizModal) {
+      closeQuizModal();
+    }
+  };
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape" && quizModal && !quizModal.classList.contains("hidden")) {
+    closeQuizModal();
+  }
+});

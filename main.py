@@ -1,8 +1,9 @@
-﻿import asyncio
+import asyncio
 import base64
 import json
 import logging
 import os
+import random
 
 from typing import List, Optional
 from pydantic import BaseModel
@@ -510,22 +511,67 @@ async def sync_vocab(request: Request, learned_only: bool = False):
         return {"status": "error", "message": str(e)}
 
 
+class GenerateQuizRequest(BaseModel):
+    count: Optional[int] = 3
+    selected_words: Optional[List[str]] = None
+
+
 @app.post("/api/passage/generate")
-async def generate_passage_api(req: GeneratePassageRequest):
-    """Sinh đoạn văn luyện dịch từ danh sách từ được tích chọn (hỗ trợ đổi bài ngẫu nhiên)."""
+async def generate_passage_api(req: GeneratePassageRequest, request: Request):
+    """Sinh đoạn văn luyện dịch từ danh sách từ được tích chọn (hỗ trợ đổi bài ngẫu nhiên & recency-weighted)."""
     if not req.selected_words:
         raise HTTPException(status_code=400, detail="Vui lòng chọn ít nhất 1 từ vựng.")
     try:
+        user = await get_current_user_optional(request)
+        user_id = user["id"] if user else None
         data = await passage_service.generate_passage_async(
             req.selected_words,
             random_change=req.random_change,
             model_family=req.model_family,
             level=req.level,
             sentence_count=req.sentence_count,
+            user_id=user_id,
         )
         return {"status": "success", "data": data}
     except Exception as e:
         logger.error(f"Error generating passage: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+@app.post("/api/quiz/generate-unchecked")
+async def generate_unchecked_quiz_api(req: Optional[GenerateQuizRequest] = None, request: Request = None):
+    """
+    Sinh bài trắc nghiệm củng cố (Quiz) từ tập từ vựng CHƯA TÍCH (chưa thuộc) của học viên.
+    """
+    try:
+        user = await get_current_user_optional(request) if request else None
+        user_id = user["id"] if user else None
+
+        # 1. Lấy toàn bộ từ vựng trong giáo trình
+        all_words_list = [w["word"] for w in passage_service.load_words_from_excel(filter_learned_only=False)]
+        
+        # 2. Lấy các từ đã tích chọn (mastered)
+        mastered_set = set(database.get_selected_words_list(user_id=user_id))
+        if req and req.selected_words:
+            mastered_set.update(req.selected_words)
+
+        # 3. Lọc ra danh sách từ chưa tích (is_mastered = 0)
+        unchecked_words = [w for w in all_words_list if w not in mastered_set]
+        if not unchecked_words:
+            unchecked_words = all_words_list
+
+        count = req.count if (req and req.count) else 3
+        count = max(1, min(count, 5))
+        
+        # 4. Bốc ngẫu nhiên 3 đến 5 từ chưa thuộc
+        candidate_count = min(len(unchecked_words), count + 2)
+        candidate_words = random.sample(unchecked_words, candidate_count)
+
+        # 5. Gọi hàm sinh Quiz siêu tốc qua gemini-flash-lite-latest
+        quiz_data = await passage_service.generate_unchecked_quiz_async(candidate_words, count=count)
+        return quiz_data
+    except Exception as e:
+        logger.error(f"Error generating unchecked quiz: {e}")
         return {"status": "error", "message": str(e)}
 
 
