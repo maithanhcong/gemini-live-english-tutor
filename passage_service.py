@@ -1,4 +1,4 @@
-﻿"""
+"""
 passage_service.py
 Quản lý đồng bộ từ vựng từ Excel / SQLite và sinh đoạn văn luyện dịch (Anh - Việt):
 - Tận dụng toàn diện cơ chế Failover xoay vòng 4 API Key.

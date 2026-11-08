@@ -238,6 +238,31 @@ const quizScoreText = document.getElementById("quizScoreText");
 const btnQuizPlayAgain = document.getElementById("btnQuizPlayAgain");
 const btnQuizDone = document.getElementById("btnQuizDone");
 
+// Flashcard Modal Elements
+const btnDashboardFlashcardAction = document.getElementById("btnDashboardFlashcardAction");
+const flashcardModal = document.getElementById("flashcardModal");
+const btnCloseFlashcardModal = document.getElementById("btnCloseFlashcardModal");
+const flashcardCounter = document.getElementById("flashcardCounter");
+const flashcardProgressBar = document.getElementById("flashcardProgressBar");
+const flashcardActiveView = document.getElementById("flashcardActiveView");
+const flashcardScene = document.getElementById("flashcardScene");
+const flashcardCardInner = document.getElementById("flashcardCardInner");
+const flashcardPos = document.getElementById("flashcardPos");
+const btnFlashcardAudio = document.getElementById("btnFlashcardAudio");
+const btnFlashcardAudioBack = document.getElementById("btnFlashcardAudioBack");
+const flashcardWord = document.getElementById("flashcardWord");
+const flashcardIpa = document.getElementById("flashcardIpa");
+const flashcardMeaning = document.getElementById("flashcardMeaning");
+const flashcardExampleBox = document.getElementById("flashcardExampleBox");
+const flashcardExampleEn = document.getElementById("flashcardExampleEn");
+const flashcardExampleVi = document.getElementById("flashcardExampleVi");
+const btnFlashcardSkip = document.getElementById("btnFlashcardSkip");
+const btnFlashcardMaster = document.getElementById("btnFlashcardMaster");
+const flashcardCompletedView = document.getElementById("flashcardCompletedView");
+const flashcardSummaryText = document.getElementById("flashcardSummaryText");
+const btnFlashcardRestart = document.getElementById("btnFlashcardRestart");
+const btnFlashcardDone = document.getElementById("btnFlashcardDone");
+
 // Mobile Bottom Sheet Elements
 const btnToggleMobileVocabDrawer = document.getElementById("btnToggleMobileVocabDrawer");
 const btnCloseMobileVocabDrawer = document.getElementById("btnCloseMobileVocabDrawer");
@@ -2576,5 +2601,326 @@ if (quizModal) {
 document.addEventListener("keydown", function(e) {
   if (e.key === "Escape" && quizModal && !quizModal.classList.contains("hidden")) {
     closeQuizModal();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FLASHCARDS FEATURE (100% LOCAL, ZERO-LATENCY, NO AI OVERHEAD)
+// ─────────────────────────────────────────────────────────────────────────────
+
+let currentFlashcardDeck = [];
+let currentFlashcardIndex = 0;
+let flashcardMasteredThisSession = 0;
+let isCardFlipped = false;
+
+function speakWord(text) {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    try {
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn("Speech synthesis error:", e);
+    }
+  }
+}
+
+function getUnmasteredVocabList() {
+  var list = [];
+  if (syncedTopics && syncedTopics.length > 0) {
+    for (var i = 0; i < syncedTopics.length; i++) {
+      var topic = syncedTopics[i];
+      if (topic && topic.words) {
+        for (var j = 0; j < topic.words.length; j++) {
+          var w = topic.words[j];
+          if (w && w.word && (!selectedWordSet || !selectedWordSet.has(w.word))) {
+            list.push(w);
+          }
+        }
+      }
+    }
+  }
+  return list;
+}
+
+function shuffleArray(arr) {
+  var copy = arr.slice();
+  for (var i = copy.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = temp;
+  }
+  return copy;
+}
+
+async function openFlashcardModal() {
+  if (!flashcardModal) return;
+  if (!syncedTopics || syncedTopics.length === 0) {
+    await syncVocabFromExcel();
+  }
+
+  var unmastered = getUnmasteredVocabList();
+  if (unmastered.length === 0) {
+    var all = [];
+    if (syncedTopics && syncedTopics.length > 0) {
+      for (var i = 0; i < syncedTopics.length; i++) {
+        var t = syncedTopics[i];
+        if (t && t.words) {
+          for (var j = 0; j < t.words.length; j++) {
+            all.push(t.words[j]);
+          }
+        }
+      }
+    }
+    if (all.length === 0) {
+      notyf.error("Chưa có dữ liệu từ vựng để mở thẻ lật.");
+      return;
+    }
+    notyf.success("Bạn đã tích thuộc tất cả từ! Bắt đầu lượt ôn tập ngẫu nhiên.");
+    unmastered = all;
+  }
+
+  var shuffled = shuffleArray(unmastered);
+  var deckSize = Math.min(20, shuffled.length);
+  currentFlashcardDeck = shuffled.slice(0, deckSize);
+  currentFlashcardIndex = 0;
+  flashcardMasteredThisSession = 0;
+
+  flashcardModal.classList.remove("hidden");
+  renderCurrentFlashcard();
+}
+
+function closeFlashcardModal() {
+  if (!flashcardModal) return;
+  flashcardModal.classList.add("hidden");
+  currentFlashcardDeck = [];
+  currentFlashcardIndex = 0;
+  isCardFlipped = false;
+  if (flashcardCardInner) {
+    flashcardCardInner.classList.remove("is-flipped");
+  }
+}
+
+function renderCurrentFlashcard() {
+  if (!currentFlashcardDeck || currentFlashcardIndex >= currentFlashcardDeck.length) {
+    showFlashcardCompletion();
+    return;
+  }
+
+  isCardFlipped = false;
+  if (flashcardCardInner) {
+    flashcardCardInner.classList.remove("is-flipped");
+  }
+
+  if (flashcardActiveView) flashcardActiveView.classList.remove("hidden");
+  if (flashcardCompletedView) flashcardCompletedView.classList.add("hidden");
+
+  var item = currentFlashcardDeck[currentFlashcardIndex];
+  var total = currentFlashcardDeck.length;
+
+  if (flashcardCounter) {
+    flashcardCounter.textContent = "Thẻ " + (currentFlashcardIndex + 1) + " / " + total;
+  }
+
+  if (flashcardProgressBar) {
+    var pct = Math.round(((currentFlashcardIndex + 1) / total) * 100);
+    flashcardProgressBar.style.width = pct + "%";
+  }
+
+  if (flashcardWord) {
+    flashcardWord.textContent = item.word || "";
+  }
+
+  if (flashcardIpa) {
+    flashcardIpa.textContent = item.ipa || "/.../";
+  }
+
+  if (flashcardPos) {
+    flashcardPos.textContent = item.pos || "word";
+  }
+
+  if (flashcardMeaning) {
+    flashcardMeaning.textContent = item.meaning || "";
+  }
+
+  if (item.example) {
+    var parts = item.example.split(/[\/\n]/);
+    var exEn = parts[0] ? parts[0].trim() : item.example;
+    var exVi = parts[1] ? parts[1].trim() : "";
+    if (flashcardExampleEn) flashcardExampleEn.textContent = exEn ? '"' + exEn + '"' : "";
+    if (flashcardExampleVi) flashcardExampleVi.textContent = exVi ? "(" + exVi + ")" : "";
+    if (flashcardExampleBox) flashcardExampleBox.classList.remove("hidden");
+  } else {
+    if (flashcardExampleBox) flashcardExampleBox.classList.add("hidden");
+  }
+
+  refreshIcons();
+}
+
+function flipFlashcard() {
+  if (!flashcardCardInner) return;
+  isCardFlipped = !isCardFlipped;
+  flashcardCardInner.classList.toggle("is-flipped", isCardFlipped);
+}
+
+function skipCurrentFlashcard() {
+  currentFlashcardIndex++;
+  renderCurrentFlashcard();
+}
+
+function masterCurrentFlashcard() {
+  if (!currentFlashcardDeck || !currentFlashcardDeck[currentFlashcardIndex]) return;
+  var w = currentFlashcardDeck[currentFlashcardIndex];
+  var wordName = (w.word || "").trim();
+  if (!wordName) return;
+
+  selectedWordSet.add(wordName);
+
+  // Sync checkboxes in sidebar DOM
+  var wordRows = document.querySelectorAll(".word-row");
+  for (var i = 0; i < wordRows.length; i++) {
+    var row = wordRows[i];
+    var wNameEl = row.querySelector(".word-name") || row.querySelector(".word-term");
+    if (wNameEl && wNameEl.textContent.trim().toLowerCase() === wordName.toLowerCase()) {
+      var chk = row.querySelector(".word-checkbox");
+      if (chk) chk.checked = true;
+      row.classList.add("selected");
+    }
+  }
+
+  updateSelectedCount();
+  updateSyncBanners();
+  flashcardMasteredThisSession++;
+
+  notyf.success('Đã thuộc "' + wordName + '" & lưu vào sổ tay!');
+
+  currentFlashcardIndex++;
+  renderCurrentFlashcard();
+}
+
+function showFlashcardCompletion() {
+  if (flashcardActiveView) flashcardActiveView.classList.add("hidden");
+  if (flashcardCompletedView) flashcardCompletedView.classList.remove("hidden");
+
+  if (flashcardSummaryText) {
+    flashcardSummaryText.textContent = "Bạn đã tích thuộc " + flashcardMasteredThisSession + " từ vựng trong lượt ôn tập này.";
+  }
+  refreshIcons();
+}
+
+// Flashcard Event Bindings
+if (flashcardScene) {
+  flashcardScene.onclick = function() {
+    flipFlashcard();
+  };
+}
+
+if (btnFlashcardAudio) {
+  btnFlashcardAudio.onclick = function(e) {
+    e.stopPropagation();
+    if (currentFlashcardDeck && currentFlashcardDeck[currentFlashcardIndex]) {
+      speakWord(currentFlashcardDeck[currentFlashcardIndex].word);
+    }
+  };
+}
+
+if (btnFlashcardAudioBack) {
+  btnFlashcardAudioBack.onclick = function(e) {
+    e.stopPropagation();
+    if (currentFlashcardDeck && currentFlashcardDeck[currentFlashcardIndex]) {
+      speakWord(currentFlashcardDeck[currentFlashcardIndex].word);
+    }
+  };
+}
+
+if (btnFlashcardSkip) {
+  btnFlashcardSkip.onclick = function(e) {
+    e.stopPropagation();
+    skipCurrentFlashcard();
+  };
+}
+
+if (btnFlashcardMaster) {
+  btnFlashcardMaster.onclick = function(e) {
+    e.stopPropagation();
+    masterCurrentFlashcard();
+  };
+}
+
+if (btnFlashcardRestart) {
+  btnFlashcardRestart.onclick = function() {
+    openFlashcardModal();
+  };
+}
+
+if (btnFlashcardDone) {
+  btnFlashcardDone.onclick = function() {
+    closeFlashcardModal();
+  };
+}
+
+if (btnCloseFlashcardModal) {
+  btnCloseFlashcardModal.onclick = function() {
+    closeFlashcardModal();
+  };
+}
+
+if (flashcardModal) {
+  flashcardModal.onclick = function(e) {
+    if (e.target === flashcardModal) {
+      closeFlashcardModal();
+    }
+  };
+}
+
+if (btnDashboardFlashcardAction) {
+  btnDashboardFlashcardAction.onclick = function() {
+    openFlashcardModal();
+  };
+}
+
+// Touch swipe gestures on flashcardScene (iPad & Mobile)
+var touchStartX = 0;
+var touchEndX = 0;
+if (flashcardScene) {
+  flashcardScene.addEventListener("touchstart", function(e) {
+    if (e.changedTouches && e.changedTouches[0]) {
+      touchStartX = e.changedTouches[0].screenX;
+    }
+  }, { passive: true });
+
+  flashcardScene.addEventListener("touchend", function(e) {
+    if (e.changedTouches && e.changedTouches[0]) {
+      touchEndX = e.changedTouches[0].screenX;
+      var diffX = touchEndX - touchStartX;
+      if (Math.abs(diffX) > 60) {
+        if (diffX < 0) {
+          skipCurrentFlashcard();
+        } else {
+          masterCurrentFlashcard();
+        }
+      }
+    }
+  }, { passive: true });
+}
+
+// Keyboard shortcuts for Flashcard modal
+document.addEventListener("keydown", function(e) {
+  if (flashcardModal && !flashcardModal.classList.contains("hidden")) {
+    if (e.key === "Escape") {
+      closeFlashcardModal();
+    } else if (e.code === "Space" || e.key === " ") {
+      e.preventDefault();
+      flipFlashcard();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      skipCurrentFlashcard();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      masterCurrentFlashcard();
+    }
   }
 });

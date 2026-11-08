@@ -26,46 +26,26 @@
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
-  <link rel="stylesheet" href="/static/style.css?v=3.9.2" />
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.2" />
+  <link rel="stylesheet" href="/static/style.css?v=3.9.3" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.3" />
 </head>
 
 <body>
   <div class="container">
-    <!-- App Header -->
+    <!-- App Header: 2 Tầng Rõ Ràng (Two-Tier Header) -->
     <header class="app-header">
-      <div class="header-left">
-        <div class="logo-icon"><i data-lucide="graduation-cap" class="lucide-icon"></i></div>
-        <div>
-          <h1 class="header-title">AuraSpeak AI</h1>
-          <p class="header-subtitle">Lộ trình 1.000 từ cốt lõi & Chuẩn hóa phát âm tự nhiên</p>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <!-- Main Navigation Tabs -->
-        <nav class="nav-tabs">
-          <button id="navTabLive" class="nav-tab active">
-            <span class="tab-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Đàm Thoại Trực Tiếp
-          </button>
-          <button id="navTabTranslation" class="nav-tab">
-            <span class="tab-icon"><i data-lucide="book-open" class="lucide-icon"></i></span> Luyện Dịch Song Ngữ
-          </button>
-          <button id="navTabStudio" class="nav-tab">
-            <span class="tab-icon"><i data-lucide="languages" class="lucide-icon"></i></span> Phòng Dịch Thuật AI
-          </button>
-        </nav>
-        <div class="header-status-wrapper">
-          <div id="status" class="status disconnected">Disconnected</div>
-          <div id="interaction-status" class="interaction-status hidden"></div>
+      <!-- Khối 1: Header Top Bar (Branding & Auth Corner) -->
+      <div class="header-top-bar">
+        <div class="header-left">
+          <div class="logo-icon"><i data-lucide="graduation-cap" class="lucide-icon"></i></div>
+          <div>
+            <h1 class="header-title">AuraSpeak AI</h1>
+            <p class="header-subtitle">Lộ trình 1.000 từ cốt lõi &amp; Chuẩn hóa phát âm tự nhiên</p>
+          </div>
         </div>
 
-        <!-- Header Quick Actions & Account Cluster -->
-        <div class="header-right-actions" id="headerRightActions">
-          <button type="button" id="btnThemeToggle" class="btn btn-icon-round" title="Chuyển chế độ Sáng / Tối">
-            <i data-lucide="moon" class="lucide-icon"></i>
-          </button>
-
+        <!-- Góc trên cùng bên phải (.header-auth-corner) -->
+        <div class="header-auth-corner" id="headerAuthCorner">
           <!-- Trạng thái 1: Chưa đăng nhập (Guest) -->
           <div id="userGuestBox" class="user-guest-cluster">
             <button type="button" id="btnOpenAuthModal" class="btn btn-ghost-auth">
@@ -78,7 +58,7 @@
 
           <!-- Trạng thái 2: Đã đăng nhập (User Profile Pill & Popover Dropdown) -->
           <div id="userLoggedInBox" class="user-profile-anchor hidden">
-            <button type="button" id="btnSettings" class="user-profile-pill" title="Cài đặt & Tài khoản">
+            <button type="button" id="btnSettings" class="user-profile-pill" title="Cài đặt &amp; Tài khoản">
               <span class="user-avatar-circle" id="userAvatarChar">U</span>
               <div class="user-profile-meta">
                 <span class="user-name" id="headerUsername">Tài khoản</span>
@@ -203,6 +183,31 @@
           </div>
         </div>
       </div>
+
+      <!-- Khối 2: Header Nav Bar (3 Tabs Chức Năng + Status + Theme) -->
+      <div class="header-nav-bar">
+        <nav class="nav-tabs">
+          <button id="navTabLive" class="nav-tab active">
+            <span class="tab-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Đàm Thoại Trực Tiếp
+          </button>
+          <button id="navTabTranslation" class="nav-tab">
+            <span class="tab-icon"><i data-lucide="book-open" class="lucide-icon"></i></span> Luyện Dịch Song Ngữ
+          </button>
+          <button id="navTabStudio" class="nav-tab">
+            <span class="tab-icon"><i data-lucide="languages" class="lucide-icon"></i></span> Phòng Dịch Thuật AI
+          </button>
+        </nav>
+
+        <div class="header-nav-right">
+          <div class="header-status-wrapper">
+            <div id="status" class="status disconnected">Disconnected</div>
+            <div id="interaction-status" class="interaction-status hidden"></div>
+          </div>
+          <button type="button" id="btnThemeToggle" class="btn btn-icon-round" title="Chuyển chế độ Sáng / Tối">
+            <i data-lucide="moon" class="lucide-icon"></i>
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- TAB 1: Đàm thoại trực tiếp (AuraSpeak Live) -->
@@ -264,16 +269,16 @@
               </button>
             </div>
 
-            <!-- Thẻ 3: Thử Thách Từ Chưa Thuộc (Micro-Quiz) -->
+            <!-- Thẻ 3: Thẻ Lật Từ Chưa Thuộc (Flashcards - 100% Cục Bộ) -->
             <div class="quick-action-card card-action-quiz">
               <div class="action-card-top">
-                <div class="action-icon-pill icon-quiz"><i data-lucide="puzzle" class="lucide-icon"></i></div>
-                <span class="action-status-tag highlight">Quiz củng cố</span>
+                <div class="action-icon-pill icon-quiz"><i data-lucide="layers" class="lucide-icon"></i></div>
+                <span class="action-status-tag highlight">0ms Cục bộ</span>
               </div>
-              <h3>🧩 Thử Thách Từ Chưa Thuộc</h3>
-              <p>Trắc nghiệm phản xạ 3–5 từ vựng trong lộ trình mà bạn chưa tích chọn, kích hoạt trí nhớ tức thì.</p>
-              <button type="button" id="btnDashboardQuizAction" class="btn btn-accent-quiz btn-action-trigger">
-                <span class="btn-icon"><i data-lucide="zap" class="lucide-icon"></i></span> Thử Thách Quiz
+              <h3>🎴 Thẻ Lật Từ Chưa Thuộc (Flashcards)</h3>
+              <p>Ôn luyện phản xạ nhanh bằng thẻ lật thông minh 2 mặt cho các từ chưa thuộc trong lộ trình.</p>
+              <button type="button" id="btnDashboardFlashcardAction" class="btn btn-accent-quiz btn-action-trigger">
+                <span class="btn-icon"><i data-lucide="layers" class="lucide-icon"></i></span> Luyện Thẻ Ngay
               </button>
             </div>
           </div>
@@ -925,13 +930,112 @@
     </div>
   </div>
 
+  <!-- Modal Thẻ Lật Từ Vựng (Flashcards - 100% Cục Bộ) -->
+  <div id="flashcardModal" class="auth-modal-overlay hidden">
+    <div class="flashcard-modal-container">
+      <div class="flashcard-modal-header">
+        <div class="badge-pill"><i data-lucide="layers" class="lucide-icon"></i> Thẻ Lật Phản Xạ 100% Cục Bộ</div>
+        <div class="flashcard-header-meta">
+          <span class="flashcard-progress-counter" id="flashcardCounter">Thẻ 1 / 20</span>
+          <button type="button" id="btnCloseFlashcardModal" class="auth-close-btn" title="Đóng"><i data-lucide="x" class="lucide-icon"></i></button>
+        </div>
+      </div>
+
+      <!-- Thanh tiến trình nhỏ trên đầu thẻ -->
+      <div class="flashcard-progress-bar-track">
+        <div id="flashcardProgressBar" class="flashcard-progress-bar-fill" style="width: 5%;"></div>
+      </div>
+
+      <!-- Khung Thẻ Lật 3D Container -->
+      <div id="flashcardActiveView" class="flashcard-active-view">
+        <div class="flashcard-scene" id="flashcardScene" title="Nhấp chuột hoặc chạm để lật thẻ">
+          <div class="flashcard-card-inner" id="flashcardCardInner">
+            <!-- Mặt Trước (Front Face) -->
+            <div class="flashcard-face flashcard-front">
+              <div class="flashcard-face-top">
+                <span class="flashcard-pos-badge" id="flashcardPos">noun</span>
+                <button type="button" id="btnFlashcardAudio" class="btn-flashcard-audio" title="Nghe phát âm chuẩn">
+                  <i data-lucide="volume-2" class="lucide-icon"></i>
+                </button>
+              </div>
+
+              <div class="flashcard-front-center">
+                <h2 class="flashcard-word" id="flashcardWord">reluctant</h2>
+                <div class="flashcard-ipa-pill" id="flashcardIpa">/rɪˈlʌktənt/</div>
+              </div>
+
+              <div class="flashcard-front-hint">
+                <i data-lucide="rotate-cw" class="lucide-icon"></i>
+                <span>Chạm hoặc nhấp chuột để lật xem nghĩa</span>
+              </div>
+            </div>
+
+            <!-- Mặt Sau (Back Face) -->
+            <div class="flashcard-face flashcard-back">
+              <div class="flashcard-face-top">
+                <span class="flashcard-back-badge"><i data-lucide="book-open" class="lucide-icon"></i> Nghĩa tiếng Việt</span>
+                <button type="button" id="btnFlashcardAudioBack" class="btn-flashcard-audio" title="Nghe lại phát âm">
+                  <i data-lucide="volume-2" class="lucide-icon"></i>
+                </button>
+              </div>
+
+              <div class="flashcard-back-center">
+                <div class="flashcard-meaning" id="flashcardMeaning">miễn cưỡng, lưỡng lự, không sẵn lòng</div>
+                <div class="flashcard-example-box" id="flashcardExampleBox">
+                  <div class="flashcard-example-en" id="flashcardExampleEn">"He was reluctant to admit his mistake."</div>
+                  <div class="flashcard-example-vi" id="flashcardExampleVi">(Anh ấy miễn cưỡng thừa nhận sai lầm của mình.)</div>
+                </div>
+              </div>
+
+              <div class="flashcard-back-hint">
+                <i data-lucide="rotate-ccw" class="lucide-icon"></i>
+                <span>Nhấp chuột để lật lại mặt trước</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Nút Bấm Hành Động Ở Dưới Đáy Thẻ -->
+        <div class="flashcard-actions-bar">
+          <button type="button" id="btnFlashcardSkip" class="btn btn-flashcard-action btn-flashcard-skip">
+            <i data-lucide="clock" class="lucide-icon"></i>
+            <span>Chưa thuộc (Để sau)</span>
+          </button>
+          <button type="button" id="btnFlashcardMaster" class="btn btn-flashcard-action btn-flashcard-master">
+            <i data-lucide="check-circle" class="lucide-icon"></i>
+            <span>Đã thuộc (Tích vào sổ)</span>
+          </button>
+        </div>
+
+        <div class="flashcard-keyboard-guide">
+          <span>Phím tắt: <strong>Space</strong> (Lật thẻ) &bull; <strong>&larr;</strong> (Để sau) &bull; <strong>&rarr;</strong> (Đã thuộc)</span>
+        </div>
+      </div>
+
+      <!-- View Hoàn Thành Khi Hết Thẻ -->
+      <div id="flashcardCompletedView" class="flashcard-completed-view hidden">
+        <div class="flashcard-complete-icon"><i data-lucide="sparkles" class="lucide-icon"></i></div>
+        <h3>Tuyệt Vời! Đã Hoàn Thành Lượt Luyện!</h3>
+        <p id="flashcardSummaryText">Bạn đã tích thuộc 5 từ vựng trong lượt ôn tập này.</p>
+        <div class="flashcard-completed-actions">
+          <button type="button" id="btnFlashcardRestart" class="btn btn-secondary">
+            <i data-lucide="refresh-cw" class="lucide-icon"></i> Luyện Tiếp Lượt Mới
+          </button>
+          <button type="button" id="btnFlashcardDone" class="btn btn-primary">
+            <i data-lucide="check" class="lucide-icon"></i> Đóng Thẻ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
-  <script src="/static/lucide.min.js?v=3.9.2"></script>
-  <script src="/static/notyf.min.js?v=3.9.2"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.9.2"></script>
-  <script src="/static/media-handler.js?v=3.9.2"></script>
-  <script src="/static/gemini-client.js?v=3.9.2"></script>
-  <script src="/static/main.js?v=3.9.2"></script>
+  <script src="/static/lucide.min.js?v=3.9.3"></script>
+  <script src="/static/notyf.min.js?v=3.9.3"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.9.3"></script>
+  <script src="/static/media-handler.js?v=3.9.3"></script>
+  <script src="/static/gemini-client.js?v=3.9.3"></script>
+  <script src="/static/main.js?v=3.9.3"></script>
 </body>
 
 </html>
