@@ -2072,46 +2072,54 @@ if (btnLogout) {
   };
 }
 
-// ─── MOBILE VOCAB BOTTOM SHEET / MODAL HANDLERS ─────────────────────────────
-function openMobileVocabSheet() {
-  if (vocabSidebar) {
-    vocabSidebar.classList.add("show-drawer");
-    vocabSidebar.classList.add("mobile-open");
-    vocabSidebar.classList.add("active");
+// ─── MOBILE VOCAB FULL-SCREEN OVERLAY HANDLERS (100% CLEAN, ZERO BACKDROP) ───
+function openMobileVocabDrawer() {
+  var drawer = document.getElementById("vocabDrawer") || document.getElementById("vocabSidebar");
+  if (drawer) {
+    drawer.classList.remove("hidden");
+    // Force layout reflow before adding active for smooth slide animation
+    void drawer.offsetWidth;
+    drawer.classList.add("active");
+    drawer.classList.add("mobile-open");
+    drawer.classList.add("show-drawer");
+    document.body.style.overflow = "hidden"; // Prevent scrolling of background page
   }
-  if (vocabDrawerBackdrop) {
-    vocabDrawerBackdrop.classList.remove("hidden");
-    vocabDrawerBackdrop.classList.add("active");
-  }
-  document.body.style.overflow = "hidden";
 }
 
-function closeMobileVocabSheet() {
-  if (vocabSidebar) {
-    vocabSidebar.classList.remove("show-drawer");
-    vocabSidebar.classList.remove("mobile-open");
-    vocabSidebar.classList.remove("active");
+function closeMobileVocabDrawer() {
+  var drawer = document.getElementById("vocabDrawer") || document.getElementById("vocabSidebar");
+  if (drawer) {
+    drawer.classList.remove("active");
+    drawer.classList.remove("mobile-open");
+    drawer.classList.remove("show-drawer");
+    setTimeout(function() {
+      if (drawer && !drawer.classList.contains("active")) {
+        drawer.classList.add("hidden");
+        document.body.style.overflow = ""; // Restore background page scrolling
+      }
+    }, 300);
+  } else {
+    document.body.style.overflow = "";
   }
-  if (vocabDrawerBackdrop) {
-    vocabDrawerBackdrop.classList.add("hidden");
-    vocabDrawerBackdrop.classList.remove("active");
-  }
-  document.body.style.overflow = "";
   updateSelectedCount();
   updateSyncBanners();
 }
 
+// Aliases for compatibility
+var openMobileVocabSheet = openMobileVocabDrawer;
+var closeMobileVocabSheet = closeMobileVocabDrawer;
+
 if (btnToggleMobileVocabDrawer) {
-  btnToggleMobileVocabDrawer.onclick = openMobileVocabSheet;
+  btnToggleMobileVocabDrawer.onclick = openMobileVocabDrawer;
 }
 
 if (btnCloseMobileVocabDrawer) {
-  btnCloseMobileVocabDrawer.onclick = closeMobileVocabSheet;
+  btnCloseMobileVocabDrawer.onclick = closeMobileVocabDrawer;
 }
 
 if (btnDoneMobileVocab) {
-  btnDoneMobileVocab.onclick = () => {
-    closeMobileVocabSheet();
+  btnDoneMobileVocab.onclick = function() {
+    closeMobileVocabDrawer();
     if (selectedWordSet.size > 0) {
       requestGeneratePassage(false);
     }
@@ -2119,24 +2127,24 @@ if (btnDoneMobileVocab) {
 }
 
 if (vocabDrawerBackdrop) {
-  vocabDrawerBackdrop.onclick = closeMobileVocabSheet;
+  vocabDrawerBackdrop.onclick = closeMobileVocabDrawer;
 }
 
-const btnPlaceholderOpenDrawer = document.getElementById("btnPlaceholderOpenDrawer");
+var btnPlaceholderOpenDrawer = document.getElementById("btnPlaceholderOpenDrawer");
 if (btnPlaceholderOpenDrawer) {
-  btnPlaceholderOpenDrawer.onclick = () => {
+  btnPlaceholderOpenDrawer.onclick = function() {
     if (window.innerWidth < 768) {
-      openMobileVocabSheet();
+      openMobileVocabDrawer();
     } else {
-      const search = document.getElementById("vocabSearchInput");
+      var search = document.getElementById("vocabSearchInput");
       if (search) search.focus();
     }
   };
 }
 
-const btnPlaceholderStartGenerate = document.getElementById("btnPlaceholderStartGenerate");
+var btnPlaceholderStartGenerate = document.getElementById("btnPlaceholderStartGenerate");
 if (btnPlaceholderStartGenerate) {
-  btnPlaceholderStartGenerate.onclick = () => {
+  btnPlaceholderStartGenerate.onclick = function() {
     if (selectedWordSet.size === 0) {
       autoSelectDefaultWords();
     }
@@ -2144,10 +2152,14 @@ if (btnPlaceholderStartGenerate) {
   };
 }
 
-// Tự động đóng Bottom Sheet khi xoay ngang hoặc mở rộng màn hình lên Tablet / iPad (>= 768px)
-window.addEventListener("resize", () => {
+// Auto close overlay when resized or rotated to Tablet / Desktop (>= 768px)
+window.addEventListener("resize", function() {
   if (window.innerWidth >= 768) {
-    closeMobileVocabSheet();
+    closeMobileVocabDrawer();
+    var drawer = document.getElementById("vocabDrawer") || document.getElementById("vocabSidebar");
+    if (drawer) {
+      drawer.classList.remove("hidden");
+    }
   }
 });
 

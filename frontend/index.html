@@ -26,8 +26,8 @@
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
-  <link rel="stylesheet" href="/static/style.css?v=3.9.6" />
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.6" />
+  <link rel="stylesheet" href="/static/style.css?v=3.9.7" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.7" />
 </head>
 
 <body>
@@ -475,12 +475,11 @@
 
       <!-- Translation Main Workspace -->
       <div class="translation-workspace">
-        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, 94vh Full-Screen Drawer on Mobile) -->
-        <div class="vocab-sidebar" id="vocabSidebar">
-          <!-- Mobile Bottom Sheet Handle -->
-          <div class="bottom-sheet-drag-handle"></div>
+        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, 100dvh Full-Screen Overlay on Mobile) -->
+        <div class="vocab-sidebar vocab-drawer-mobile hidden" id="vocabSidebar">
+          <!-- Mobile Drag Handle Removed for Full-Screen Mode -->
 
-          <div class="vocab-sidebar-header">
+          <div class="vocab-sidebar-header vocab-drawer-header">
             <div class="sidebar-title-row">
               <div class="bottom-sheet-header-title">
                 <h3>Bộ Lọc Từ Vựng</h3>
@@ -536,9 +535,9 @@
             </div>
           </div>
 
-          <div class="topics-accordion" id="topicsContainer">
+          <div class="topics-accordion vocab-drawer-body" id="topicsContainer">
             <div class="empty-state">
-              <p>Nhấn <strong>"Đồng bộ từ Excel"</strong> để tải dữ liệu từ vựng theo chủ đề.</p>
+              <p>Nhấn <strong>"Đồng bộ CSDL"</strong> để tải dữ liệu từ vựng theo chủ đề.</p>
             </div>
           </div>
 
@@ -1125,12 +1124,12 @@
   </div>
 
   <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
-  <script src="/static/lucide.min.js?v=3.9.6"></script>
-  <script src="/static/notyf.min.js?v=3.9.6"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.9.6"></script>
-  <script src="/static/media-handler.js?v=3.9.6"></script>
-  <script src="/static/gemini-client.js?v=3.9.6"></script>
-  <script src="/static/main.js?v=3.9.6"></script>
+  <script src="/static/lucide.min.js?v=3.9.7"></script>
+  <script src="/static/notyf.min.js?v=3.9.7"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.9.7"></script>
+  <script src="/static/media-handler.js?v=3.9.7"></script>
+  <script src="/static/gemini-client.js?v=3.9.7"></script>
+  <script src="/static/main.js?v=3.9.7"></script>
 </body>
 
 </html>

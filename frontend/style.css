@@ -2720,25 +2720,15 @@ a:focus-visible {
     background: #2563eb !important;
   }
 
-  /* Màn hình mờ Backdrop khi Bottom Sheet / Modal bật lên */
+  /* 1. XÓA BỎ HOÀN TOÀN LỚP PHỦ MỜ RÁC GÂY KẸT MÀN HÌNH */
+  .vocab-drawer-backdrop,
   .bottom-sheet-backdrop {
-    display: block !important;
-    position: fixed !important;
-    inset: 0 !important;
-    background: rgba(0, 0, 0, 0.45) !important;
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-    z-index: 9998 !important;
-    animation: fadeInBackdrop 0.2s ease-out !important;
-  }
-
-  .bottom-sheet-backdrop.hidden {
     display: none !important;
-  }
-
-  @keyframes fadeInBackdrop {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    opacity: 0 !important;
+    pointer-events: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    visibility: hidden !important;
   }
 
   /* Bố cục translation-workspace trên điện thoại: 1 cột */
@@ -2749,66 +2739,72 @@ a:focus-visible {
     width: 100% !important;
   }
 
-  /* MẶC ĐỊNH TRÊN MOBILE: Ẩn hoàn toàn .vocab-sidebar khỏi luồng trang chính */
+  /* 2. BIẾN DRAWER THÀNH TRANG CHỌN TỪ TOÀN MÀN HÌNH (100dvh) */
+  #vocabDrawer,
+  #vocabSidebar,
+  .vocab-drawer-mobile,
   .vocab-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important; /* Dùng 100dvh chuẩn cho iOS Safari */
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: var(--bg-primary, #0b0f17) !important;
+    z-index: 99999 !important; /* Đè lên toàn bộ mọi thành phần */
+    display: flex !important;
+    flex-direction: column !important;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    border: none !important;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* KHI MỞ: TRƯỢT LÊN PHỦ KÍN 100% MÀN HÌNH */
+  #vocabDrawer.active,
+  #vocabSidebar.active,
+  .vocab-drawer-mobile.active,
+  .vocab-sidebar.active,
+  .vocab-sidebar.show-drawer,
+  .vocab-sidebar.mobile-open {
+    display: flex !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+  }
+
+  /* KHI ĐÓNG: ẨN HOÀN TOÀN, TRÁNH ĐÈ LÊN MÀN HÌNH */
+  #vocabDrawer.hidden,
+  #vocabSidebar.hidden,
+  .vocab-drawer-mobile.hidden,
+  .vocab-sidebar.hidden {
+    display: none !important;
+    transform: translateY(100%) !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+  }
+
+  /* ẨN DRAG HANDLE */
+  .bottom-sheet-drag-handle {
     display: none !important;
   }
 
-  /* KHI BẬT: Hiển thị theo dạng Modal / Bottom Sheet trượt từ đáy màn hình lên */
-  .vocab-sidebar.show-drawer,
-  .vocab-sidebar.mobile-open,
-  .vocab-sidebar.active {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: auto !important;
-    width: 100% !important;
-    z-index: 9999 !important;
-    max-height: 85vh !important;
-    height: 85vh !important;
-    background: #ffffff !important;
-    border-radius: 20px 20px 0 0 !important;
-    border: none !important;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18) !important;
+  /* 3. PHẦN ĐẦU CỐ ĐỊNH CỦA TRANG CHỌN TỪ (HEADER) */
+  .vocab-drawer-header,
+  .vocab-sidebar-header {
+    flex-shrink: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-    animation: slideUpModal 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-
-  @keyframes slideUpModal {
-    from {
-      transform: translateY(100%);
-      opacity: 0.8;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  /* Thanh gạt drag handle */
-  .bottom-sheet-drag-handle {
-    display: block !important;
-    width: 40px !important;
-    height: 4px !important;
-    background: #cbd5e1 !important;
-    border-radius: 99px !important;
-    margin: 10px auto 4px auto !important;
-    flex-shrink: 0 !important;
-  }
-
-  /* Header của Bottom Sheet */
-  .vocab-sidebar-header {
-    background: #ffffff !important;
-    padding: 8px 16px 12px 16px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    flex-shrink: 0 !important;
+    padding: 16px 20px !important;
+    background: var(--bg-card, #161f30) !important;
+    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
   }
 
   .sidebar-title-row {
@@ -2825,19 +2821,19 @@ a:focus-visible {
   }
 
   .bottom-sheet-header-title h3 {
-    font-size: 1.1rem !important;
-    font-weight: 800 !important;
-    color: #0f172a !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary, #f8fafc) !important;
     margin: 0 !important;
   }
 
   .sheet-count-tag {
     display: inline-block !important;
-    background: #eff6ff !important;
-    color: #2563eb !important;
-    border: 1px solid #bfdbfe !important;
+    background: var(--accent-subtle, rgba(59, 130, 246, 0.15)) !important;
+    color: var(--accent-color, #3b82f6) !important;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
     border-radius: 12px !important;
-    padding: 2px 8px !important;
+    padding: 2px 10px !important;
     font-size: 0.75rem !important;
     font-weight: 700 !important;
   }
@@ -2846,21 +2842,21 @@ a:focus-visible {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background: #f1f5f9 !important;
-    border: none !important;
-    padding: 6px 14px !important;
-    border-radius: 20px !important;
-    font-size: 0.82rem !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
+    background: var(--bg-surface, #1e293b) !important;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12)) !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    font-size: 0.9rem !important;
+    color: var(--text-secondary, #94a3b8) !important;
     cursor: pointer !important;
-    min-height: 36px !important;
     touch-action: manipulation !important;
   }
 
-  .btn-close-bottom-sheet:hover {
-    background: #e2e8f0 !important;
-    color: #0f172a !important;
+  .btn-close-bottom-sheet:hover,
+  .btn-close-bottom-sheet:active {
+    background: var(--bg-card, #161f30) !important;
+    color: var(--text-primary, #f8fafc) !important;
   }
 
   /* Ô tìm kiếm & Các nút chọn nhanh */
@@ -5909,69 +5905,21 @@ a:focus-visible {
   }
 }
 
-/* Mobile Full-Screen Vocab Drawer (94vh) */
-@media (max-width: 767.98px) {
+/* Desktop Sidebar Mode: Always visible and normal layout */
+@media (min-width: 769px) {
+  #vocabDrawer,
+  #vocabSidebar,
+  .vocab-drawer-mobile,
   .vocab-sidebar {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: 94vh !important;
-    max-height: 94vh !important;
-    border-radius: 16px 16px 0 0 !important;
-    background: var(--bg-surface) !important;
-    z-index: 1200 !important;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3) !important;
     display: flex !important;
-    flex-direction: column !important;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    will-change: transform;
-    overflow: hidden !important;
-    border: 1px solid var(--border-subtle) !important;
-    border-bottom: none !important;
-  }
-
-  .vocab-sidebar.open-mobile {
-    transform: translateY(0) !important;
-  }
-
-  .vocab-sidebar-header {
-    flex-shrink: 0 !important;
-    padding: 12px 16px !important;
-    border-bottom: 1px solid var(--border-subtle) !important;
-    background: var(--bg-surface) !important;
-  }
-
-  .sidebar-header-actions {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-  }
-
-  .drawer-toggle {
-    display: inline-flex !important;
-    font-size: 12px !important;
-    cursor: pointer;
-  }
-
-  .topics-accordion {
-    flex: 1 1 auto !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 12px 14px 80px !important;
-  }
-
-  .bottom-sheet-footer {
-    position: sticky !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    padding: 10px 16px 16px !important;
-    background: var(--bg-surface) !important;
-    border-top: 1px solid var(--border-subtle) !important;
-    z-index: 10 !important;
+    position: static !important;
+    transform: none !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    box-shadow: none !important;
   }
 }
 
