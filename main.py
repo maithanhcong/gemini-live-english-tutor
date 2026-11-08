@@ -384,9 +384,8 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.on_event("startup")
 async def startup_event():
     try:
-        words = passage_service.load_words_from_excel(filter_learned_only=False)
-        database.init_db(excel_words=words)
-        logger.info("[Database] study_progress.db initialized on startup.")
+        database.init_db()
+        logger.info("[Database] study_progress.db initialized on startup (Pure SQLite Single Source of Truth).")
     except Exception as e:
         logger.error(f"[Database] Error initializing db on startup: {e}")
 
@@ -475,15 +474,14 @@ async def sync_vocab_state_api(req: SyncVocabStateRequest, request: Request):
 
 @app.get("/api/vocab/sync")
 async def sync_vocab(request: Request, learned_only: bool = False):
-    """Đồng bộ từ vựng từ Excel & SQLite theo user_id độc lập."""
+    """Đồng bộ từ vựng 100% từ SQLite theo user_id độc lập (Single Source of Truth, ~2ms)."""
     try:
         user = await get_current_user_optional(request)
         user_id = user["id"] if user else None
 
-        all_words = passage_service.load_words_from_excel(filter_learned_only=False, user_id=user_id)
+        all_words = database.get_all_vocab_dictionary(user_id=user_id, filter_learned_only=False)
         total_count = len(all_words)
 
-        # Lấy danh sách từ được chọn trực tiếp từ SQLite theo user_id
         selected_words = database.get_selected_words_list(user_id=user_id)
         learned_count = len(selected_words)
 
@@ -507,8 +505,24 @@ async def sync_vocab(request: Request, learned_only: bool = False):
             "topics": topics,
         }
     except Exception as e:
-        logger.error(f"Error syncing vocab: {e}")
+        logger.error(f"Error syncing vocab from SQLite: {e}")
         return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/vocab/export")
+async def export_vocab_backup(request: Request):
+    """Xuất file Excel dự phòng khi người dùng chủ động yêu cầu."""
+    try:
+        user = await get_current_user_optional(request)
+        user_id = user["id"] if user else None
+        filepath = database.export_vocab_to_excel(user_id=user_id)
+        if filepath and os.path.exists(filepath):
+            filename = os.path.basename(filepath)
+            return FileResponse(filepath, filename=filename, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        raise HTTPException(status_code=500, detail="Không thể tạo file sao lưu Excel.")
+    except Exception as e:
+        logger.error(f"Error exporting vocab backup: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 class CustomWordRequest(BaseModel):
@@ -627,8 +641,8 @@ async def generate_unchecked_quiz_api(req: Optional[GenerateQuizRequest] = None,
         user = await get_current_user_optional(request) if request else None
         user_id = user["id"] if user else None
 
-        # 1. Lấy toàn bộ từ vựng trong giáo trình
-        all_words_list = [w["word"] for w in passage_service.load_words_from_excel(filter_learned_only=False)]
+        # 1. Lấy toàn bộ từ vựng 100% từ SQLite (Single Source of Truth)
+        all_words_list = [w["word"] for w in database.get_all_vocab_dictionary(user_id=user_id, filter_learned_only=False)]
         
         # 2. Lấy các từ đã tích chọn (mastered)
         mastered_set = set(database.get_selected_words_list(user_id=user_id))

@@ -161,3 +161,4 @@ def get_extended_records_2():
         ("wardrobe", "/ˈwɔːdrəʊb/", "noun", "tủ quần áo", "Hang your tailored suits and silk dresses inside the wooden wardrobe.", "Nhà cửa & Tiện nghi đời sống", "A2"),
     ]
     return records
+

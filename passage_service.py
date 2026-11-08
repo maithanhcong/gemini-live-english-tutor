@@ -119,72 +119,58 @@ def get_excel_path() -> str:
 
     return str(primary_file)
 
-def load_words_from_excel(filter_learned_only=False, user_id=None):
+def load_words_from_db(filter_learned_only=False, user_id=None):
     """
-    Đọc danh sách từ vựng từ SQLite vocab_dictionary (siêu tốc ~2ms) hoặc fallback file Excel,
+    Đọc danh sách từ vựng 100% từ SQLite vocab_dictionary (siêu tốc ~2ms, Single Source of Truth),
     đồng thời hợp nhất trạng thái tích chọn từ SQLite database theo user_id.
     """
     try:
         db_words = database.get_all_vocab_dictionary(user_id=user_id, filter_learned_only=filter_learned_only)
-        if db_words and len(db_words) > 0:
+        if db_words is not None and len(db_words) > 0:
             return db_words
     except Exception as e:
-        logger.warning(f"[PassageService] Falling back to Excel due to DB read error: {e}")
+        logger.warning(f"[PassageService] SQLite read exception: {e}")
 
+    # Fallback dự phòng chỉ khi CSDL SQLite chưa được nạp
     path = get_excel_path()
     if not os.path.exists(path):
         return []
 
-    wb = openpyxl.load_workbook(path, data_only=True)
-    sheet_name = 'Lộ trình 1000 từ cốt lõi' if 'Lộ trình 1000 từ cốt lõi' in wb.sheetnames else wb.sheetnames[0]
-    sheet = wb[sheet_name]
-
-    # Đọc trạng thái đã lưu từ SQLite theo user_id
-    selections = database.get_all_selections(user_id=user_id)
-
-    words = []
-    rows = list(sheet.iter_rows(values_only=True))
-    if len(rows) <= 1:
+    try:
+        wb = openpyxl.load_workbook(path, data_only=True)
+        sheet_name = 'Lộ trình 1000 từ cốt lõi' if 'Lộ trình 1000 từ cốt lõi' in wb.sheetnames else wb.sheetnames[0]
+        sheet = wb[sheet_name]
+        selections = database.get_all_selections(user_id=user_id)
+        words = []
+        rows = list(sheet.iter_rows(values_only=True))
+        if len(rows) <= 1:
+            return []
+        for r in rows[1:]:
+            if not r or len(r) < 8 or not r[3]:
+                continue
+            word = str(r[3] or '').strip()
+            learned = bool(selections.get(word, False))
+            if filter_learned_only and not learned:
+                continue
+            words.append({
+                "stt": r[0],
+                "day": str(r[1] or '').strip(),
+                "topic": str(r[2] or '').strip() or "Chủ đề chung",
+                "word": word,
+                "ipa": str(r[4] or '').strip(),
+                "pos": str(r[5] or '').strip(),
+                "meaning": str(r[6] or '').strip(),
+                "example": str(r[7] or '').strip(),
+                "level": "A1",
+                "is_custom": False,
+                "learned": learned
+            })
+        return words
+    except Exception as e:
+        logger.error(f"[PassageService] Error in excel fallback: {e}")
         return []
 
-    for r in rows[1:]:
-        if not r or len(r) < 8 or not r[3]:
-            continue
-        stt = r[0]
-        day = str(r[1] or '').strip()
-        topic = str(r[2] or '').strip()
-        word = str(r[3] or '').strip()
-        ipa = str(r[4] or '').strip()
-        pos = str(r[5] or '').strip()
-        meaning = str(r[6] or '').strip()
-        example = str(r[7] or '').strip()
-
-        # Với user đã đăng nhập, lấy từ selections của user (mặc định False nếu chưa tích)
-        # Nếu là Guest (user_id is None), lấy từ bảng chung hoặc fallback cột I Excel
-        if user_id is not None:
-            learned = bool(selections.get(word, False))
-        else:
-            if word in selections:
-                learned = bool(selections[word])
-            else:
-                learned = bool(r[8]) if len(r) > 8 and r[8] is not None else False
-
-        if filter_learned_only and not learned:
-            continue
-
-        words.append({
-            "stt": stt,
-            "day": day,
-            "topic": topic,
-            "word": word,
-            "ipa": ipa,
-            "pos": pos,
-            "meaning": meaning,
-            "example": example,
-            "learned": learned
-        })
-
-    return words
+load_words_from_excel = load_words_from_db
 
 
 def append_word_to_excel(word_data: dict) -> bool:

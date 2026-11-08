@@ -153,3 +153,4 @@ def get_extended_records():
         ("zealous", "/ˈzeləs/", "adj", "sốt sắng, nhiệt thành", "Zealous learners dedicate time every single day without fail.", "Cảm xúc & Tính cách", "B2"),
     ]
     return records
+

@@ -176,23 +176,33 @@ def init_db(excel_words=None):
     """)
     conn.commit()
 
-    # Seed từ vựng ban đầu nếu bảng chung rỗng
+    # Seed từ vựng ban đầu nếu bảng chung rỗng (ưu tiên từ vocab_dictionary của SQLite)
     cursor.execute("SELECT COUNT(*) FROM vocab_selection")
     count = cursor.fetchone()[0]
 
-    if count == 0 and excel_words:
-        logger.info(f"[Database] Seeding vocab_selection with {len(excel_words)} words from Excel...")
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        records = [
-            (w["word"], w.get("topic", ""), 1 if w.get("learned", False) else 0, now_str)
-            for w in excel_words if w.get("word")
-        ]
-        cursor.executemany(
-            "INSERT OR REPLACE INTO vocab_selection (word, topic, is_selected, updated_at) VALUES (?, ?, ?, ?)",
-            records
-        )
-        conn.commit()
-        logger.info("[Database] Seeding completed.")
+    if count == 0:
+        cursor.execute("SELECT COUNT(*) FROM vocab_dictionary")
+        dict_count = cursor.fetchone()[0]
+        if dict_count > 0:
+            cursor.execute("""
+                INSERT OR IGNORE INTO vocab_selection (word, topic, is_selected, selected_at)
+                SELECT word, topic, 0, 0 FROM vocab_dictionary;
+            """)
+            conn.commit()
+            logger.info(f"[Database] Seeded vocab_selection with {dict_count} words from SQLite vocab_dictionary.")
+        elif excel_words:
+            logger.info(f"[Database] Seeding vocab_selection with {len(excel_words)} words from Excel fallback...")
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            records = [
+                (w["word"], w.get("topic", ""), 1 if w.get("learned", False) else 0, now_str)
+                for w in excel_words if w.get("word")
+            ]
+            cursor.executemany(
+                "INSERT OR REPLACE INTO vocab_selection (word, topic, is_selected, updated_at) VALUES (?, ?, ?, ?)",
+                records
+            )
+            conn.commit()
+            logger.info("[Database] Seeding completed.")
 
     conn.close()
 
@@ -798,4 +808,53 @@ def sync_user_vocab_defaults(user_id=None):
         conn.close()
     except Exception as e:
         logger.error(f"[Database] Error syncing user vocab defaults: {e}")
+
+def export_vocab_to_excel(filepath: str = None, user_id=None) -> str:
+    """
+    Xuất dữ liệu từ vựng và tiến độ học tập từ SQLite ra file Excel dự phòng khi người dùng yêu cầu.
+    """
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment
+
+        if not filepath:
+            ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filepath = f"data/export_backup_{ts}.xlsx"
+
+        words = get_all_vocab_dictionary(user_id=user_id, filter_learned_only=False)
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Lộ trình Oxford 3000"
+
+        headers = ["STT", "Chủ đề", "Từ vựng", "Phiên âm", "Từ loại", "Nghĩa tiếng Việt", "Câu ví dụ", "Đã học", "Tùy chỉnh"]
+        ws.append(headers)
+
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="2563EB", end_color="2563EB", fill_type="solid")
+        for col_idx in range(1, len(headers) + 1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center")
+
+        for idx, w in enumerate(words, start=1):
+            ws.append([
+                idx,
+                w.get("topic", ""),
+                w.get("word", ""),
+                w.get("ipa", ""),
+                w.get("pos", ""),
+                w.get("meaning", ""),
+                w.get("example", ""),
+                w.get("learned", False),
+                w.get("is_custom", False)
+            ])
+
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        wb.save(filepath)
+        logger.info(f"[Database] Exported backup Excel to {filepath}")
+        return filepath
+    except Exception as e:
+        logger.error(f"[Database] Error exporting vocab to Excel: {e}")
+        return ""
 

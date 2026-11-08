@@ -145,15 +145,35 @@ const videoPlaceholder = document.getElementById("video-placeholder");
 const connectBtn = document.getElementById("connectBtn");
 const chatLog = document.getElementById("chat-log");
 
-// Tab Navigation Elements
+// Focus Word HUD & Pronunciation Feedback Elements
+const liveFocusWordHUD = document.getElementById("liveFocusWordHUD");
+const focusWordLevel = document.getElementById("focusWordLevel");
+const focusWordTerm = document.getElementById("focusWordTerm");
+const focusWordIpa = document.getElementById("focusWordIpa");
+const focusWordPos = document.getElementById("focusWordPos");
+const focusWordMeaning = document.getElementById("focusWordMeaning");
+const liveFeedbackBox = document.getElementById("liveFeedbackBox");
+const liveFeedbackText = document.getElementById("liveFeedbackText");
+
+// Tab Navigation Elements (4 Tabs: Home, Live, Translation, Studio)
+const navTabHome = document.getElementById("navTabHome");
 const navTabLive = document.getElementById("navTabLive");
 const navTabTranslation = document.getElementById("navTabTranslation");
+const navTabStudio = document.getElementById("navTabStudio");
+const tabContentHome = document.getElementById("tabContentHome");
 const tabContentLive = document.getElementById("tabContentLive");
 const tabContentTranslation = document.getElementById("tabContentTranslation");
+const tabContentStudio = document.getElementById("tabContentStudio");
+
+// Quick Action Elements on Home Tab
+const btnHomeActionLive = document.getElementById("btnHomeActionLive");
+const btnDashboardReadingAction = document.getElementById("btnDashboardReadingAction");
+const btnExportBackup = document.getElementById("btnExportBackup");
 
 // Translation Workspace Elements
 const btnSyncVocab = document.getElementById("btnSyncVocab");
 const chkLearnedOnly = document.getElementById("chkLearnedOnly");
+const chkLearnedOnlyDrawer = document.getElementById("chkLearnedOnlyDrawer");
 const btnGeneratePassage = document.getElementById("btnGeneratePassage");
 const btnRandomToolbar = document.getElementById("btnRandomToolbar");
 const statTotalWords = document.getElementById("statTotalWords");
@@ -161,6 +181,7 @@ const statLearnedWords = document.getElementById("statLearnedWords");
 const statSelectedCount = document.getElementById("statSelectedCount");
 const topicsContainer = document.getElementById("topicsContainer");
 const vocabSearchInput = document.getElementById("vocabSearchInput");
+const btnClearVocabSearch = document.getElementById("btnClearVocabSearch");
 const inputCustomWord = document.getElementById("inputCustomWord");
 const btnAddCustomWord = document.getElementById("btnAddCustomWord");
 const linkSelectAll = document.getElementById("linkSelectAll");
@@ -216,7 +237,6 @@ const btnOpenRegisterModal = document.getElementById("btnOpenRegisterModal");
 // Dashboard & Micro-Quiz Elements
 const dashboardProgressBar = document.getElementById("dashboardProgressBar");
 const dashboardProgressText = document.getElementById("dashboardProgressText");
-const btnDashboardReadingAction = document.getElementById("btnDashboardReadingAction");
 const btnDashboardQuizAction = document.getElementById("btnDashboardQuizAction");
 
 // Quiz Modal Elements
@@ -430,9 +450,23 @@ function updateSyncBanners() {
   if (sheetCountTag) {
     sheetCountTag.textContent = `${count} từ đã chọn`;
   }
+
+  const headerMobileMasteredCount = document.getElementById("headerMobileMasteredCount");
+  if (headerMobileMasteredCount) {
+    headerMobileMasteredCount.textContent = count;
+  }
+
+  const liveActiveSyncSubText = document.getElementById("liveActiveSyncSubText");
+  if (liveActiveSyncSubText) {
+    if (count > 0) {
+      liveActiveSyncSubText.textContent = `Đang loại trừ ${count} từ đã thành thạo từ tab Luyện Dịch`;
+    } else {
+      liveActiveSyncSubText.textContent = `Chưa có từ nào được loại trừ`;
+    }
+  }
+
   if (headerMasteredBadge && currentUser) {
-    headerMasteredBadge.innerHTML = `<i data-lucide="target" class="lucide-icon"></i> ${count} từ đã học`;
-    refreshIcons();
+    headerMasteredBadge.textContent = `${count} từ đã học`;
   }
 }
 
@@ -613,6 +647,12 @@ function handleJsonMessage(msg) {
       chatLog.scrollTop = chatLog.scrollHeight;
     } else {
       currentGeminiMessageDiv = appendMessage("gemini", msg.text);
+    }
+    if (liveFeedbackText && msg.text) {
+      const lower = msg.text.toLowerCase();
+      if (lower.indexOf("âm") !== -1 || lower.indexOf("phát âm") !== -1 || lower.indexOf("sound") !== -1 || lower.indexOf("/s/") !== -1 || lower.indexOf("/z/") !== -1 || lower.indexOf("/t/") !== -1 || lower.indexOf("/d/") !== -1) {
+        liveFeedbackText.textContent = msg.text;
+      }
     }
   }
 }
@@ -815,41 +855,97 @@ if (restartBtn) {
   };
 }
 
-// ─── TAB SWITCHING LOGIC (3 TABS: LIVE, TRANSLATION, STUDIO) ────────────────
-const navTabStudio = document.getElementById("navTabStudio");
-const tabContentStudio = document.getElementById("tabContentStudio");
-
+// ─── TAB SWITCHING LOGIC (4 TABS: HOME, LIVE, TRANSLATION, STUDIO) ────────────────
 function switchMainTab(target) {
-  // target: 'live' | 'translation' | 'studio'
+  // target: 'home' | 'live' | 'translation' | 'studio'
+  if (navTabHome) navTabHome.classList.toggle("active", target === "home");
   if (navTabLive) navTabLive.classList.toggle("active", target === "live");
   if (navTabTranslation) navTabTranslation.classList.toggle("active", target === "translation");
   if (navTabStudio) navTabStudio.classList.toggle("active", target === "studio");
 
+  if (tabContentHome) tabContentHome.classList.toggle("hidden", target !== "home");
   if (tabContentLive) tabContentLive.classList.toggle("hidden", target !== "live");
   if (tabContentTranslation) tabContentTranslation.classList.toggle("hidden", target !== "translation");
   if (tabContentStudio) tabContentStudio.classList.toggle("hidden", target !== "studio");
 
-  if (target === "live") {
+  if (target === "home") {
+    updateSyncBanners();
+  } else if (target === "live") {
     syncMasteredWordsToLive();
+    updateFocusWordHUD();
   } else if (target === "translation" && syncedTopics.length === 0) {
     syncVocabFromExcel();
   }
   refreshIcons();
 }
 
+if (navTabHome) navTabHome.onclick = () => switchMainTab("home");
 if (navTabLive) navTabLive.onclick = () => switchMainTab("live");
 if (navTabTranslation) navTabTranslation.onclick = () => switchMainTab("translation");
 if (navTabStudio) navTabStudio.onclick = () => switchMainTab("studio");
 
-// ─── TRANSLATION WORKSPACE: EXCEL SYNC & VOCABULARY SELECTION ───────────────
-if (btnSyncVocab) {
-  btnSyncVocab.onclick = () => {
-    syncVocabFromExcel();
+// Quick Actions on Home
+if (btnHomeActionLive) {
+  btnHomeActionLive.onclick = () => switchMainTab("live");
+}
+if (btnDashboardReadingAction) {
+  btnDashboardReadingAction.onclick = () => switchMainTab("translation");
+}
+
+// Backup & Export Excel
+if (btnExportBackup) {
+  btnExportBackup.onclick = () => {
+    window.open("/api/vocab/export", "_blank");
   };
 }
 
+// Sync check between Desktop and Mobile Drawer for "Chỉ từ Đã học"
+function handleLearnedOnlyToggle(isChecked) {
+  if (chkLearnedOnly) chkLearnedOnly.checked = isChecked;
+  if (chkLearnedOnlyDrawer) chkLearnedOnlyDrawer.checked = isChecked;
+  syncVocabFromExcel();
+}
+
 if (chkLearnedOnly) {
-  chkLearnedOnly.onchange = () => {
+  chkLearnedOnly.onchange = () => handleLearnedOnlyToggle(chkLearnedOnly.checked);
+}
+if (chkLearnedOnlyDrawer) {
+  chkLearnedOnlyDrawer.onchange = () => handleLearnedOnlyToggle(chkLearnedOnlyDrawer.checked);
+}
+
+// Focus Word HUD Controller (Tab 2: Đàm Thoại)
+function updateFocusWordHUD(wordObj) {
+  if (!wordObj) {
+    if (window.allWordsCache && window.allWordsCache.length > 0) {
+      const candidates = window.allWordsCache.filter(function(w) {
+        return !selectedWordSet.has(w.word);
+      });
+      if (candidates.length > 0) {
+        wordObj = candidates[Math.floor(Math.random() * candidates.length)];
+      } else {
+        wordObj = window.allWordsCache[0];
+      }
+    }
+  }
+  if (!wordObj) {
+    wordObj = {
+      word: "comfortable",
+      ipa: "/ˈkʌmftəbl/",
+      pos: "adj",
+      meaning: "thoải mái, tiện nghi, dễ chịu",
+      level: "A2"
+    };
+  }
+  if (focusWordTerm) focusWordTerm.textContent = wordObj.word || "";
+  if (focusWordIpa) focusWordIpa.textContent = wordObj.ipa || "";
+  if (focusWordPos) focusWordPos.textContent = wordObj.pos ? `[${wordObj.pos}]` : "";
+  if (focusWordMeaning) focusWordMeaning.textContent = wordObj.meaning || "";
+  if (focusWordLevel) focusWordLevel.textContent = wordObj.level || "A2";
+}
+
+// ─── TRANSLATION WORKSPACE: SQLITE SYNC & VOCABULARY SELECTION ───────────────
+if (btnSyncVocab) {
+  btnSyncVocab.onclick = () => {
     syncVocabFromExcel();
   };
 }
@@ -936,7 +1032,7 @@ async function syncVocabFromExcel() {
     notyf.error("Không thể kết nối đến máy chủ để đọc dữ liệu từ vựng.");
   } finally {
     btnSyncVocab.disabled = false;
-    btnSyncVocab.innerHTML = `<span class="btn-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span> Đồng bộ từ Excel`;
+    btnSyncVocab.innerHTML = `<span class="btn-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span> Đồng bộ CSDL`;
     refreshIcons();
   }
 }
@@ -1166,11 +1262,20 @@ function renderSearchResults(searchTerm) {
 
   resultContainer.appendChild(list);
   topicsContainer.appendChild(resultContainer);
+  refreshIcons();
 }
 
 function renderTopics() {
   const searchTerm = (vocabSearchInput ? vocabSearchInput.value : "").toLowerCase().trim();
   topicsContainer.innerHTML = "";
+
+  if (btnClearVocabSearch) {
+    if (searchTerm) {
+      btnClearVocabSearch.classList.remove("hidden");
+    } else {
+      btnClearVocabSearch.classList.add("hidden");
+    }
+  }
 
   if (searchTerm) {
     renderSearchResults(searchTerm);
@@ -1373,10 +1478,29 @@ if (linkCollapseAll) {
 let vocabSearchDebounceTimer = null;
 if (vocabSearchInput) {
   vocabSearchInput.oninput = () => {
+    const val = (vocabSearchInput.value || "").trim();
+    if (btnClearVocabSearch) {
+      if (val.length > 0) {
+        btnClearVocabSearch.classList.remove("hidden");
+      } else {
+        btnClearVocabSearch.classList.add("hidden");
+      }
+    }
     clearTimeout(vocabSearchDebounceTimer);
     vocabSearchDebounceTimer = setTimeout(() => {
       renderTopics();
     }, 250);
+  };
+}
+
+if (btnClearVocabSearch) {
+  btnClearVocabSearch.onclick = () => {
+    if (vocabSearchInput) {
+      vocabSearchInput.value = "";
+      vocabSearchInput.focus();
+    }
+    btnClearVocabSearch.classList.add("hidden");
+    renderTopics();
   };
 }
 
@@ -1395,10 +1519,9 @@ async function handleAddNewCustomWord() {
     return;
   }
 
-  const btnText = btnAddCustomWord ? btnAddCustomWord.innerHTML : "";
   if (btnAddCustomWord) {
     btnAddCustomWord.disabled = true;
-    btnAddCustomWord.innerHTML = `<i data-lucide="loader-2" class="lucide-icon spin"></i> Đang thêm...`;
+    btnAddCustomWord.innerHTML = `<i data-lucide="loader-2" class="lucide-icon spin"></i> <span>Đang thêm...</span>`;
     refreshIcons();
   }
 
@@ -1494,7 +1617,7 @@ async function handleAddNewCustomWord() {
   } finally {
     if (btnAddCustomWord) {
       btnAddCustomWord.disabled = false;
-      btnAddCustomWord.innerHTML = btnText || `<i data-lucide="plus" class="lucide-icon"></i> Thêm từ`;
+      btnAddCustomWord.innerHTML = `<i data-lucide="plus"></i> <span>Thêm</span>`;
       refreshIcons();
     }
   }
@@ -2047,9 +2170,11 @@ function initApplication() {
   }
 
   try {
+    const tabHome = document.getElementById("navTabHome");
     const tabLive = document.getElementById("navTabLive");
     const tabTrans = document.getElementById("navTabTranslation");
     const tabStudio = document.getElementById("navTabStudio");
+    if (tabHome) tabHome.onclick = (e) => { e.preventDefault(); switchMainTab("home"); };
     if (tabLive) tabLive.onclick = (e) => { e.preventDefault(); switchMainTab("live"); };
     if (tabTrans) tabTrans.onclick = (e) => { e.preventDefault(); switchMainTab("translation"); };
     if (tabStudio) tabStudio.onclick = (e) => { e.preventDefault(); switchMainTab("studio"); };

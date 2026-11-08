@@ -26,8 +26,8 @@
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
-  <link rel="stylesheet" href="/static/style.css?v=3.9.4" />
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.4" />
+  <link rel="stylesheet" href="/static/style.css?v=3.9.6" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.6" />
 </head>
 
 <body>
@@ -62,8 +62,11 @@
               <span class="user-avatar-circle" id="userAvatarChar">U</span>
               <div class="user-profile-meta">
                 <span class="user-name" id="headerUsername">Tài khoản</span>
-                <span class="user-mastered-badge" id="headerMasteredBadge"><i data-lucide="target" class="lucide-icon"></i> 0 từ đã học</span>
+                <span class="user-mastered-badge" id="headerMasteredBadge">0 từ đã học</span>
               </div>
+              <span class="user-mobile-badge" id="headerMobileBadge">
+                <span id="headerMobileMasteredCount">0</span>★
+              </span>
               <i data-lucide="chevron-down" class="lucide-icon chevron-icon"></i>
             </button>
 
@@ -184,10 +187,13 @@
         </div>
       </div>
 
-      <!-- Khối 2: Header Nav Bar (3 Tabs Chức Năng + Status + Theme) -->
+      <!-- Khối 2: Header Nav Bar (4 Tabs Chức Năng + Status + Theme) -->
       <div class="header-nav-bar">
         <nav class="nav-tabs">
-          <button id="navTabLive" class="nav-tab active">
+          <button id="navTabHome" class="nav-tab active">
+            <span class="tab-icon"><i data-lucide="home" class="lucide-icon"></i></span> Trang Chủ
+          </button>
+          <button id="navTabLive" class="nav-tab">
             <span class="tab-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Đàm Thoại Trực Tiếp
           </button>
           <button id="navTabTranslation" class="nav-tab">
@@ -210,15 +216,14 @@
       </div>
     </header>
 
-    <!-- TAB 1: Đàm thoại trực tiếp (AuraSpeak Live) -->
-    <section id="tabContentLive" class="tab-page active">
-      <!-- Bảng Điều Khiển Học Tập (Learning Dashboard) -->
-      <div class="auth-section dashboard-container" id="auth-section">
+    <!-- TAB 1: Trang Chủ (Dashboard Tổng Quan) -->
+    <section id="tabContentHome" class="tab-page active">
+      <div class="dashboard-container">
         <!-- Hero Banner -->
         <div class="dashboard-hero-card">
-          <div class="badge-pill"><i data-lucide="sparkles" class="lucide-icon"></i> Đồng hành học tập thông minh</div>
+          <div class="badge-pill">Đồng hành học tập thông minh</div>
           <h2 class="dashboard-title">AuraSpeak — Luyện Nói Phản Xạ &amp; Dịch Thuật AI</h2>
-          <p class="dashboard-subtitle">Hệ thống tích hợp phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị.</p>
+          <p class="dashboard-subtitle">Hệ thống luyện phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị.</p>
 
           <!-- Thanh Tiến Độ Lộ Trình (Mastery Progress Bar) -->
           <div class="dashboard-progress-card">
@@ -249,10 +254,10 @@
                 <div class="action-icon-pill icon-live"><i data-lucide="mic" class="lucide-icon"></i></div>
                 <span class="action-status-tag">Phản xạ Live</span>
               </div>
-              <h3>🎙️ Đàm Thoại Trực Tiếp</h3>
+              <h3>Đàm thoại trực tiếp</h3>
               <p>Trò chuyện giọng nói 2 chiều với gia sư AI, nhận diện âm thanh tức thì và chuẩn hóa phát âm tự nhiên.</p>
-              <button id="connectBtn" class="btn btn-primary btn-action-trigger">
-                <span class="btn-icon"><i data-lucide="phone-call" class="lucide-icon"></i></span> Bắt Đầu Buổi Học
+              <button type="button" id="btnHomeActionLive" class="btn btn-primary btn-action-trigger">
+                <span class="btn-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Vào Phòng Đàm Thoại
               </button>
             </div>
 
@@ -262,20 +267,20 @@
                 <div class="action-icon-pill icon-reading"><i data-lucide="book-open" class="lucide-icon"></i></div>
                 <span class="action-status-tag">Ưu tiên từ mới</span>
               </div>
-              <h3>📖 Luyện Đọc Theo Từ</h3>
+              <h3>Luyện đọc theo từ</h3>
               <p>Tạo bài đọc tự nhiên lồng ghép các từ bạn vừa chọn với thuật toán ưu tiên từ mới tích, đối chiếu lời dịch.</p>
               <button type="button" id="btnDashboardReadingAction" class="btn btn-secondary btn-action-trigger">
                 <span class="btn-icon"><i data-lucide="sparkles" class="lucide-icon"></i></span> Tạo Bài Đọc Ngay
               </button>
             </div>
 
-            <!-- Thẻ 3: Thẻ Lật Từ Chưa Thuộc (Flashcards - 100% Cục Bộ) -->
+            <!-- Thẻ 3: Thẻ Lật Từ Vựng (Flashcards) -->
             <div class="quick-action-card card-action-quiz">
               <div class="action-card-top">
                 <div class="action-icon-pill icon-quiz"><i data-lucide="layers" class="lucide-icon"></i></div>
                 <span class="action-status-tag highlight">0ms Cục bộ</span>
               </div>
-              <h3>🎴 Thẻ Lật Từ Chưa Thuộc (Flashcards)</h3>
+              <h3>Thẻ lật từ vựng</h3>
               <p>Ôn luyện phản xạ nhanh bằng thẻ lật thông minh 2 mặt cho các từ chưa thuộc trong lộ trình.</p>
               <button type="button" id="btnDashboardFlashcardAction" class="btn btn-accent-quiz btn-action-trigger">
                 <span class="btn-icon"><i data-lucide="layers" class="lucide-icon"></i></span> Luyện Thẻ Ngay
@@ -289,7 +294,7 @@
               <span class="f-icon"><i data-lucide="book-open" class="lucide-icon"></i></span>
               <div>
                 <strong>Lộ trình chuẩn Oxford 3000:</strong>
-                <span>Bao quát 3.000 từ vựng thông dụng nhất theo chuẩn CEFR (A1-B2) và phân tích ngữ âm chuyên sâu.</span>
+                <span>Bao quát 2.850+ từ vựng thông dụng nhất theo chuẩn CEFR (A1-B2) và phân tích âm vị chuyên sâu.</span>
               </div>
             </div>
             <div class="feature-item">
@@ -314,6 +319,31 @@
               <strong>Đồng bộ từ vựng với Tab Luyện Dịch:</strong>
               <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, AuraSpeak AI chỉ luyện các từ còn lại.</span>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: Đàm thoại trực tiếp (AuraSpeak Live Room) -->
+    <section id="tabContentLive" class="tab-page hidden">
+      <!-- Live Room Pre-session Card (Chỉ không gian luyện nói chuyên biệt) -->
+      <div class="auth-section live-room-pre-card" id="auth-section">
+        <div class="live-pre-hero">
+          <div class="live-status-pill">
+            <span class="status-pulse-dot"></span> Không Gian Luyện Nói 1:1
+          </div>
+          <h2 class="live-room-title">Phòng Đàm Thoại Trực Tiếp</h2>
+          <p class="live-room-desc">Kết nối giọng nói thời gian thực với Gia sư AI. Hệ thống tự động loại trừ các từ bạn đã thành thạo để tối ưu phản xạ cho các từ mục tiêu.</p>
+
+          <div class="live-pre-sync-notice">
+            <i data-lucide="shield-check" class="lucide-icon"></i>
+            <span id="liveActiveSyncText">Chưa có từ nào được loại trừ (Đang luyện toàn bộ lộ trình)</span>
+          </div>
+
+          <div class="live-pre-actions-row">
+            <button id="connectBtn" class="btn btn-primary btn-live-connect-main">
+              <span class="btn-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Bắt Đầu Buổi Học (Connect)
+            </button>
           </div>
         </div>
       </div>
@@ -342,6 +372,33 @@
               <div id="voice-visualizer" class="voice-visualizer"></div>
             </div>
 
+            <!-- Focus Word HUD (Mục tiêu từ vựng đang luyện) -->
+            <div class="focus-word-hud-card" id="liveFocusWordHUD">
+              <div class="focus-hud-header">
+                <span class="focus-hud-badge">Focus Word Mục Tiêu</span>
+                <span class="focus-hud-level" id="focusWordLevel">A2</span>
+              </div>
+              <div class="focus-hud-body">
+                <div class="focus-word-main">
+                  <span class="focus-word-term" id="focusWordTerm">comfortable</span>
+                  <span class="focus-word-ipa" id="focusWordIpa">/ˈkʌmftəbl/</span>
+                  <span class="focus-word-pos" id="focusWordPos">[adj]</span>
+                </div>
+                <div class="focus-word-meaning" id="focusWordMeaning">thoải mái, tiện nghi, dễ chịu</div>
+              </div>
+            </div>
+
+            <!-- Live Pronunciation Feedback Box -->
+            <div class="live-feedback-box" id="liveFeedbackBox">
+              <div class="feedback-header">
+                <i data-lucide="sparkles" class="lucide-icon"></i>
+                <span class="feedback-title">Ghi chú &amp; Phản hồi phát âm</span>
+              </div>
+              <div class="feedback-body" id="liveFeedbackText">
+                Gia sư AI đang lắng nghe và sẽ phản hồi âm đuôi, ngữ điệu trực tiếp tại đây.
+              </div>
+            </div>
+
             <div class="controls">
               <button id="micBtn" class="btn icon-btn"><i data-lucide="mic" class="lucide-icon"></i> Start Mic</button>
               <button id="cameraBtn" class="btn icon-btn"><i data-lucide="video" class="lucide-icon"></i> Start Camera</button>
@@ -353,7 +410,7 @@
           <div class="right-panel">
             <div class="live-active-sync-bar" id="liveActiveSyncBar">
               <span class="sync-badge-icon"><i data-lucide="target" class="lucide-icon"></i></span>
-              <span id="liveActiveSyncText">Đang loại trừ 0 từ đã thành thạo từ tab Luyện Dịch</span>
+              <span id="liveActiveSyncSubText">Đang loại trừ từ đã thành thạo từ tab Luyện Dịch</span>
             </div>
             <div class="chat-log" id="chat-log"></div>
             <div class="input-area">
@@ -385,13 +442,16 @@
         </div>
 
         <div class="toolbar-actions">
-          <label class="toggle-control" title="Chỉ lấy những từ đã được tích 'Đã học = TRUE' trong file Excel">
+          <label class="toggle-control" title="Chỉ lấy những từ đã được tích 'Đã học = TRUE' trong CSDL">
             <input type="checkbox" id="chkLearnedOnly" checked />
             <span class="toggle-slider"></span>
-            <span class="toggle-text">Chỉ từ "Đã học" (TRUE)</span>
+            <span class="toggle-text">Chỉ từ "Đã học"</span>
           </label>
           <button id="btnSyncVocab" class="btn btn-secondary">
-            <span class="btn-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span> Đồng bộ từ Excel
+            <span class="btn-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span> Đồng bộ CSDL
+          </button>
+          <button id="btnExportBackup" class="btn btn-secondary" title="Xuất file Excel dự phòng">
+            <span class="btn-icon"><i data-lucide="download" class="lucide-icon"></i></span> Xuất Excel
           </button>
           <button id="btnRandomToolbar" class="btn btn-secondary"
             title="Chọn ngẫu nhiên 3-5 từ đang tích để sinh bài mới" disabled>
@@ -415,7 +475,7 @@
 
       <!-- Translation Main Workspace -->
       <div class="translation-workspace">
-        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, Bottom Sheet on Mobile) -->
+        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, 94vh Full-Screen Drawer on Mobile) -->
         <div class="vocab-sidebar" id="vocabSidebar">
           <!-- Mobile Bottom Sheet Handle -->
           <div class="bottom-sheet-drag-handle"></div>
@@ -426,9 +486,16 @@
                 <h3>Bộ Lọc Từ Vựng</h3>
                 <span class="sheet-count-tag" id="sheetCountTag">0 từ đã chọn</span>
               </div>
-              <button id="btnCloseMobileVocabDrawer" class="btn-close-bottom-sheet" title="Đóng danh sách">
-                <i data-lucide="x" class="lucide-icon"></i> Đóng
-              </button>
+              <div class="sidebar-header-actions">
+                <label class="toggle-control drawer-toggle" title="Chỉ lọc từ đã học">
+                  <input type="checkbox" id="chkLearnedOnlyDrawer" checked />
+                  <span class="toggle-slider"></span>
+                  <span class="toggle-text">Đã học</span>
+                </label>
+                <button id="btnCloseMobileVocabDrawer" class="btn-close-bottom-sheet" title="Đóng danh sách">
+                  <i data-lucide="x" class="lucide-icon"></i>
+                </button>
+              </div>
             </div>
             <div class="quick-select-links">
               <a href="javascript:void(0)" id="linkSelectAll" title="Tích chọn tất cả các từ">Chọn hết</a> ·
@@ -436,13 +503,35 @@
               <a href="javascript:void(0)" id="linkExpandAll" title="Mở rộng tất cả chủ đề">Mở hết</a> ·
               <a href="javascript:void(0)" id="linkCollapseAll" title="Thu gọn tất cả chủ đề">Thu gọn</a>
             </div>
-            <div class="search-and-add-row">
-              <div class="search-box">
-                <input type="text" id="vocabSearchInput" placeholder="Tìm kiếm từ, nghĩa, phiên âm..." />
+            <div class="vocab-control-stack">
+              <!-- HÀNG 1: TÌM KIẾM TỪ VỰNG -->
+              <div class="vocab-search-row">
+                <i data-lucide="search" class="search-icon"></i>
+                <input 
+                  type="text" 
+                  id="vocabSearchInput" 
+                  class="vocab-input-field" 
+                  placeholder="Tìm kiếm từ, nghĩa, phiên âm..." 
+                  autocomplete="off"
+                />
+                <button type="button" id="btnClearVocabSearch" class="btn-clear-search hidden" title="Xóa tìm kiếm">
+                  <i data-lucide="x"></i>
+                </button>
               </div>
-              <div class="custom-word-group">
-                <input type="text" id="inputCustomWord" class="custom-word-input" placeholder="Nhập từ mới..." />
-                <button type="button" id="btnAddCustomWord" class="btn-add-custom-word" title="Thêm từ vựng mới">+</button>
+
+              <!-- HÀNG 2: THÊM TỪ MỚI TÙY CHỈNH -->
+              <div class="vocab-add-row">
+                <input 
+                  type="text" 
+                  id="inputCustomWord" 
+                  class="vocab-input-field" 
+                  placeholder="Thêm từ mới (VD: comfortable)..." 
+                  autocomplete="off"
+                />
+                <button type="button" id="btnAddCustomWord" class="btn-add-custom-word">
+                  <i data-lucide="plus"></i>
+                  <span>Thêm</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1036,12 +1125,12 @@
   </div>
 
   <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
-  <script src="/static/lucide.min.js?v=3.9.4"></script>
-  <script src="/static/notyf.min.js?v=3.9.4"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.9.4"></script>
-  <script src="/static/media-handler.js?v=3.9.4"></script>
-  <script src="/static/gemini-client.js?v=3.9.4"></script>
-  <script src="/static/main.js?v=3.9.4"></script>
+  <script src="/static/lucide.min.js?v=3.9.6"></script>
+  <script src="/static/notyf.min.js?v=3.9.6"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.9.6"></script>
+  <script src="/static/media-handler.js?v=3.9.6"></script>
+  <script src="/static/gemini-client.js?v=3.9.6"></script>
+  <script src="/static/main.js?v=3.9.6"></script>
 </body>
 
 </html>
