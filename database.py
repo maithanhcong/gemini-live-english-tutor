@@ -137,6 +137,24 @@ def init_db(excel_words=None):
     );
     """)
 
+    # 7. Bảng Vocab Dictionary (Kho từ vựng chuẩn Oxford 3000 & Từ tùy chỉnh)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS vocab_dictionary (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        word TEXT UNIQUE NOT NULL,
+        ipa TEXT,
+        pos TEXT,
+        meaning_vi TEXT,
+        example_sentence TEXT,
+        topic TEXT,
+        level TEXT DEFAULT 'A1',
+        is_custom INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_vocab_dict_word ON vocab_dictionary(word);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_vocab_dict_topic ON vocab_dictionary(topic);")
+
     # Migration: Bổ sung cột selected_at nếu chưa tồn tại
     try:
         cursor.execute("ALTER TABLE user_vocab_progress ADD COLUMN selected_at INTEGER DEFAULT 0;")
@@ -648,4 +666,136 @@ def save_passage_cache(cache_key: str, english_passage: str, vietnamese_translat
         conn.close()
     except Exception as e:
         logger.warning(f"[Cache] Error saving passage_cache: {e}")
+
+# ─── OXFORD 3000 & CUSTOM VOCABULARY DICTIONARY ──────────────────────────────
+def add_vocab_dictionary_word(word: str, ipa: str = "", pos: str = "", meaning_vi: str = "", example_sentence: str = "", topic: str = "Từ tùy chỉnh", level: str = "B1", is_custom: int = 1):
+    """Thêm một từ mới vào kho từ điển SQLite."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO vocab_dictionary (word, ipa, pos, meaning_vi, example_sentence, topic, level, is_custom)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (word.strip().lower(), ipa.strip(), pos.strip(), meaning_vi.strip(), example_sentence.strip(), topic.strip(), level.strip().upper(), is_custom)
+        )
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        logger.error(f"[Database] Error adding vocab word {word}: {e}")
+        return False
+
+def add_vocab_dictionary_bulk(records: list):
+    """Nạp hàng loạt bản ghi từ vựng vào kho từ điển SQLite."""
+    if not records:
+        return 0
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.executemany(
+            """
+            INSERT OR REPLACE INTO vocab_dictionary (word, ipa, pos, meaning_vi, example_sentence, topic, level, is_custom)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            records
+        )
+        conn.commit()
+        count = cursor.rowcount
+        conn.close()
+        return count
+    except Exception as e:
+        logger.error(f"[Database] Error bulk inserting vocab words: {e}")
+        return 0
+
+def get_vocab_dictionary_count() -> int:
+    """Đếm tổng số từ vựng trong kho từ điển SQLite."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM vocab_dictionary")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+    except Exception as e:
+        logger.error(f"[Database] Error counting vocab_dictionary: {e}")
+        return 0
+
+def find_vocab_dictionary_word(word: str) -> dict | None:
+    """Tìm một từ vựng trong kho từ điển."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM vocab_dictionary WHERE word = ?", (word.strip().lower(),))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return dict(row)
+    except Exception as e:
+        logger.error(f"[Database] Error finding vocab word {word}: {e}")
+    return None
+
+def get_all_vocab_dictionary(user_id=None, filter_learned_only: bool = False) -> list:
+    """
+    Lấy toàn bộ từ vựng trong kho từ điển SQLite, đồng thời hợp nhất trạng thái học từ user_vocab_progress / vocab_selection.
+    """
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, word, ipa, pos, meaning_vi, example_sentence, topic, level, is_custom 
+            FROM vocab_dictionary 
+            ORDER BY topic ASC, word ASC
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+
+        selections = get_all_selections(user_id=user_id)
+        words = []
+        for r in rows:
+            w_word = r["word"]
+            learned = bool(selections.get(w_word, False))
+            if filter_learned_only and not learned:
+                continue
+            words.append({
+                "stt": r["id"],
+                "day": "",
+                "topic": r["topic"] or "Chủ đề chung",
+                "word": w_word,
+                "ipa": r["ipa"] or "",
+                "pos": r["pos"] or "",
+                "meaning": r["meaning_vi"] or "",
+                "example": r["example_sentence"] or "",
+                "level": r["level"] or "A1",
+                "is_custom": bool(r["is_custom"]),
+                "learned": learned
+            })
+        return words
+    except Exception as e:
+        logger.error(f"[Database] Error fetching all vocab dictionary: {e}")
+        return []
+
+def sync_user_vocab_defaults(user_id=None):
+    """
+    Đảm bảo tất cả các từ trong kho từ điển đều có mặt trong user_vocab_progress (hoặc vocab_selection).
+    Dùng INSERT OR IGNORE để bảo toàn 100% tiến độ học đã có.
+    """
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if user_id is not None:
+            cursor.execute("""
+                INSERT OR IGNORE INTO user_vocab_progress (user_id, word, is_mastered, selected_at)
+                SELECT ?, word, 0, 0 FROM vocab_dictionary;
+            """, (user_id,))
+        else:
+            cursor.execute("""
+                INSERT OR IGNORE INTO vocab_selection (word, topic, is_selected, selected_at)
+                SELECT word, topic, 0, 0 FROM vocab_dictionary;
+            """)
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"[Database] Error syncing user vocab defaults: {e}")
 

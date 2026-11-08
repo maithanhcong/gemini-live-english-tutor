@@ -995,20 +995,75 @@ a:focus-visible {
   text-decoration: underline;
 }
 
-.search-box input {
+.search-and-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
-  padding: 8px 14px;
+}
+
+.search-and-add-row .search-box {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-box input,
+.custom-word-input,
+#vocabSearchInput,
+#inputCustomWord {
+  width: 100%;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-size: 16px !important; /* Chống tự động phóng to trên iPad Safari (Anti-Auto-Zoom) */
   background: var(--bg-surface);
+  color: var(--text-main);
+  box-sizing: border-box;
 }
 
-.search-box input:focus {
+.search-box input:focus,
+.custom-word-input:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.custom-word-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.custom-word-input {
+  width: 120px !important;
+}
+
+.btn-add-custom-word {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform 0.1s ease;
+  user-select: none;
+}
+
+.btn-add-custom-word:hover {
+  background: var(--primary-hover);
+}
+
+.btn-add-custom-word:active {
+  transform: scale(0.95);
 }
 
 /* Khung chứa danh sách chủ đề: cuộn mượt mà độc lập */
@@ -2786,13 +2841,14 @@ a:focus-visible {
     margin-top: 8px !important;
   }
 
-  .search-box input {
+  .search-box input,
+  .custom-word-input {
     width: 100% !important;
     height: 42px !important;
     padding: 0 14px !important;
     border-radius: 10px !important;
     border: 1.5px solid #cbd5e1 !important;
-    font-size: 0.92rem !important;
+    font-size: 16px !important;
   }
 
   .quick-select-links {
@@ -3126,10 +3182,11 @@ a:focus-visible {
     margin-top: 8px !important;
   }
 
-  .search-box input {
+  .search-box input,
+  .custom-word-input {
     width: 100% !important;
     height: 42px !important;
-    font-size: 0.88rem !important;
+    font-size: 16px !important;
     padding: 0 12px !important;
     border-radius: 8px !important;
   }
@@ -5595,4 +5652,39 @@ a:focus-visible {
   gap: 12px;
   justify-content: center;
   margin-top: 20px;
+}
+
+/* Search results panel (Debounced fast search) */
+.search-results-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-results-header {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.word-topic-tag {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-left: 6px;
+  display: inline-block;
+  white-space: nowrap;
 }

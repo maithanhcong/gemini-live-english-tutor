@@ -161,6 +161,8 @@ const statLearnedWords = document.getElementById("statLearnedWords");
 const statSelectedCount = document.getElementById("statSelectedCount");
 const topicsContainer = document.getElementById("topicsContainer");
 const vocabSearchInput = document.getElementById("vocabSearchInput");
+const inputCustomWord = document.getElementById("inputCustomWord");
+const btnAddCustomWord = document.getElementById("btnAddCustomWord");
 const linkSelectAll = document.getElementById("linkSelectAll");
 const linkDeselectAll = document.getElementById("linkDeselectAll");
 const linkExpandAll = document.getElementById("linkExpandAll");
@@ -390,13 +392,17 @@ function saveMasteredWordsToStorage() {
 
 function updateSyncBanners() {
   const count = selectedWordSet ? selectedWordSet.size : 0;
-  const pct = Math.min(100, Math.round((count / 1000) * 100));
+  const total = totalVocabCount || 2850;
+  const rawPct = total > 0 ? (count / total) * 100 : 0;
+  const pctStr = rawPct.toFixed(1);
+  const displayPct = pctStr.indexOf(".0") !== -1 ? parseInt(pctStr, 10) : pctStr;
 
   if (dashboardProgressText) {
-    dashboardProgressText.textContent = `${count} / 1.000 từ (${pct}%)`;
+    dashboardProgressText.textContent = `${count} / ${total.toLocaleString("vi-VN")} từ (${displayPct}%)`;
   }
   if (dashboardProgressBar) {
-    dashboardProgressBar.style.width = `${pct}%`;
+    const barPct = Math.min(100, Math.max(0, Math.round(rawPct)));
+    dashboardProgressBar.style.width = `${barPct}%`;
   }
 
   const settingsMasteredCount = document.getElementById("settingsMasteredCount");
@@ -451,6 +457,8 @@ function syncMasteredWordsToLive() {
 let currentGeminiMessageDiv = null;
 let currentUserMessageDiv = null;
 let syncedTopics = [];
+let totalVocabCount = 2850;
+window.allWordsCache = [];
 let selectedWordSet = loadMasteredWordsFromStorage();
 let openTopicSet = new Set([0]); // Default topic 0 open
 let currentPassageData = null;
@@ -528,7 +536,7 @@ const geminiClient = new GeminiClient({
 
     // Send personalized tutor intro instruction reflecting mastered words
     const masteredList = Array.from(selectedWordSet);
-    let introPrompt = `System: Chào học viên ngắn gọn bằng tiếng Việt với vai trò Gia sư Tiếng Anh 1:1 cá nhân hóa. Giới thiệu bạn đồng hành theo Lộ trình 1000 từ vựng cốt lõi và Sổ tay phát âm. `;
+    let introPrompt = `System: Chào học viên ngắn gọn bằng tiếng Việt với vai trò Gia sư Tiếng Anh 1:1 cá nhân hóa. Giới thiệu bạn đồng hành theo Lộ trình chuẩn Oxford 3000 và Sổ tay phát âm. `;
     if (masteredList.length > 0) {
       introPrompt += `Học viên đã tích chọn thành thạo ${masteredList.length} từ ở tab Luyện Dịch. Gia sư tuyệt đối KHÔNG yêu cầu học viên đọc lại hay kiểm tra lại các từ này, mà hãy tập trung hỏi và luyện các từ còn lại chưa học. `;
     }
@@ -852,16 +860,36 @@ async function syncVocabFromExcel() {
   refreshIcons();
 
   try {
-    const learnedOnly = chkLearnedOnly.checked;
+    const learnedOnly = chkLearnedOnly ? chkLearnedOnly.checked : false;
     const response = await fetch(`/api/vocab/sync?learned_only=${learnedOnly}`, {
       headers: getAuthHeaders(),
     });
     const data = await response.json();
 
     if (data.status === "success") {
-      statTotalWords.textContent = data.total_words;
-      statLearnedWords.textContent = data.learned_count;
+      totalVocabCount = data.total_words || 2850;
+      if (statTotalWords) statTotalWords.textContent = totalVocabCount.toLocaleString("vi-VN");
+      if (statLearnedWords) statLearnedWords.textContent = (data.learned_count !== undefined && data.learned_count !== null ? data.learned_count : 0);
       syncedTopics = data.topics || [];
+
+      // Rebuild window.allWordsCache for fast searching and flashcards
+      window.allWordsCache = [];
+      for (let t = 0; t < syncedTopics.length; t++) {
+        const top = syncedTopics[t];
+        if (top && Array.isArray(top.words)) {
+          for (let w = 0; w < top.words.length; w++) {
+            const wordObj = top.words[w];
+            window.allWordsCache.push({
+              word: wordObj.word,
+              ipa: wordObj.ipa || "",
+              pos: wordObj.pos || "",
+              meaning: wordObj.meaning || "",
+              topic: top.name,
+              learned: !!wordObj.learned
+            });
+          }
+        }
+      }
 
       // Phục hồi chính xác trạng thái tích chọn từ CSDL SQLite theo user_id
       if (Array.isArray(data.selected_words) && data.selected_words.length > 0) {
@@ -874,9 +902,11 @@ async function syncVocabFromExcel() {
         } catch (e) {}
         updateSyncBanners();
       } else if (selectedWordSet.size === 0) {
-        // Tự động tích chọn tất cả các từ đã học (TRUE) từ Excel để đồng bộ số lượng chính xác
-        for (const topic of syncedTopics) {
-          for (const w of topic.words) {
+        // Tự động tích chọn tất cả các từ đã học (TRUE) từ database để đồng bộ số lượng chính xác
+        for (let i = 0; i < syncedTopics.length; i++) {
+          const topic = syncedTopics[i];
+          for (let j = 0; j < topic.words.length; j++) {
+            const w = topic.words[j];
             if (w.learned) {
               selectedWordSet.add(w.word);
             }
@@ -884,9 +914,10 @@ async function syncVocabFromExcel() {
         }
         // Nếu không có từ nào đánh dấu learned, tự động chọn tất cả từ của các chủ đề hiện tại
         if (selectedWordSet.size === 0) {
-          for (const topic of syncedTopics) {
-            for (const w of topic.words) {
-              selectedWordSet.add(w.word);
+          for (let i = 0; i < syncedTopics.length; i++) {
+            const topic = syncedTopics[i];
+            for (let j = 0; j < topic.words.length; j++) {
+              selectedWordSet.add(topic.words[j].word);
             }
           }
         }
@@ -895,7 +926,8 @@ async function syncVocabFromExcel() {
 
       renderTopics();
       updateSelectedCount();
-      notyf.success(`Đã đồng bộ ${data.total_words} từ cốt lõi (${data.learned_count} từ đã học)!`);
+      updateSyncBanners();
+      notyf.success(`Đã đồng bộ ${totalVocabCount} từ chuẩn Oxford 3000 (${data.learned_count} từ đã học)!`);
     } else {
       notyf.error("Lỗi đồng bộ dữ liệu: " + (data.message || "Unknown error"));
     }
@@ -909,11 +941,243 @@ async function syncVocabFromExcel() {
   }
 }
 
+// Lazy Rendering: render child word rows only when a topic accordion is open
+function renderTopicChildren(topic, topicBody, chkTopic, countBadge) {
+  topicBody.innerHTML = "";
+  const words = topic.words || [];
+
+  const updateTopicState = () => {
+    let selectedCount = 0;
+    for (let i = 0; i < words.length; i++) {
+      if (selectedWordSet.has(words[i].word)) selectedCount++;
+    }
+    const total = words.length;
+    if (selectedCount === total && total > 0) {
+      chkTopic.checked = true;
+      chkTopic.indeterminate = false;
+      countBadge.className = "topic-count-badge all-selected";
+      countBadge.textContent = `Đã chọn hết (${total})`;
+    } else if (selectedCount > 0) {
+      chkTopic.checked = false;
+      chkTopic.indeterminate = true;
+      countBadge.className = "topic-count-badge active";
+      countBadge.textContent = `Đã chọn: ${selectedCount}/${total}`;
+    } else {
+      chkTopic.checked = false;
+      chkTopic.indeterminate = false;
+      countBadge.className = "topic-count-badge";
+      countBadge.textContent = `${total} từ`;
+    }
+  };
+
+  words.forEach((w) => {
+    const isSelected = selectedWordSet.has(w.word);
+    const row = document.createElement("div");
+    row.className = `word-row ${isSelected ? "selected" : ""}`;
+
+    const wChk = document.createElement("input");
+    wChk.type = "checkbox";
+    wChk.className = "word-checkbox";
+    wChk.checked = isSelected;
+
+    const toggleWord = (checked) => {
+      if (checked) selectedWordSet.add(w.word);
+      else selectedWordSet.delete(w.word);
+      wChk.checked = checked;
+      row.classList.toggle("selected", checked);
+      updateTopicState();
+      updateSelectedCount();
+      updateSyncBanners();
+    };
+
+    wChk.onclick = (e) => {
+      e.stopPropagation();
+      toggleWord(wChk.checked);
+    };
+
+    row.onclick = () => {
+      toggleWord(!wChk.checked);
+    };
+
+    const meta = document.createElement("div");
+    meta.className = "word-meta";
+
+    const topLine = document.createElement("div");
+    topLine.className = "word-top-line";
+
+    const term = document.createElement("span");
+    term.className = "word-term";
+    term.textContent = w.word;
+
+    const ipa = document.createElement("span");
+    ipa.className = "word-ipa";
+    ipa.textContent = w.ipa || "";
+
+    const pos = document.createElement("span");
+    pos.className = "word-pos";
+    pos.textContent = w.pos ? `[${w.pos}]` : "";
+
+    topLine.appendChild(term);
+    if (w.ipa) topLine.appendChild(ipa);
+    if (w.pos) topLine.appendChild(pos);
+
+    const meaning = document.createElement("div");
+    meaning.className = "word-meaning";
+    meaning.textContent = w.meaning;
+
+    meta.appendChild(topLine);
+    meta.appendChild(meaning);
+
+    row.appendChild(wChk);
+    row.appendChild(meta);
+    topicBody.appendChild(row);
+  });
+}
+
+// Debounced search results renderer: capped at max 60 words for 60fps performance
+function renderSearchResults(searchTerm) {
+  topicsContainer.innerHTML = "";
+  const q = searchTerm.toLowerCase().trim();
+  const matchedWords = [];
+  const cache = (window.allWordsCache && window.allWordsCache.length > 0) ? window.allWordsCache : [];
+
+  if (cache.length > 0) {
+    for (let i = 0; i < cache.length; i++) {
+      const item = cache[i];
+      if (
+        (item.word && item.word.toLowerCase().indexOf(q) !== -1) ||
+        (item.meaning && item.meaning.toLowerCase().indexOf(q) !== -1) ||
+        (item.ipa && item.ipa.toLowerCase().indexOf(q) !== -1)
+      ) {
+        matchedWords.push(item);
+        if (matchedWords.length >= 60) break;
+      }
+    }
+  } else {
+    // Fallback if window.allWordsCache not populated yet
+    for (let t = 0; t < syncedTopics.length; t++) {
+      const top = syncedTopics[t];
+      for (let w = 0; w < top.words.length; w++) {
+        const item = top.words[w];
+        if (
+          (item.word && item.word.toLowerCase().indexOf(q) !== -1) ||
+          (item.meaning && item.meaning.toLowerCase().indexOf(q) !== -1) ||
+          (item.ipa && item.ipa.toLowerCase().indexOf(q) !== -1)
+        ) {
+          matchedWords.push({
+            word: item.word,
+            ipa: item.ipa || "",
+            pos: item.pos || "",
+            meaning: item.meaning || "",
+            topic: top.name
+          });
+          if (matchedWords.length >= 60) break;
+        }
+      }
+      if (matchedWords.length >= 60) break;
+    }
+  }
+
+  if (matchedWords.length === 0) {
+    const safeTerm = searchTerm.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    topicsContainer.innerHTML = `<div class="empty-state"><p>Không tìm thấy từ vựng nào khớp với "<strong>${safeTerm}</strong>".</p></div>`;
+    return;
+  }
+
+  const resultContainer = document.createElement("div");
+  resultContainer.className = "search-results-panel";
+
+  const header = document.createElement("div");
+  header.className = "search-results-header";
+  header.innerHTML = `<span>Tìm thấy <strong>${matchedWords.length}</strong> từ ${matchedWords.length >= 60 ? "(hiển thị 60 kết quả nhanh nhất)" : ""}</span>`;
+  resultContainer.appendChild(header);
+
+  const list = document.createElement("div");
+  list.className = "search-results-list";
+
+  matchedWords.forEach((w) => {
+    const isSelected = selectedWordSet.has(w.word);
+    const row = document.createElement("div");
+    row.className = `word-row ${isSelected ? "selected" : ""}`;
+
+    const wChk = document.createElement("input");
+    wChk.type = "checkbox";
+    wChk.className = "word-checkbox";
+    wChk.checked = isSelected;
+
+    const toggleWord = (checked) => {
+      if (checked) selectedWordSet.add(w.word);
+      else selectedWordSet.delete(w.word);
+      wChk.checked = checked;
+      row.classList.toggle("selected", checked);
+      updateSelectedCount();
+      updateSyncBanners();
+    };
+
+    wChk.onclick = (e) => {
+      e.stopPropagation();
+      toggleWord(wChk.checked);
+    };
+
+    row.onclick = () => {
+      toggleWord(!wChk.checked);
+    };
+
+    const meta = document.createElement("div");
+    meta.className = "word-meta";
+
+    const topLine = document.createElement("div");
+    topLine.className = "word-top-line";
+
+    const term = document.createElement("span");
+    term.className = "word-term";
+    term.textContent = w.word;
+
+    const ipa = document.createElement("span");
+    ipa.className = "word-ipa";
+    ipa.textContent = w.ipa || "";
+
+    const pos = document.createElement("span");
+    pos.className = "word-pos";
+    pos.textContent = w.pos ? `[${w.pos}]` : "";
+
+    topLine.appendChild(term);
+    if (w.ipa) topLine.appendChild(ipa);
+    if (w.pos) topLine.appendChild(pos);
+
+    if (w.topic) {
+      const topicTag = document.createElement("span");
+      topicTag.className = "word-topic-tag";
+      topicTag.textContent = w.topic;
+      topLine.appendChild(topicTag);
+    }
+
+    const meaning = document.createElement("div");
+    meaning.className = "word-meaning";
+    meaning.textContent = w.meaning;
+
+    meta.appendChild(topLine);
+    meta.appendChild(meaning);
+
+    row.appendChild(wChk);
+    row.appendChild(meta);
+    list.appendChild(row);
+  });
+
+  resultContainer.appendChild(list);
+  topicsContainer.appendChild(resultContainer);
+}
+
 function renderTopics() {
-  const searchTerm = (vocabSearchInput.value || "").toLowerCase().trim();
+  const searchTerm = (vocabSearchInput ? vocabSearchInput.value : "").toLowerCase().trim();
   topicsContainer.innerHTML = "";
 
-  if (syncedTopics.length === 0) {
+  if (searchTerm) {
+    renderSearchResults(searchTerm);
+    return;
+  }
+
+  if (!syncedTopics || syncedTopics.length === 0) {
     topicsContainer.innerHTML = `<div class="empty-state"><p>Không tìm thấy từ vựng nào phù hợp.</p></div>`;
     return;
   }
@@ -921,23 +1185,6 @@ function renderTopics() {
   const fragment = document.createDocumentFragment();
 
   syncedTopics.forEach((topic, tIdx) => {
-    // Filter words matching search
-    const filteredWords = topic.words.filter((w) => {
-      if (!searchTerm) return true;
-      return (
-        w.word.toLowerCase().includes(searchTerm) ||
-        w.meaning.toLowerCase().includes(searchTerm) ||
-        w.ipa.toLowerCase().includes(searchTerm)
-      );
-    });
-
-    if (filteredWords.length === 0) return;
-
-    // If searching, auto-expand topics with matching results
-    if (searchTerm) {
-      openTopicSet.add(tIdx);
-    }
-
     const isOpen = openTopicSet.has(tIdx);
     const topicGroup = document.createElement("div");
     topicGroup.className = `topic-group ${isOpen ? "open" : ""}`;
@@ -950,12 +1197,10 @@ function renderTopics() {
     const titleArea = document.createElement("div");
     titleArea.className = "topic-title-area";
 
-    // Arrow indicator
     const arrow = document.createElement("span");
     arrow.className = "topic-arrow";
     arrow.innerHTML = `<i data-lucide="chevron-right" class="topic-chevron"></i>`;
 
-    // Parent Checkbox (Cha)
     const chkTopic = document.createElement("input");
     chkTopic.type = "checkbox";
     chkTopic.className = "topic-checkbox";
@@ -979,28 +1224,35 @@ function renderTopics() {
     const topicBody = document.createElement("div");
     topicBody.className = "topic-body";
 
-    // Synchronize parent checkbox and badge state based on selected children
-    const updateTopicState = () => {
-      const selectedCount = filteredWords.filter((w) => selectedWordSet.has(w.word)).length;
-      const total = filteredWords.length;
+    // Synchronize parent checkbox and badge state
+    const words = topic.words || [];
+    let selectedCount = 0;
+    for (let i = 0; i < words.length; i++) {
+      if (selectedWordSet.has(words[i].word)) selectedCount++;
+    }
+    const total = words.length;
 
-      if (selectedCount === total && total > 0) {
-        chkTopic.checked = true;
-        chkTopic.indeterminate = false;
-        countBadge.className = "topic-count-badge all-selected";
-        countBadge.textContent = `Đã chọn hết (${total})`;
-      } else if (selectedCount > 0) {
-        chkTopic.checked = false;
-        chkTopic.indeterminate = true;
-        countBadge.className = "topic-count-badge active";
-        countBadge.textContent = `Đã chọn: ${selectedCount}/${total}`;
-      } else {
-        chkTopic.checked = false;
-        chkTopic.indeterminate = false;
-        countBadge.className = "topic-count-badge";
-        countBadge.textContent = `${total} từ`;
-      }
-    };
+    if (selectedCount === total && total > 0) {
+      chkTopic.checked = true;
+      chkTopic.indeterminate = false;
+      countBadge.className = "topic-count-badge all-selected";
+      countBadge.textContent = `Đã chọn hết (${total})`;
+    } else if (selectedCount > 0) {
+      chkTopic.checked = false;
+      chkTopic.indeterminate = true;
+      countBadge.className = "topic-count-badge active";
+      countBadge.textContent = `Đã chọn: ${selectedCount}/${total}`;
+    } else {
+      chkTopic.checked = false;
+      chkTopic.indeterminate = false;
+      countBadge.className = "topic-count-badge";
+      countBadge.textContent = `${total} từ`;
+    }
+
+    // Lazy load: ONLY render child DOM elements when this topic is open!
+    if (isOpen) {
+      renderTopicChildren(topic, topicBody, chkTopic, countBadge);
+    }
 
     // Accordion Toggle: click anywhere on header (except the checkbox)
     topicHeader.onclick = (e) => {
@@ -1009,6 +1261,9 @@ function renderTopics() {
       topicGroup.classList.toggle("open", willBeOpen);
       if (willBeOpen) {
         openTopicSet.add(tIdx);
+        if (topicBody.children.length === 0) {
+          renderTopicChildren(topic, topicBody, chkTopic, countBadge);
+        }
       } else {
         openTopicSet.delete(tIdx);
       }
@@ -1018,90 +1273,35 @@ function renderTopics() {
     chkTopic.onclick = (e) => {
       e.stopPropagation();
       const willSelect = chkTopic.checked;
-      filteredWords.forEach((w) => {
+      words.forEach((w) => {
         if (willSelect) selectedWordSet.add(w.word);
         else selectedWordSet.delete(w.word);
       });
 
-      // Update all child rows directly in DOM
-      topicBody.querySelectorAll(".word-row").forEach((rowEl, rIdx) => {
-        const w = filteredWords[rIdx];
-        if (!w) return;
-        const isSel = selectedWordSet.has(w.word);
-        rowEl.classList.toggle("selected", isSel);
-        const cEl = rowEl.querySelector(".word-checkbox");
-        if (cEl) cEl.checked = isSel;
-      });
+      // Update rendered child rows if present in DOM
+      if (topicBody.children.length > 0) {
+        topicBody.querySelectorAll(".word-row").forEach((rowEl, rIdx) => {
+          const w = words[rIdx];
+          if (!w) return;
+          const isSel = selectedWordSet.has(w.word);
+          rowEl.classList.toggle("selected", isSel);
+          const cEl = rowEl.querySelector(".word-checkbox");
+          if (cEl) cEl.checked = isSel;
+        });
+      }
 
-      updateTopicState();
+      if (willSelect && words.length > 0) {
+        countBadge.className = "topic-count-badge all-selected";
+        countBadge.textContent = `Đã chọn hết (${words.length})`;
+      } else {
+        countBadge.className = "topic-count-badge";
+        countBadge.textContent = `${words.length} từ`;
+      }
+      chkTopic.indeterminate = false;
+
       updateSelectedCount();
+      updateSyncBanners();
     };
-
-    // Render Children Word Rows (Con)
-    filteredWords.forEach((w) => {
-      const isSelected = selectedWordSet.has(w.word);
-      const row = document.createElement("div");
-      row.className = `word-row ${isSelected ? "selected" : ""}`;
-
-      const wChk = document.createElement("input");
-      wChk.type = "checkbox";
-      wChk.className = "word-checkbox";
-      wChk.checked = isSelected;
-
-      const toggleWord = (checked) => {
-        if (checked) selectedWordSet.add(w.word);
-        else selectedWordSet.delete(w.word);
-        wChk.checked = checked;
-        row.classList.toggle("selected", checked);
-        updateTopicState();
-        updateSelectedCount();
-      };
-
-      wChk.onclick = (e) => {
-        e.stopPropagation();
-        toggleWord(wChk.checked);
-      };
-
-      row.onclick = () => {
-        toggleWord(!wChk.checked);
-      };
-
-      const meta = document.createElement("div");
-      meta.className = "word-meta";
-
-      const topLine = document.createElement("div");
-      topLine.className = "word-top-line";
-
-      const term = document.createElement("span");
-      term.className = "word-term";
-      term.textContent = w.word;
-
-      const ipa = document.createElement("span");
-      ipa.className = "word-ipa";
-      ipa.textContent = w.ipa;
-
-      const pos = document.createElement("span");
-      pos.className = "word-pos";
-      pos.textContent = `[${w.pos}]`;
-
-      topLine.appendChild(term);
-      if (w.ipa) topLine.appendChild(ipa);
-      if (w.pos) topLine.appendChild(pos);
-
-      const meaning = document.createElement("div");
-      meaning.className = "word-meaning";
-      meaning.textContent = w.meaning;
-
-      meta.appendChild(topLine);
-      meta.appendChild(meaning);
-
-      row.appendChild(wChk);
-      row.appendChild(meta);
-      topicBody.appendChild(row);
-    });
-
-    // Initialize parent topic state
-    updateTopicState();
 
     topicGroup.appendChild(topicHeader);
     topicGroup.appendChild(topicBody);
@@ -1169,9 +1369,148 @@ if (linkCollapseAll) {
   };
 }
 
-vocabSearchInput.oninput = () => {
-  renderTopics();
-};
+// Debounced search on input (250ms delay for 60fps)
+let vocabSearchDebounceTimer = null;
+if (vocabSearchInput) {
+  vocabSearchInput.oninput = () => {
+    clearTimeout(vocabSearchDebounceTimer);
+    vocabSearchDebounceTimer = setTimeout(() => {
+      renderTopics();
+    }, 250);
+  };
+}
+
+// ─── ADD CUSTOM WORD HANDLER ───────────────────────────────────────────────
+async function handleAddNewCustomWord() {
+  if (!inputCustomWord) return;
+  const word = (inputCustomWord.value || "").trim().toLowerCase();
+  if (!word) {
+    notyf.error("Vui lòng nhập từ tiếng Anh cần thêm.");
+    inputCustomWord.focus();
+    return;
+  }
+
+  if (!/^[a-zA-Z\s'-]+$/.test(word)) {
+    notyf.error("Từ vựng chỉ nên chứa các chữ cái tiếng Anh.");
+    return;
+  }
+
+  const btnText = btnAddCustomWord ? btnAddCustomWord.innerHTML : "";
+  if (btnAddCustomWord) {
+    btnAddCustomWord.disabled = true;
+    btnAddCustomWord.innerHTML = `<i data-lucide="loader-2" class="lucide-icon spin"></i> Đang thêm...`;
+    refreshIcons();
+  }
+
+  try {
+    const res = await fetch("/api/vocab/custom-word", {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ word: word })
+    });
+    const data = await res.json();
+
+    if (data.status === "success") {
+      const newWord = data.word;
+      const meaning = data.meaning_vi || "";
+      const ipa = data.ipa || "";
+      const pos = data.pos || "word";
+      const topicName = data.topic || "Từ tùy chỉnh";
+
+      // 1. Add to selectedWordSet
+      selectedWordSet.add(newWord);
+
+      // 2. Add to window.allWordsCache if not already there
+      let existingInCache = false;
+      if (!window.allWordsCache) window.allWordsCache = [];
+      for (let i = 0; i < window.allWordsCache.length; i++) {
+        if (window.allWordsCache[i].word.toLowerCase() === newWord.toLowerCase()) {
+          existingInCache = true;
+          window.allWordsCache[i].meaning = meaning;
+          window.allWordsCache[i].ipa = ipa;
+          window.allWordsCache[i].pos = pos;
+          break;
+        }
+      }
+      if (!existingInCache) {
+        window.allWordsCache.unshift({
+          word: newWord,
+          ipa: ipa,
+          pos: pos,
+          meaning: meaning,
+          topic: topicName,
+          learned: true
+        });
+        totalVocabCount++;
+        if (statTotalWords) statTotalWords.textContent = totalVocabCount.toLocaleString("vi-VN");
+      }
+
+      // 3. Add to syncedTopics
+      let foundTopic = null;
+      for (let t = 0; t < syncedTopics.length; t++) {
+        if (syncedTopics[t].name === topicName) {
+          foundTopic = syncedTopics[t];
+          break;
+        }
+      }
+      if (!foundTopic) {
+        foundTopic = { name: topicName, words: [] };
+        syncedTopics.unshift(foundTopic);
+        openTopicSet.add(0);
+      }
+      let foundWordInTopic = false;
+      for (let w = 0; w < foundTopic.words.length; w++) {
+        if (foundTopic.words[w].word.toLowerCase() === newWord.toLowerCase()) {
+          foundWordInTopic = true;
+          break;
+        }
+      }
+      if (!foundWordInTopic) {
+        foundTopic.words.unshift({
+          word: newWord,
+          ipa: ipa,
+          pos: pos,
+          meaning: meaning,
+          learned: true
+        });
+      }
+
+      inputCustomWord.value = "";
+      saveMasteredWordsToStorage();
+      updateSelectedCount();
+      updateSyncBanners();
+      renderTopics();
+
+      const notifMsg = data.is_new 
+        ? `Đã thêm từ "${newWord}" (${meaning}) vào lộ trình học!`
+        : `Từ "${newWord}" đã có trong từ điển và được đánh dấu thành thạo!`;
+      notyf.success(notifMsg);
+    } else {
+      notyf.error("Lỗi khi thêm từ: " + (data.detail || data.message || "Không xác định"));
+    }
+  } catch (err) {
+    console.error("Add custom word error:", err);
+    notyf.error("Không thể kết nối đến máy chủ để thêm từ mới.");
+  } finally {
+    if (btnAddCustomWord) {
+      btnAddCustomWord.disabled = false;
+      btnAddCustomWord.innerHTML = btnText || `<i data-lucide="plus" class="lucide-icon"></i> Thêm từ`;
+      refreshIcons();
+    }
+  }
+}
+
+if (btnAddCustomWord) {
+  btnAddCustomWord.onclick = handleAddNewCustomWord;
+}
+if (inputCustomWord) {
+  inputCustomWord.onkeydown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddNewCustomWord();
+    }
+  };
+}
 
 // ─── GENERATE PASSAGE & RANDOM EXERCISE FLOW ────────────────────────────────
 async function requestGeneratePassage(randomChange = false) {

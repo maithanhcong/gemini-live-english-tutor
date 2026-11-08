@@ -26,8 +26,8 @@
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
-  <link rel="stylesheet" href="/static/style.css?v=3.9.3" />
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.3" />
+  <link rel="stylesheet" href="/static/style.css?v=3.9.4" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.4" />
 </head>
 
 <body>
@@ -40,7 +40,7 @@
           <div class="logo-icon"><i data-lucide="graduation-cap" class="lucide-icon"></i></div>
           <div>
             <h1 class="header-title">AuraSpeak AI</h1>
-            <p class="header-subtitle">Lộ trình 1.000 từ cốt lõi &amp; Chuẩn hóa phát âm tự nhiên</p>
+            <p class="header-subtitle">Lộ trình chuẩn Oxford 3000 &amp; Chuẩn hóa phát âm tự nhiên</p>
           </div>
         </div>
 
@@ -226,12 +226,12 @@
               <div class="progress-title-group">
                 <i data-lucide="award" class="lucide-icon progress-icon"></i>
                 <div>
-                  <strong>Tiến Độ 1.000 Từ Cốt Lõi</strong>
+                  <strong>Tiến Độ Lộ Trình Oxford 3000</strong>
                   <span class="progress-sub">Tự động loại trừ các từ đã thuộc để tối ưu phản xạ</span>
                 </div>
               </div>
               <div class="progress-stats-badge">
-                <span id="dashboardProgressText">0 / 1.000 từ (0%)</span>
+                <span id="dashboardProgressText">0 / 2.850 từ (0%)</span>
               </div>
             </div>
             <div class="progress-track-wrapper">
@@ -288,8 +288,8 @@
             <div class="feature-item">
               <span class="f-icon"><i data-lucide="book-open" class="lucide-icon"></i></span>
               <div>
-                <strong>Lộ trình 1.000 từ cốt lõi:</strong>
-                <span>Chia đều 100 ngày (10 từ/ngày), bao quát đầy đủ đại từ, trợ động từ, mạo từ và chủ đề thông dụng.</span>
+                <strong>Lộ trình chuẩn Oxford 3000:</strong>
+                <span>Bao quát 3.000 từ vựng thông dụng nhất theo chuẩn CEFR (A1-B2) và phân tích ngữ âm chuyên sâu.</span>
               </div>
             </div>
             <div class="feature-item">
@@ -371,12 +371,12 @@
       <div class="translation-toolbar">
         <div class="toolbar-stats">
           <div class="stat-badge">
-            <span class="stat-label">Tổng từ cốt lõi:</span>
-            <span class="stat-value" id="statTotalWords">1000</span>
+            <span class="stat-label">Tổng từ vựng:</span>
+            <span class="stat-value" id="statTotalWords">2850</span>
           </div>
           <div class="stat-badge learned">
             <span class="stat-label">Đã học:</span>
-            <span class="stat-value" id="statLearnedWords">1000</span>
+            <span class="stat-value" id="statLearnedWords">0</span>
           </div>
           <div class="stat-badge selected">
             <span class="stat-label">Đang chọn:</span>
@@ -436,8 +436,14 @@
               <a href="javascript:void(0)" id="linkExpandAll" title="Mở rộng tất cả chủ đề">Mở hết</a> ·
               <a href="javascript:void(0)" id="linkCollapseAll" title="Thu gọn tất cả chủ đề">Thu gọn</a>
             </div>
-            <div class="search-box">
-              <input type="text" id="vocabSearchInput" placeholder="Tìm kiếm từ, nghĩa, phiên âm..." />
+            <div class="search-and-add-row">
+              <div class="search-box">
+                <input type="text" id="vocabSearchInput" placeholder="Tìm kiếm từ, nghĩa, phiên âm..." />
+              </div>
+              <div class="custom-word-group">
+                <input type="text" id="inputCustomWord" class="custom-word-input" placeholder="Nhập từ mới..." />
+                <button type="button" id="btnAddCustomWord" class="btn-add-custom-word" title="Thêm từ vựng mới">+</button>
+              </div>
             </div>
           </div>
 
@@ -808,7 +814,7 @@
 
     <!-- App Footer -->
     <footer class="app-footer">
-      <p>AuraSpeak AI &bull; Lộ trình 1.000 từ vựng cốt lõi &bull; Phản xạ giọng nói thời gian thực</p>
+      <p>AuraSpeak AI &bull; Lộ trình chuẩn Oxford 3000 &bull; Phản xạ giọng nói thời gian thực</p>
     </footer>
   </div>
 
@@ -1030,12 +1036,12 @@
   </div>
 
   <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
-  <script src="/static/lucide.min.js?v=3.9.3"></script>
-  <script src="/static/notyf.min.js?v=3.9.3"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.9.3"></script>
-  <script src="/static/media-handler.js?v=3.9.3"></script>
-  <script src="/static/gemini-client.js?v=3.9.3"></script>
-  <script src="/static/main.js?v=3.9.3"></script>
+  <script src="/static/lucide.min.js?v=3.9.4"></script>
+  <script src="/static/notyf.min.js?v=3.9.4"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.9.4"></script>
+  <script src="/static/media-handler.js?v=3.9.4"></script>
+  <script src="/static/gemini-client.js?v=3.9.4"></script>
+  <script src="/static/main.js?v=3.9.4"></script>
 </body>
 
 </html>

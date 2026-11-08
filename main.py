@@ -8,7 +8,7 @@ import random
 from typing import List, Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect, HTTPException, Request
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect, HTTPException, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -509,6 +509,86 @@ async def sync_vocab(request: Request, learned_only: bool = False):
     except Exception as e:
         logger.error(f"Error syncing vocab: {e}")
         return {"status": "error", "message": str(e)}
+
+
+class CustomWordRequest(BaseModel):
+    word: str
+
+
+@app.post("/api/vocab/custom-word")
+async def add_custom_word_api(req: CustomWordRequest, request: Request, background_tasks: BackgroundTasks):
+    """
+    Thêm một từ vựng mới tùy chỉnh hoặc đánh dấu từ đã có là thành thạo.
+    - Nếu từ đã có trong vocab_dictionary: tự động đánh dấu đã học cho user.
+    - Nếu từ chưa có: gọi Gemini Flash-Lite lấy IPA, pos, meaning_vi, example, lưu vào SQLite (is_custom=1),
+      đánh dấu đã học cho user, và kích hoạt background task để ghi bổ sung vào Excel.
+    """
+    clean_word = (req.word or "").strip().lower()
+    if not clean_word:
+        raise HTTPException(status_code=400, detail="Vui lòng nhập từ vựng hợp lệ.")
+
+    user = await get_current_user_optional(request)
+    user_id = user["id"] if user else None
+
+    # 1. Kiểm tra xem từ đã tồn tại trong từ điển chưa
+    existing = database.find_vocab_dictionary_word(clean_word)
+    if existing:
+        database.update_vocab_selection([clean_word], True, user_id=user_id)
+        return {
+            "status": "success",
+            "is_new": False,
+            "word": existing["word"],
+            "ipa": existing["ipa"],
+            "pos": existing["pos"],
+            "meaning_vi": existing["meaning_vi"],
+            "example": existing["example_sentence"],
+            "topic": existing["topic"],
+            "level": existing["level"],
+            "is_custom": bool(existing["is_custom"]),
+            "message": f"Từ '{clean_word}' đã có trong kho từ vựng và được đánh dấu thành thạo."
+        }
+
+    # 2. Sinh thông tin từ vựng mới qua Gemini Flash-Lite
+    word_info = passage_service.generate_custom_word_details(clean_word)
+    database.add_vocab_dictionary_word(
+        word=clean_word,
+        ipa=word_info.get("ipa", f"/{clean_word}/"),
+        pos=word_info.get("pos", "word"),
+        meaning_vi=word_info.get("meaning_vi", f"Nghĩa của {clean_word}"),
+        example_sentence=word_info.get("example", f"I use {clean_word} in my conversation."),
+        topic=word_info.get("topic", "Từ tùy chỉnh"),
+        level=word_info.get("level", "B1"),
+        is_custom=1
+    )
+
+    # 3. Đánh dấu đã học cho người dùng hiện tại
+    database.update_vocab_selection([clean_word], True, user_id=user_id)
+
+    # 4. Background Excel Sync: Ghi bổ sung ngầm không nghẽn event loop
+    word_record_for_excel = {
+        "word": clean_word,
+        "ipa": word_info.get("ipa", ""),
+        "pos": word_info.get("pos", ""),
+        "meaning_vi": word_info.get("meaning_vi", ""),
+        "example_sentence": word_info.get("example", ""),
+        "topic": "Từ tùy chỉnh"
+    }
+    background_tasks.add_task(asyncio.to_thread, passage_service.append_word_to_excel, word_record_for_excel)
+
+    return {
+        "status": "success",
+        "is_new": True,
+        "word": clean_word,
+        "ipa": word_info.get("ipa", f"/{clean_word}/"),
+        "pos": word_info.get("pos", "word"),
+        "meaning_vi": word_info.get("meaning_vi", f"Nghĩa của {clean_word}"),
+        "example": word_info.get("example", ""),
+        "topic": "Từ tùy chỉnh",
+        "level": "B1",
+        "is_custom": True,
+        "message": f"Đã thêm thành công từ mới '{clean_word}' vào lộ trình học."
+    }
+
 
 
 class GenerateQuizRequest(BaseModel):

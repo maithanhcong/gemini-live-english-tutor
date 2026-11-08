@@ -121,8 +121,16 @@ def get_excel_path() -> str:
 
 def load_words_from_excel(filter_learned_only=False, user_id=None):
     """
-    Đọc danh sách từ vựng từ file Excel, đồng thời hợp nhất trạng thái tích chọn từ SQLite database theo user_id.
+    Đọc danh sách từ vựng từ SQLite vocab_dictionary (siêu tốc ~2ms) hoặc fallback file Excel,
+    đồng thời hợp nhất trạng thái tích chọn từ SQLite database theo user_id.
     """
+    try:
+        db_words = database.get_all_vocab_dictionary(user_id=user_id, filter_learned_only=filter_learned_only)
+        if db_words and len(db_words) > 0:
+            return db_words
+    except Exception as e:
+        logger.warning(f"[PassageService] Falling back to Excel due to DB read error: {e}")
+
     path = get_excel_path()
     if not os.path.exists(path):
         return []
@@ -177,6 +185,57 @@ def load_words_from_excel(filter_learned_only=False, user_id=None):
         })
 
     return words
+
+
+def append_word_to_excel(word_data: dict) -> bool:
+    """
+    Ghi bổ sung một từ mới vào file Excel ở luồng nền (Background Worker) để không nghẽn event loop.
+    """
+    try:
+        path = get_excel_path()
+        if not os.path.exists(path):
+            return False
+        wb = openpyxl.load_workbook(path)
+        sheet_name = 'Lộ trình 1000 từ cốt lõi' if 'Lộ trình 1000 từ cốt lõi' in wb.sheetnames else wb.sheetnames[0]
+        sheet = wb[sheet_name]
+
+        word_to_add = str(word_data.get("word", "")).strip().lower()
+        if not word_to_add:
+            return False
+
+        # Kiểm tra xem từ đã có trong cột D (cột 4) chưa
+        for row in range(2, sheet.max_row + 1):
+            cell_val = str(sheet.cell(row=row, column=4).value or "").strip().lower()
+            if cell_val == word_to_add:
+                return True
+
+        new_row = sheet.max_row + 1
+        stt = new_row - 1
+        day = "Mở rộng"
+        topic = word_data.get("topic") or "Từ tùy chỉnh"
+        word = word_to_add
+        ipa = word_data.get("ipa", "")
+        pos = word_data.get("pos", "")
+        meaning = word_data.get("meaning") or word_data.get("meaning_vi", "")
+        example = word_data.get("example") or word_data.get("example_sentence", "")
+        learned = True
+
+        sheet.cell(row=new_row, column=1, value=stt)
+        sheet.cell(row=new_row, column=2, value=day)
+        sheet.cell(row=new_row, column=3, value=topic)
+        sheet.cell(row=new_row, column=4, value=word)
+        sheet.cell(row=new_row, column=5, value=ipa)
+        sheet.cell(row=new_row, column=6, value=pos)
+        sheet.cell(row=new_row, column=7, value=meaning)
+        sheet.cell(row=new_row, column=8, value=example)
+        sheet.cell(row=new_row, column=9, value=learned)
+
+        wb.save(path)
+        logger.info(f"[Excel Background Sync] Appended custom word '{word}' to row {new_row}: {path}")
+        return True
+    except Exception as e:
+        logger.error(f"[Excel Background Sync] Failed to append word to Excel: {e}")
+        return False
 
 def get_api_keys():
     from dotenv import load_dotenv
@@ -811,4 +870,69 @@ async def generate_unchecked_quiz_async(candidate_words: list[str], count: int =
         "status": "success",
         "quiz": fallback_quiz,
         "model_used": "offline-fallback"
+    }
+
+
+def generate_custom_word_details(word: str) -> dict:
+    """
+    Sử dụng mô hình gemini-flash-lite-latest với Failover 4 API key để sinh nhanh thông tin:
+    IPA, loại từ (pos), nghĩa tiếng Việt cốt lõi (meaning_vi), và câu ví dụ đơn giản (example).
+    """
+    clean_word = word.strip().lower()
+    keys = get_api_keys()
+    models = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-2.0-flash-lite"]
+
+    prompt = f"""Phân tích từ vựng tiếng Anh: "{clean_word}".
+Trả về duy nhất định dạng JSON thuần (không kèm markdown):
+{{
+  "word": "{clean_word}",
+  "ipa": "/phiên âm IPA chuẩn/",
+  "pos": "loại từ (noun/verb/adj/adv...)",
+  "meaning_vi": "nghĩa tiếng Việt ngắn gọn, súc tích",
+  "example": "câu ví dụ tiếng Anh ngắn gọn, tự nhiên"
+}}"""
+
+    for key_idx, key in enumerate(keys, start=1):
+        for model_name in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "maxOutputTokens": 256,
+                    "responseMimeType": "application/json"
+                }
+            }
+            try:
+                with httpx.Client(timeout=3.5) as client:
+                    resp = client.post(url, json=payload)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    candidate = data.get("candidates", [{}])[0]
+                    text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
+                    parsed = extract_json_safe(text)
+                    if parsed and isinstance(parsed, dict) and parsed.get("meaning_vi"):
+                        return {
+                            "word": clean_word,
+                            "ipa": str(parsed.get("ipa") or f"/{clean_word}/").strip(),
+                            "pos": str(parsed.get("pos") or "word").strip(),
+                            "meaning_vi": str(parsed.get("meaning_vi") or f"Nghĩa của {clean_word}").strip(),
+                            "example": str(parsed.get("example") or f"I use the word {clean_word} in conversation.").strip(),
+                            "topic": "Từ tùy chỉnh",
+                            "level": "B1"
+                        }
+                elif is_quota_error(resp.status_code, resp.text):
+                    break
+            except Exception as ex:
+                continue
+
+    # Safe Offline Fallback
+    return {
+        "word": clean_word,
+        "ipa": f"/{clean_word}/",
+        "pos": "từ vựng",
+        "meaning_vi": f"Từ tùy chỉnh: {clean_word}",
+        "example": f"I am practicing the word {clean_word} today.",
+        "topic": "Từ tùy chỉnh",
+        "level": "B1"
     }

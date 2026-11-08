@@ -1,0 +1,1512 @@
+[
+  {
+    "word": "comfortable",
+    "ipa": "/ˈkʌmftəbl/",
+    "pos": "adj",
+    "meaning_vi": "thoải mái, tiện nghi, dễ chịu",
+    "example_sentence": "The sofa in the living room is extremely comfortable.",
+    "topic": "Nhà cửa & Tiện nghi đời sống",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "convenient",
+    "ipa": "/kənˈviːniənt/",
+    "pos": "adj",
+    "meaning_vi": "thuận tiện, tiện lợi, nhanh chóng",
+    "example_sentence": "It is very convenient to live near a subway station.",
+    "topic": "Nhà cửa & Tiện nghi đời sống",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "recommend",
+    "ipa": "/ˌrekəˈmend/",
+    "pos": "verb",
+    "meaning_vi": "gợi ý, giới thiệu, khuyên bảo",
+    "example_sentence": "Can you recommend a good book to read on holiday?",
+    "topic": "Giao tiếp & Xã hội",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "flexible",
+    "ipa": "/ˈfleksəbl/",
+    "pos": "adj",
+    "meaning_vi": "linh hoạt, linh động, mềm dẻo",
+    "example_sentence": "Modern companies offer flexible schedules to employees.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "essential",
+    "ipa": "/ɪˈsenʃl/",
+    "pos": "adj",
+    "meaning_vi": "thiết yếu, cốt lõi, không thể thiếu",
+    "example_sentence": "Good nutrition and adequate rest are essential for health.",
+    "topic": "Y tế & Cơ thể người mở rộng",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "accommodate",
+    "ipa": "/əˈkɒmədeɪt/",
+    "pos": "verb",
+    "meaning_vi": "cung cấp chỗ ở, đáp ứng nhu cầu",
+    "example_sentence": "The hotel can accommodate over five hundred guests comfortably.",
+    "topic": "Du lịch & Khám phá",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "ability",
+    "ipa": "/əˈbɪləti/",
+    "pos": "noun",
+    "meaning_vi": "khả năng, năng lực",
+    "example_sentence": "She has the ability to manage complex projects.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "abroad",
+    "ipa": "/əˈbrɔːd/",
+    "pos": "adv",
+    "meaning_vi": "ở nước ngoài",
+    "example_sentence": "Many graduates choose to work abroad for experience.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "absence",
+    "ipa": "/ˈæbsəns/",
+    "pos": "noun",
+    "meaning_vi": "sự vắng mặt, sự thiếu hụt",
+    "example_sentence": "His absence from the meeting was noticed by everyone.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "absent",
+    "ipa": "/ˈæbsənt/",
+    "pos": "adj",
+    "meaning_vi": "vắng mặt, nghỉ",
+    "example_sentence": "Three team members were absent due to illness.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "academic",
+    "ipa": "/ˌækəˈdemɪk/",
+    "pos": "adj",
+    "meaning_vi": "thuộc học thuật, nghiên cứu",
+    "example_sentence": "He pursued a successful academic career in economics.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "accent",
+    "ipa": "/ˈæksent/",
+    "pos": "noun",
+    "meaning_vi": "giọng điệu, trọng âm",
+    "example_sentence": "She speaks fluent English with a slight French accent.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "accept",
+    "ipa": "/əkˈsept/",
+    "pos": "verb",
+    "meaning_vi": "chấp nhận, đồng ý",
+    "example_sentence": "The committee decided to accept the proposed revision.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "acceptable",
+    "ipa": "/əkˈseptəbl/",
+    "pos": "adj",
+    "meaning_vi": "có thể chấp nhận được",
+    "example_sentence": "The quality of the report was fully acceptable.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "access",
+    "ipa": "/ˈækses/",
+    "pos": "noun",
+    "meaning_vi": "quyền truy cập, lối vào",
+    "example_sentence": "All staff members have direct access to the database.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "accident",
+    "ipa": "/ˈæksɪdənt/",
+    "pos": "noun",
+    "meaning_vi": "tai nạn, sự cố bất ngờ",
+    "example_sentence": "Drive carefully to prevent an unexpected accident.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "accidental",
+    "ipa": "/ˌæksɪˈdentl/",
+    "pos": "adj",
+    "meaning_vi": "tình cờ, ngẫu nhiên",
+    "example_sentence": "It was an accidental discovery that changed his research.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "accompany",
+    "ipa": "/əˈkʌmpəni/",
+    "pos": "verb",
+    "meaning_vi": "đồng hành, đi cùng",
+    "example_sentence": "A mentor will accompany the interns during orientation.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "according to",
+    "ipa": "/əˈkɔːdɪŋ tu/",
+    "pos": "prep",
+    "meaning_vi": "theo như, căn cứ theo",
+    "example_sentence": "According to the forecast, it will rain tomorrow.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "account",
+    "ipa": "/əˈkaʊnt/",
+    "pos": "noun",
+    "meaning_vi": "tài khoản, bản tường trình",
+    "example_sentence": "Please review the financial account before submission.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "accountant",
+    "ipa": "/əˈkaʊntənt/",
+    "pos": "noun",
+    "meaning_vi": "kế toán viên",
+    "example_sentence": "Our company hired a professional accountant last month.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "accurate",
+    "ipa": "/ˈækjərət/",
+    "pos": "adj",
+    "meaning_vi": "chính xác, đúng đắn",
+    "example_sentence": "The sensor provides highly accurate measurements.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "accurately",
+    "ipa": "/ˈækjərətli/",
+    "pos": "adv",
+    "meaning_vi": "một cách chính xác",
+    "example_sentence": "The system calculates the balance accurately.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "accuse",
+    "ipa": "/əˈkjuːz/",
+    "pos": "verb",
+    "meaning_vi": "buộc tội, cáo buộc",
+    "example_sentence": "You should not accuse anyone without clear evidence.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "achieve",
+    "ipa": "/əˈtʃiːv/",
+    "pos": "verb",
+    "meaning_vi": "đạt được, hoàn thành",
+    "example_sentence": "With hard work, you can achieve your career goals.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "achievement",
+    "ipa": "/əˈtʃiːvmənt/",
+    "pos": "noun",
+    "meaning_vi": "thành tựu, thành tích",
+    "example_sentence": "Winning the award was her proudest achievement.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "acknowledge",
+    "ipa": "/əkˈnɒlɪdʒ/",
+    "pos": "verb",
+    "meaning_vi": "thừa nhận, công nhận",
+    "example_sentence": "He refused to acknowledge his responsibility in the matter.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "acquire",
+    "ipa": "/əˈkwaɪə(r)/",
+    "pos": "verb",
+    "meaning_vi": "thu được, tiếp thu",
+    "example_sentence": "Students acquire valuable skills through internships.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "act",
+    "ipa": "/ækt/",
+    "pos": "verb",
+    "meaning_vi": "hành động, cư xử",
+    "example_sentence": "We must act promptly to resolve the client complaint.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "action",
+    "ipa": "/ˈækʃn/",
+    "pos": "noun",
+    "meaning_vi": "hành động, biện pháp",
+    "example_sentence": "Immediate action was taken to fix the server error.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "active",
+    "ipa": "/ˈæktɪv/",
+    "pos": "adj",
+    "meaning_vi": "tích cực, năng động, hoạt động",
+    "example_sentence": "He remains an active participant in our discussions.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "actively",
+    "ipa": "/ˈæktɪvli/",
+    "pos": "adv",
+    "meaning_vi": "một cách tích cực",
+    "example_sentence": "The team actively sought innovative solutions.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "activity",
+    "ipa": "/ækˈtɪvəti/",
+    "pos": "noun",
+    "meaning_vi": "hoạt động",
+    "example_sentence": "Outdoor activity helps relieve workplace stress.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "actor",
+    "ipa": "/ˈæktə(r)/",
+    "pos": "noun",
+    "meaning_vi": "diễn viên nam",
+    "example_sentence": "He is a talented actor in modern British theater.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "actress",
+    "ipa": "/ˈæktrəs/",
+    "pos": "noun",
+    "meaning_vi": "nữ diễn viên",
+    "example_sentence": "The actress delivered a captivating monologue.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "actual",
+    "ipa": "/ˈæktʃuəl/",
+    "pos": "adj",
+    "meaning_vi": "thực tế, thật sự",
+    "example_sentence": "The actual results exceeded all initial projections.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "actually",
+    "ipa": "/ˈæktʃuəli/",
+    "pos": "adv",
+    "meaning_vi": "thực ra, thực sự",
+    "example_sentence": "I actually prefer remote collaboration over commuting.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "adapt",
+    "ipa": "/əˈdæpt/",
+    "pos": "verb",
+    "meaning_vi": "thích nghi, chuyển biến",
+    "example_sentence": "Successful businesses adapt quickly to market trends.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "add",
+    "ipa": "/æd/",
+    "pos": "verb",
+    "meaning_vi": "thêm vào, cộng thêm",
+    "example_sentence": "Please add your signature to the bottom of the page.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "addition",
+    "ipa": "/əˈdɪʃn/",
+    "pos": "noun",
+    "meaning_vi": "sự thêm vào, phép cộng",
+    "example_sentence": "The new hire is a great addition to our department.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "additional",
+    "ipa": "/əˈdɪʃənl/",
+    "pos": "adj",
+    "meaning_vi": "bổ sung, thêm vào",
+    "example_sentence": "We require additional resources to meet the deadline.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "address",
+    "ipa": "/əˈdres/",
+    "pos": "verb",
+    "meaning_vi": "giải quyết, đề cập",
+    "example_sentence": "The director will address the concerns in tomorrow meeting.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "adequate",
+    "ipa": "/ˈædɪkwət/",
+    "pos": "adj",
+    "meaning_vi": "đầy đủ, thỏa đáng",
+    "example_sentence": "Make sure there is adequate preparation before the test.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "adjust",
+    "ipa": "/əˈdʒʌst/",
+    "pos": "verb",
+    "meaning_vi": "điều chỉnh, sắp xếp",
+    "example_sentence": "You can adjust the monitor height for better posture.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "admiration",
+    "ipa": "/ˌædməˈreɪʃn/",
+    "pos": "noun",
+    "meaning_vi": "sự ngưỡng mộ, khâm phục",
+    "example_sentence": "She gained the admiration of all her peers.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "admire",
+    "ipa": "/ədˈmaɪə(r)/",
+    "pos": "verb",
+    "meaning_vi": "ngưỡng mộ, khâm phục",
+    "example_sentence": "I really admire his dedication to social welfare.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "admit",
+    "ipa": "/ədˈmɪt/",
+    "pos": "verb",
+    "meaning_vi": "thừa nhận, cho vào",
+    "example_sentence": "He was reluctant to admit his calculation mistake.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "adopt",
+    "ipa": "/əˈdɒpt/",
+    "pos": "verb",
+    "meaning_vi": "áp dụng, thông qua, nhận nuôi",
+    "example_sentence": "The firm decided to adopt sustainable business policies.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "advance",
+    "ipa": "/ədˈvɑːns/",
+    "pos": "noun",
+    "meaning_vi": "sự tiến bộ, phát triển",
+    "example_sentence": "Recent advances in AI have accelerated productivity.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "advanced",
+    "ipa": "/ədˈvɑːnst/",
+    "pos": "adj",
+    "meaning_vi": "tiên tiến, nâng cao",
+    "example_sentence": "This course is designed for advanced English learners.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "advantage",
+    "ipa": "/ədˈvɑːntɪdʒ/",
+    "pos": "noun",
+    "meaning_vi": "lợi thế, ưu điểm",
+    "example_sentence": "Being bilingual gives you a distinct advantage in hiring.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "advertise",
+    "ipa": "/ˈædvətaɪz/",
+    "pos": "verb",
+    "meaning_vi": "quảng cáo, thông báo tuyển dụng",
+    "example_sentence": "They plan to advertise the new opening on LinkedIn.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "advertisement",
+    "ipa": "/ədˈvɜːtɪsmənt/",
+    "pos": "noun",
+    "meaning_vi": "bài quảng cáo, thông báo",
+    "example_sentence": "The advertisement attracted hundreds of applicants.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "advice",
+    "ipa": "/ədˈvaɪs/",
+    "pos": "noun",
+    "meaning_vi": "lời khuyên, tư vấn",
+    "example_sentence": "Her advice helped me navigate my career transition.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "advise",
+    "ipa": "/ədˈvaɪz/",
+    "pos": "verb",
+    "meaning_vi": "khuyên bảo, tư vấn",
+    "example_sentence": "Experts advise reviewing your finances annually.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "affair",
+    "ipa": "/əˈfeə(r)/",
+    "pos": "noun",
+    "meaning_vi": "việc, vấn đề nội bộ",
+    "example_sentence": "The foreign affairs team handles international treaties.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "affect",
+    "ipa": "/əˈfekt/",
+    "pos": "verb",
+    "meaning_vi": "ảnh hưởng đến, tác động",
+    "example_sentence": "Market fluctuations will affect corporate profits.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "afford",
+    "ipa": "/əˈfɔːd/",
+    "pos": "verb",
+    "meaning_vi": "có đủ khả năng chi trả",
+    "example_sentence": "With this bonus, we can afford better equipment.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "agency",
+    "ipa": "/ˈeɪdʒənsi/",
+    "pos": "noun",
+    "meaning_vi": "đại lý, cơ quan",
+    "example_sentence": "We partnered with a creative marketing agency in London.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "agenda",
+    "ipa": "/əˈdʒendə/",
+    "pos": "noun",
+    "meaning_vi": "chương trình nghị sự, lịch trình",
+    "example_sentence": "The team reviewed all five items on today agenda.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "agent",
+    "ipa": "/ˈeɪdʒənt/",
+    "pos": "noun",
+    "meaning_vi": "đại lý, nhân viên ủy quyền",
+    "example_sentence": "Our travel agent arranged the entire flight schedule.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "aggressive",
+    "ipa": "/əˈɡresɪv/",
+    "pos": "adj",
+    "meaning_vi": "hung hăng, quyết liệt",
+    "example_sentence": "The company took an aggressive stance against competitors.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "agree",
+    "ipa": "/əˈɡriː/",
+    "pos": "verb",
+    "meaning_vi": "đồng ý, tán thành",
+    "example_sentence": "All board members agree with the strategy.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "agreement",
+    "ipa": "/əˈɡriːmənt/",
+    "pos": "noun",
+    "meaning_vi": "sự thỏa thuận, hợp đồng",
+    "example_sentence": "Both parties signed a binding non-disclosure agreement.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "ahead",
+    "ipa": "/əˈhed/",
+    "pos": "adv",
+    "meaning_vi": "ở phía trước, dẫn trước",
+    "example_sentence": "We have exciting product launches ahead this quarter.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "aim",
+    "ipa": "/eɪm/",
+    "pos": "noun",
+    "meaning_vi": "mục tiêu, mục đích",
+    "example_sentence": "Our primary aim is to boost customer retention.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "alert",
+    "ipa": "/əˈlɜːt/",
+    "pos": "adj",
+    "meaning_vi": "cảnh giác, báo động",
+    "example_sentence": "Security guards must stay alert during night shifts.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "allow",
+    "ipa": "/əˈlaʊ/",
+    "pos": "verb",
+    "meaning_vi": "cho phép, cấp phép",
+    "example_sentence": "Managers allow team members to work remotely on Fridays.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "alternative",
+    "ipa": "/ɔːlˈtɜːnətɪv/",
+    "pos": "noun",
+    "meaning_vi": "sự lựa chọn thay thế",
+    "example_sentence": "Solar energy is an attractive alternative to fossil fuels.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "analyze",
+    "ipa": "/ˈænəlaɪz/",
+    "pos": "verb",
+    "meaning_vi": "phân tích, mổ xẻ",
+    "example_sentence": "Engineers analyze user feedback to refine the software.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "analysis",
+    "ipa": "/əˈnæləsɪs/",
+    "pos": "noun",
+    "meaning_vi": "sự phân tích, bản phân tích",
+    "example_sentence": "The statistical analysis proved our initial hypothesis.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "annual",
+    "ipa": "/ˈænjuəl/",
+    "pos": "adj",
+    "meaning_vi": "hàng năm, thường niên",
+    "example_sentence": "The annual general meeting will take place next Thursday.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "anticipate",
+    "ipa": "/ænˈtɪsɪpeɪt/",
+    "pos": "verb",
+    "meaning_vi": "dự đoán, lường trước",
+    "example_sentence": "We anticipate higher consumer demand during the holidays.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "apparent",
+    "ipa": "/əˈpærənt/",
+    "pos": "adj",
+    "meaning_vi": "rõ ràng, hiển nhiên",
+    "example_sentence": "It became apparent that the strategy needed adjustment.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "appeal",
+    "ipa": "/əˈpiːl/",
+    "pos": "noun",
+    "meaning_vi": "sự lôi cuốn, lời kêu gọi",
+    "example_sentence": "The product design holds great appeal for young buyers.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "applicant",
+    "ipa": "/ˈæplɪkənt/",
+    "pos": "noun",
+    "meaning_vi": "người nộp đơn xin việc",
+    "example_sentence": "Each applicant must submit a portfolio of past work.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "application",
+    "ipa": "/ˌæplɪˈkeɪʃn/",
+    "pos": "noun",
+    "meaning_vi": "đơn xin việc, ứng dụng",
+    "example_sentence": "She submitted her job application yesterday morning.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "apply",
+    "ipa": "/əˈplaɪ/",
+    "pos": "verb",
+    "meaning_vi": "nộp đơn, áp dụng",
+    "example_sentence": "You can apply for the promotion through the employee portal.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "appoint",
+    "ipa": "/əˈpɔɪnt/",
+    "pos": "verb",
+    "meaning_vi": "bổ nhiệm, chỉ định",
+    "example_sentence": "The board chose to appoint her as the new managing director.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "appointment",
+    "ipa": "/əˈpɔɪntmənt/",
+    "pos": "noun",
+    "meaning_vi": "cuộc hẹn, sự bổ nhiệm",
+    "example_sentence": "I scheduled an appointment with the human resources lead.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "appreciate",
+    "ipa": "/əˈpriːʃieɪt/",
+    "pos": "verb",
+    "meaning_vi": "đánh giá cao, cảm kích",
+    "example_sentence": "We appreciate your prompt assistance during the audit.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "approach",
+    "ipa": "/əˈprəʊtʃ/",
+    "pos": "noun",
+    "meaning_vi": "cách tiếp cận, phương pháp",
+    "example_sentence": "A flexible approach works best when solving novel problems.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "appropriate",
+    "ipa": "/əˈprəʊpriət/",
+    "pos": "adj",
+    "meaning_vi": "thích hợp, phù hợp",
+    "example_sentence": "Wear appropriate formal attire to the corporate dinner.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "approval",
+    "ipa": "/əˈpruːvl/",
+    "pos": "noun",
+    "meaning_vi": "sự phê duyệt, tán thành",
+    "example_sentence": "The purchase order is awaiting executive approval.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "approve",
+    "ipa": "/əˈpruːv/",
+    "pos": "verb",
+    "meaning_vi": "phê duyệt, chuẩn thuận",
+    "example_sentence": "The committee will approve the expansion budget today.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "approximate",
+    "ipa": "/əˈprɒksɪmət/",
+    "pos": "adj",
+    "meaning_vi": "xấp xỉ, tương đối",
+    "example_sentence": "The approximate cost of renovation is five thousand dollars.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "arbitrary",
+    "ipa": "/ˈɑːbɪtrəri/",
+    "pos": "adj",
+    "meaning_vi": "tùy tiện, độc đoán",
+    "example_sentence": "Decisions should be based on data rather than arbitrary whims.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "architect",
+    "ipa": "/ˈɑːkɪtekt/",
+    "pos": "noun",
+    "meaning_vi": "kiến trúc sư",
+    "example_sentence": "The architect presented 3D renderings of the modern campus.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "architecture",
+    "ipa": "/ˈɑːkɪtektʃə(r)/",
+    "pos": "noun",
+    "meaning_vi": "kiến trúc, cấu trúc",
+    "example_sentence": "The software architecture ensures high scalability.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "archive",
+    "ipa": "/ˈɑːkaɪv/",
+    "pos": "noun",
+    "meaning_vi": "kho lưu trữ, tài liệu lưu",
+    "example_sentence": "Historical project records are saved in the cloud archive.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "area",
+    "ipa": "/ˈeəriə/",
+    "pos": "noun",
+    "meaning_vi": "khu vực, lĩnh vực",
+    "example_sentence": "He specializes in the area of international commercial law.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "argue",
+    "ipa": "/ˈɑːɡjuː/",
+    "pos": "verb",
+    "meaning_vi": "tranh luận, cãi vã",
+    "example_sentence": "Colleagues should discuss constructively rather than argue.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "argument",
+    "ipa": "/ˈɑːɡjumənt/",
+    "pos": "noun",
+    "meaning_vi": "luận điểm, cuộc tranh cãi",
+    "example_sentence": "She presented a compelling argument in favor of the merger.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "arise",
+    "ipa": "/əˈraɪz/",
+    "pos": "verb",
+    "meaning_vi": "nảy sinh, xuất hiện",
+    "example_sentence": "Unexpected challenges often arise during complex transitions.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "arm",
+    "ipa": "/ɑːm/",
+    "pos": "noun",
+    "meaning_vi": "cánh tay, chi nhánh",
+    "example_sentence": "The research arm of the institute develops clean energy.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "army",
+    "ipa": "/ˈɑːmi/",
+    "pos": "noun",
+    "meaning_vi": "quân đội, đoàn ngũ",
+    "example_sentence": "He served in the national army before entering business.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "arrange",
+    "ipa": "/əˈreɪndʒ/",
+    "pos": "verb",
+    "meaning_vi": "sắp xếp, thu xếp",
+    "example_sentence": "Please arrange a video conference for next Wednesday.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "arrangement",
+    "ipa": "/əˈreɪndʒmənt/",
+    "pos": "noun",
+    "meaning_vi": "sự sắp xếp, thỏa thuận",
+    "example_sentence": "All travel arrangements have been confirmed by email.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "arrest",
+    "ipa": "/əˈrest/",
+    "pos": "verb",
+    "meaning_vi": "bắt giữ, ngăn chặn",
+    "example_sentence": "Police managed to arrest the fraud suspect at the airport.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "arrival",
+    "ipa": "/əˈraɪvl/",
+    "pos": "noun",
+    "meaning_vi": "sự đến, cập bến",
+    "example_sentence": "Check the arrival board for updated flight status.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "arrive",
+    "ipa": "/əˈraɪv/",
+    "pos": "verb",
+    "meaning_vi": "đến nơi, tới",
+    "example_sentence": "The shipment is scheduled to arrive early tomorrow.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "art",
+    "ipa": "/ɑːt/",
+    "pos": "noun",
+    "meaning_vi": "nghệ thuật, mỹ thuật",
+    "example_sentence": "She studied the history of modern European art.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "article",
+    "ipa": "/ˈɑːtɪkl/",
+    "pos": "noun",
+    "meaning_vi": "bài báo, điều khoản",
+    "example_sentence": "He published an insightful article on tech innovations.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "artificial",
+    "ipa": "/ˌɑːtɪˈfɪʃl/",
+    "pos": "adj",
+    "meaning_vi": "nhân tạo, giả tạo",
+    "example_sentence": "Artificial intelligence enhances automated speech analysis.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "artist",
+    "ipa": "/ˈɑːtɪst/",
+    "pos": "noun",
+    "meaning_vi": "nghệ sĩ, họa sĩ",
+    "example_sentence": "The graphic artist created the branding logo for the app.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A1",
+    "is_custom": 0
+  },
+  {
+    "word": "artistic",
+    "ipa": "/ɑːˈtɪstɪk/",
+    "pos": "adj",
+    "meaning_vi": "mang tính nghệ thuật",
+    "example_sentence": "The museum exhibition displayed tremendous artistic talent.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "ashamed",
+    "ipa": "/əˈʃeɪmd/",
+    "pos": "adj",
+    "meaning_vi": "hổ thẹn, xấu hổ",
+    "example_sentence": "He felt ashamed after realizing his unpunctuality.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "aside",
+    "ipa": "/əˈsaɪd/",
+    "pos": "adv",
+    "meaning_vi": "sang một bên, riêng ra",
+    "example_sentence": "Set aside time daily for focused vocabulary practice.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "aspect",
+    "ipa": "/ˈæspekt/",
+    "pos": "noun",
+    "meaning_vi": "khía cạnh, phương diện",
+    "example_sentence": "Pronunciation is a crucial aspect of language mastery.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assess",
+    "ipa": "/əˈses/",
+    "pos": "verb",
+    "meaning_vi": "đánh giá, định giá",
+    "example_sentence": "The tutor will assess your speaking fluency each week.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assessment",
+    "ipa": "/əˈsesmənt/",
+    "pos": "noun",
+    "meaning_vi": "sự đánh giá, thẩm định",
+    "example_sentence": "Continuous assessment motivates students to learn consistently.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "asset",
+    "ipa": "/ˈæset/",
+    "pos": "noun",
+    "meaning_vi": "tài sản, vốn quý",
+    "example_sentence": "Bilingual proficiency is a tremendous asset in commerce.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assign",
+    "ipa": "/əˈsaɪn/",
+    "pos": "verb",
+    "meaning_vi": "giao việc, phân công",
+    "example_sentence": "The manager will assign tasks according to team strengths.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "assignment",
+    "ipa": "/əˈsaɪnmənt/",
+    "pos": "noun",
+    "meaning_vi": "nhiệm vụ, bài tập",
+    "example_sentence": "Submit your translation assignment before midnight.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "assist",
+    "ipa": "/əˈsɪst/",
+    "pos": "verb",
+    "meaning_vi": "hỗ trợ, giúp đỡ",
+    "example_sentence": "Virtual assistants assist customers with billing inquiries.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "assistance",
+    "ipa": "/əˈsɪstəns/",
+    "pos": "noun",
+    "meaning_vi": "sự hỗ trợ, trợ giúp",
+    "example_sentence": "Thank you for your generous assistance with the report.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assistant",
+    "ipa": "/əˈsɪstənt/",
+    "pos": "noun",
+    "meaning_vi": "trợ lý, phụ tá",
+    "example_sentence": "The executive assistant coordinates all board meetings.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "associate",
+    "ipa": "/əˈsəʊʃieɪt/",
+    "pos": "verb",
+    "meaning_vi": "liên tưởng, kết giao",
+    "example_sentence": "People often associate diligence with long-term success.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "association",
+    "ipa": "/əˌsəʊʃiˈeɪʃn/",
+    "pos": "noun",
+    "meaning_vi": "hiệp hội, sự liên kết",
+    "example_sentence": "She joined the international linguistics association.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assume",
+    "ipa": "/əˈsjuːm/",
+    "pos": "verb",
+    "meaning_vi": "cho rằng, đảm đương",
+    "example_sentence": "Do not assume the task is complete without testing.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assurance",
+    "ipa": "/əˈʃʊərəns/",
+    "pos": "noun",
+    "meaning_vi": "sự cam đoan, bảo đảm",
+    "example_sentence": "The vendor provided assurance that delivery is on time.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "assure",
+    "ipa": "/əˈʃʊə(r)/",
+    "pos": "verb",
+    "meaning_vi": "cam đoan, quả quyết",
+    "example_sentence": "I can assure you that your privacy is protected.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "astonish",
+    "ipa": "/əˈstɒnɪʃ/",
+    "pos": "verb",
+    "meaning_vi": "làm ngạc nhiên, làm sửng sốt",
+    "example_sentence": "Her rapid language acquisition continues to astonish us.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "athlete",
+    "ipa": "/ˈæθliːt/",
+    "pos": "noun",
+    "meaning_vi": "vận động viên",
+    "example_sentence": "Every professional athlete trains with rigorous discipline.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "atmosphere",
+    "ipa": "/ˈætməsfɪə(r)/",
+    "pos": "noun",
+    "meaning_vi": "bầu không khí, môi trường",
+    "example_sentence": "A supportive atmosphere encourages confident speech.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attach",
+    "ipa": "/əˈtætʃ/",
+    "pos": "verb",
+    "meaning_vi": "đính kèm, gắn kết",
+    "example_sentence": "Please attach your resume in PDF format to the application.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attachment",
+    "ipa": "/əˈtætʃmənt/",
+    "pos": "noun",
+    "meaning_vi": "tệp đính kèm",
+    "example_sentence": "Open the email attachment to view the contract details.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attack",
+    "ipa": "/əˈtæk/",
+    "pos": "noun",
+    "meaning_vi": "sự tấn công, công kích",
+    "example_sentence": "Cybersecurity teams defended against a distributed attack.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "attempt",
+    "ipa": "/əˈtempt/",
+    "pos": "noun",
+    "meaning_vi": "sự nỗ lực, cố gắng",
+    "example_sentence": "His first attempt at speaking English was very courageous.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attend",
+    "ipa": "/əˈtend/",
+    "pos": "verb",
+    "meaning_vi": "tham dự, có mặt",
+    "example_sentence": "All registered members are invited to attend the seminar.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "attention",
+    "ipa": "/əˈtenʃn/",
+    "pos": "noun",
+    "meaning_vi": "sự chú ý, lưu tâm",
+    "example_sentence": "Pay close attention to word endings when speaking English.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "attitude",
+    "ipa": "/ˈætɪtjuːd/",
+    "pos": "noun",
+    "meaning_vi": "thái độ, quan điểm",
+    "example_sentence": "A positive attitude is half the battle in learning.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attorney",
+    "ipa": "/əˈtɜːni/",
+    "pos": "noun",
+    "meaning_vi": "luật sư",
+    "example_sentence": "The corporate attorney reviewed the licensing clauses.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "attract",
+    "ipa": "/əˈtrækt/",
+    "pos": "verb",
+    "meaning_vi": "thu hút, lôi cuốn",
+    "example_sentence": "Innovative features attract thousands of eager learners.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attraction",
+    "ipa": "/əˈtrækʃn/",
+    "pos": "noun",
+    "meaning_vi": "điểm thu hút, sự lôi cuốn",
+    "example_sentence": "The city main attraction is its historic cathedral.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "attractive",
+    "ipa": "/əˈtræktɪv/",
+    "pos": "adj",
+    "meaning_vi": "hấp dẫn, lôi cuốn",
+    "example_sentence": "The subscription offers an attractive family package.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "audience",
+    "ipa": "/ˈɔːdiəns/",
+    "pos": "noun",
+    "meaning_vi": "khán giả, thính giả",
+    "example_sentence": "The audience clapped enthusiastically after the speech.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "audit",
+    "ipa": "/ˈɔːdɪt/",
+    "pos": "noun",
+    "meaning_vi": "sự kiểm toán, thanh tra",
+    "example_sentence": "The annual financial audit concluded without discrepancies.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "author",
+    "ipa": "/ˈɔːθə(r)/",
+    "pos": "noun",
+    "meaning_vi": "tác giả, người sáng tạo",
+    "example_sentence": "The author wrote an inspiring guide to language mastery.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "authority",
+    "ipa": "/ɔːˈθɒrəti/",
+    "pos": "noun",
+    "meaning_vi": "thẩm quyền, chuyên gia",
+    "example_sentence": "She is a leading authority on phonetics and accent.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "authorize",
+    "ipa": "/ˈɔːθəraɪz/",
+    "pos": "verb",
+    "meaning_vi": "ủy quyền, cho phép",
+    "example_sentence": "Only senior managers can authorize overseas expenditures.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "automatic",
+    "ipa": "/ˌɔːtəˈmætɪk/",
+    "pos": "adj",
+    "meaning_vi": "tự động, tự giác",
+    "example_sentence": "The microphone has an automatic noise cancellation filter.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "automatically",
+    "ipa": "/ˌɔːtəˈmætɪkli/",
+    "pos": "adv",
+    "meaning_vi": "một cách tự động",
+    "example_sentence": "The application automatically syncs vocabulary progress.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "available",
+    "ipa": "/əˈveɪləbl/",
+    "pos": "adj",
+    "meaning_vi": "có sẵn, rảnh rỗi",
+    "example_sentence": "The AI tutor is available twenty-four hours a day.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "average",
+    "ipa": "/ˈævərɪdʒ/",
+    "pos": "adj",
+    "meaning_vi": "trung bình, thông thường",
+    "example_sentence": "The average daily study time is twenty-five minutes.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "avoid",
+    "ipa": "/əˈvɔɪd/",
+    "pos": "verb",
+    "meaning_vi": "tránh xa, né tránh",
+    "example_sentence": "Practice daily to avoid forgetting recently acquired terms.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "award",
+    "ipa": "/əˈwɔːd/",
+    "pos": "noun",
+    "meaning_vi": "giải thưởng, phần thưởng",
+    "example_sentence": "He received an award for outstanding community leadership.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "aware",
+    "ipa": "/əˈweə(r)/",
+    "pos": "adj",
+    "meaning_vi": "nhận thức được, ý thức",
+    "example_sentence": "Be aware of common pronunciation pitfalls like final sounds.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B1",
+    "is_custom": 0
+  },
+  {
+    "word": "awareness",
+    "ipa": "/əˈweənəs/",
+    "pos": "noun",
+    "meaning_vi": "sự nhận thức, hiểu biết",
+    "example_sentence": "Workshops raise public awareness about digital security.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  },
+  {
+    "word": "awful",
+    "ipa": "/ˈɔːfl/",
+    "pos": "adj",
+    "meaning_vi": "kinh khủng, tệ hại",
+    "example_sentence": "The bad weather caused an awful traffic delay.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "A2",
+    "is_custom": 0
+  },
+  {
+    "word": "awkward",
+    "ipa": "/ˈɔːkwəd/",
+    "pos": "adj",
+    "meaning_vi": "ngượng ngùng, lúng túng",
+    "example_sentence": "There was an awkward silence before someone spoke up.",
+    "topic": "Nghề nghiệp & Môi trường công sở",
+    "level": "B2",
+    "is_custom": 0
+  }
+]
