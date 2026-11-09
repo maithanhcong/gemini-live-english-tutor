@@ -415,6 +415,18 @@ function saveMasteredWordsToStorage(immediate) {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ selected_words: Array.from(selectedWordSet) }),
+    }).then(function(res) {
+      return res.json();
+    }).then(function(data) {
+      if (data && typeof data.selected_count === "number") {
+        if (statLearnedWords) statLearnedWords.textContent = data.selected_count;
+        if (headerMasteredBadge && currentUser) {
+          headerMasteredBadge.textContent = data.selected_count + " từ đã học";
+        }
+        if (flashcardSessionMasteredBadge) {
+          flashcardSessionMasteredBadge.textContent = "Đã thuộc: " + data.selected_count + " từ";
+        }
+      }
     }).catch(function(err) {
       console.debug("Error updating selection in backend:", err);
     });
@@ -986,15 +998,19 @@ async function syncVocabFromExcel() {
     const data = await response.json();
 
     if (data.status === "success") {
-      totalVocabCount = data.total_words || 2850;
+      totalVocabCount = data.total_words || 2854;
       if (statTotalWords) statTotalWords.textContent = totalVocabCount.toLocaleString("vi-VN");
       if (statLearnedWords) statLearnedWords.textContent = (data.learned_count !== undefined && data.learned_count !== null ? data.learned_count : 0);
+      
+      // Lưu toàn bộ danh mục từ vựng Oxford 3000 không bị lọc
+      window.allTopicsFull = (data.all_topics && data.all_topics.length > 0) ? data.all_topics : (data.topics || []);
       syncedTopics = data.topics || [];
 
       // Rebuild window.allWordsCache for fast searching and flashcards
       window.allWordsCache = [];
-      for (let t = 0; t < syncedTopics.length; t++) {
-        const top = syncedTopics[t];
+      const cacheSource = window.allTopicsFull;
+      for (let t = 0; t < cacheSource.length; t++) {
+        const top = cacheSource[t];
         if (top && Array.isArray(top.words)) {
           for (let w = 0; w < top.words.length; w++) {
             const wordObj = top.words[w];
@@ -1010,8 +1026,8 @@ async function syncVocabFromExcel() {
         }
       }
 
-      // Phục hồi chính xác trạng thái tích chọn từ CSDL SQLite theo user_id
-      if (Array.isArray(data.selected_words) && data.selected_words.length > 0) {
+      // Phục hồi chính xác trạng thái tích chọn từ CSDL SQLite theo user_id (Single Source of Truth)
+      if (Array.isArray(data.selected_words)) {
         selectedWordSet = new Set(data.selected_words);
         try {
           localStorage.setItem(
@@ -1019,28 +1035,10 @@ async function syncVocabFromExcel() {
             JSON.stringify(data.selected_words)
           );
         } catch (e) {}
-        updateSyncBanners();
-      } else if (selectedWordSet.size === 0) {
-        // Tự động tích chọn tất cả các từ đã học (TRUE) từ database để đồng bộ số lượng chính xác
-        for (let i = 0; i < syncedTopics.length; i++) {
-          const topic = syncedTopics[i];
-          for (let j = 0; j < topic.words.length; j++) {
-            const w = topic.words[j];
-            if (w.learned) {
-              selectedWordSet.add(w.word);
-            }
-          }
-        }
-        // Nếu không có từ nào đánh dấu learned, tự động chọn tất cả từ của các chủ đề hiện tại
-        if (selectedWordSet.size === 0) {
-          for (let i = 0; i < syncedTopics.length; i++) {
-            const topic = syncedTopics[i];
-            for (let j = 0; j < topic.words.length; j++) {
-              selectedWordSet.add(topic.words[j].word);
-            }
-          }
-        }
-        saveMasteredWordsToStorage();
+      }
+
+      if (flashcardSessionMasteredBadge) {
+        flashcardSessionMasteredBadge.textContent = "Đã thuộc: " + selectedWordSet.size + " từ";
       }
 
       renderTopics();
@@ -1107,6 +1105,7 @@ function renderTopicChildren(topic, topicBody, chkTopic, countBadge) {
       updateTopicState();
       updateSelectedCount();
       updateSyncBanners();
+      saveMasteredWordsToStorage();
     };
 
     wChk.onclick = (e) => {
@@ -1231,6 +1230,7 @@ function renderSearchResults(searchTerm) {
       row.classList.toggle("selected", checked);
       updateSelectedCount();
       updateSyncBanners();
+      saveMasteredWordsToStorage();
     };
 
     wChk.onclick = (e) => {
@@ -1429,6 +1429,7 @@ function renderTopics() {
 
       updateSelectedCount();
       updateSyncBanners();
+      saveMasteredWordsToStorage();
     };
 
     topicGroup.appendChild(topicHeader);
@@ -1458,7 +1459,6 @@ function updateSelectedCount() {
   if (mobileSelectionHintText) {
     mobileSelectionHintText.textContent = `Đang chọn: ${count} từ cốt lõi`;
   }
-  saveMasteredWordsToStorage();
   if (geminiClient && geminiClient.isConnected()) {
     geminiClient.syncMasteredWords(Array.from(selectedWordSet));
   }
@@ -1472,6 +1472,7 @@ if (linkSelectAll) {
     });
     renderTopics();
     updateSelectedCount();
+    saveMasteredWordsToStorage();
   };
 }
 
@@ -1480,6 +1481,7 @@ if (linkDeselectAll) {
     selectedWordSet.clear();
     renderTopics();
     updateSelectedCount();
+    saveMasteredWordsToStorage();
   };
 }
 
@@ -3168,7 +3170,7 @@ async function loadFlashcardDeck(filterType) {
   if (filterType) {
     currentDeckFilter = filterType;
   }
-  if (!syncedTopics || syncedTopics.length === 0) {
+  if (!syncedTopics || syncedTopics.length === 0 || !window.allWordsCache || window.allWordsCache.length === 0) {
     await syncVocabFromExcel();
   }
 
@@ -3187,9 +3189,10 @@ async function loadFlashcardDeck(filterType) {
 
   var pool = [];
   var allWords = [];
-  if (syncedTopics && syncedTopics.length > 0) {
-    for (var i = 0; i < syncedTopics.length; i++) {
-      var topic = syncedTopics[i];
+  var sourceTopics = (window.allTopicsFull && window.allTopicsFull.length > 0) ? window.allTopicsFull : syncedTopics;
+  if (sourceTopics && sourceTopics.length > 0) {
+    for (var i = 0; i < sourceTopics.length; i++) {
+      var topic = sourceTopics[i];
       if (topic && topic.words) {
         for (var j = 0; j < topic.words.length; j++) {
           var w = topic.words[j];
@@ -3231,7 +3234,7 @@ async function loadFlashcardDeck(filterType) {
   flashcardMasteredThisSession = 0;
 
   if (flashcardSessionMasteredBadge) {
-    flashcardSessionMasteredBadge.textContent = "Đã thuộc: 0";
+    flashcardSessionMasteredBadge.textContent = "Đã thuộc: " + (selectedWordSet ? selectedWordSet.size : 0) + " từ";
   }
 
   renderCurrentFlashcard();
@@ -3340,17 +3343,41 @@ function masterCurrentFlashcard() {
     }
   }
 
-  // Instant SQLite sync
-  saveMasteredWordsToStorage(true);
+  // Update local storage
+  try {
+    localStorage.setItem(
+      STORAGE_KEY_MASTERED_WORDS,
+      JSON.stringify(Array.from(selectedWordSet))
+    );
+  } catch (e) {}
+
+  // Atomic backend SQLite sync for this word
+  fetch("/api/vocab/update-selection", {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ words: [wordName], is_selected: true })
+  }).then(function(res) {
+    return res.json();
+  }).then(function(data) {
+    if (data && data.status === "success" && typeof data.selected_count === "number") {
+      if (statLearnedWords) statLearnedWords.textContent = data.selected_count;
+      if (headerMasteredBadge && currentUser) {
+        headerMasteredBadge.textContent = data.selected_count + " từ đã học";
+      }
+    }
+  }).catch(function(err) {
+    console.debug("Error saving mastered word to SQLite:", err);
+  });
+
   updateSelectedCount();
   updateSyncBanners();
 
   flashcardMasteredThisSession++;
   if (flashcardSessionMasteredBadge) {
-    flashcardSessionMasteredBadge.textContent = "Đã thuộc: " + flashcardMasteredThisSession;
+    flashcardSessionMasteredBadge.textContent = "Đã thuộc: " + selectedWordSet.size + " từ";
   }
 
-  notyf.success('Đã thuộc "' + wordName + '" & tự động lưu vào CSDL!');
+  notyf.success('Đã thuộc "' + wordName + '"!');
 
   currentFlashcardIndex++;
   renderCurrentFlashcard();
@@ -3361,7 +3388,7 @@ function showFlashcardCompletion() {
   if (flashcardCompletedView) flashcardCompletedView.classList.remove("hidden");
 
   if (flashcardSummaryText) {
-    flashcardSummaryText.textContent = "Bạn đã tích thuộc " + flashcardMasteredThisSession + " từ vựng và lưu đồng bộ vào CSDL tài khoản.";
+    flashcardSummaryText.textContent = "Bạn đã hoàn thành bộ thẻ! Tổng số từ đã thuộc trong tài khoản: " + (selectedWordSet ? selectedWordSet.size : 0) + " từ.";
   }
   refreshIcons();
 }

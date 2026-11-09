@@ -437,10 +437,17 @@ async def update_vocab_selection_api(req: UpdateVocabSelectionRequest, request: 
             count = len(req.selected_words)
         elif req.words is not None and req.is_selected is not None:
             database.update_vocab_selection(req.words, req.is_selected, user_id=user_id)
-            curr_selected = set(database.get_selected_words_list(user_id=user_id))
+            curr_selected = database.get_selected_words_list(user_id=user_id)
             if not user_id:
-                asyncio.create_task(asyncio.to_thread(database.sync_selection_to_excel, curr_selected))
+                asyncio.create_task(asyncio.to_thread(database.sync_selection_to_excel, set(curr_selected)))
             count = len(curr_selected)
+            return {
+                "status": "success",
+                "user_id": user_id,
+                "selected_count": count,
+                "selected_words": curr_selected,
+                "message": "Đã lưu trạng thái tích chọn thành công.",
+            }
         else:
             raise HTTPException(status_code=400, detail="Thiếu dữ liệu cập nhật trạng thái.")
 
@@ -448,6 +455,7 @@ async def update_vocab_selection_api(req: UpdateVocabSelectionRequest, request: 
             "status": "success",
             "user_id": user_id,
             "selected_count": count,
+            "selected_words": database.get_selected_words_list(user_id=user_id),
             "message": "Đã lưu trạng thái tích chọn thành công.",
         }
     except Exception as e:
@@ -485,24 +493,39 @@ async def sync_vocab(request: Request, learned_only: bool = False):
         selected_words = database.get_selected_words_list(user_id=user_id)
         learned_count = len(selected_words)
 
-        words_to_return = [w for w in all_words if (not learned_only or w["learned"])]
-
-        topics_dict = {}
-        for w in words_to_return:
+        # Build full topics dictionary for 100% of Oxford 3000
+        full_topics_dict = {}
+        for w in all_words:
             t = w["topic"] or "Chủ đề chung"
-            if t not in topics_dict:
-                topics_dict[t] = []
-            topics_dict[t].append(w)
+            if t not in full_topics_dict:
+                full_topics_dict[t] = []
+            full_topics_dict[t].append(w)
+        all_topics = [{"name": t, "words": w_list} for t, w_list in full_topics_dict.items()]
 
-        topics = [{"name": t, "words": w_list} for t, w_list in topics_dict.items()]
+        # Filtered topics if learned_only is requested
+        if learned_only:
+            filtered_topics_dict = {}
+            for w in all_words:
+                if w["learned"]:
+                    t = w["topic"] or "Chủ đề chung"
+                    if t not in filtered_topics_dict:
+                        filtered_topics_dict[t] = []
+                    filtered_topics_dict[t].append(w)
+            topics = [{"name": t, "words": w_list} for t, w_list in filtered_topics_dict.items()]
+            returned_count = sum(len(x["words"]) for x in topics)
+        else:
+            topics = all_topics
+            returned_count = total_count
+
         return {
             "status": "success",
             "user_id": user_id,
             "total_words": total_count,
             "learned_count": learned_count,
             "selected_words": selected_words,
-            "returned_count": len(words_to_return),
+            "returned_count": returned_count,
             "topics": topics,
+            "all_topics": all_topics,
         }
     except Exception as e:
         logger.error(f"Error syncing vocab from SQLite: {e}")
