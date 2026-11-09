@@ -8,7 +8,7 @@
 
   <!-- Upgraded On-Screen Debugger for iPad/Safari Detailed Error Trace -->
   <script>
-    window.onerror = function(msg, url, line, col, err) {
+    window.onerror = function (msg, url, line, col, err) {
       var box = document.getElementById('debug-error-box');
       if (!box) {
         box = document.createElement('div');
@@ -26,8 +26,8 @@
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <!-- 100% Local CSS Tokens & Vendor Styles (Zero External CDN) -->
-  <link rel="stylesheet" href="/static/style.css?v=3.9.7" />
-  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.7" />
+  <link rel="stylesheet" href="/static/style.css?v=3.9.8" />
+  <link rel="stylesheet" href="/static/notyf.min.css?v=3.9.8" />
 </head>
 
 <body>
@@ -113,7 +113,8 @@
                       </div>
                       <div class="profile-info-row">
                         <span class="info-label">Trạng thái:</span>
-                        <span class="badge-status-online"><i data-lucide="shield-check" class="lucide-icon"></i> Đang hoạt động</span>
+                        <span class="badge-status-online"><i data-lucide="shield-check" class="lucide-icon"></i> Đang
+                          hoạt động</span>
                       </div>
                     </div>
                   </div>
@@ -128,11 +129,13 @@
                     </div>
                     <div class="form-group">
                       <label for="inputNewPassword">Mật khẩu mới</label>
-                      <input type="password" id="inputNewPassword" placeholder="Tối thiểu 4 ký tự" required minlength="4" />
+                      <input type="password" id="inputNewPassword" placeholder="Tối thiểu 4 ký tự" required
+                        minlength="4" />
                     </div>
                     <div class="form-group">
                       <label for="inputConfirmPassword">Xác nhận mật khẩu</label>
-                      <input type="password" id="inputConfirmPassword" placeholder="Nhập lại mật khẩu mới" required minlength="4" />
+                      <input type="password" id="inputConfirmPassword" placeholder="Nhập lại mật khẩu mới" required
+                        minlength="4" />
                     </div>
                     <div id="changePasswordStatusMsg" class="form-status-msg hidden"></div>
                     <button type="submit" id="btnSubmitChangePassword" class="btn btn-primary btn-block">
@@ -199,6 +202,9 @@
           <button id="navTabTranslation" class="nav-tab">
             <span class="tab-icon"><i data-lucide="book-open" class="lucide-icon"></i></span> Luyện Dịch Song Ngữ
           </button>
+          <button id="navTabFlashcards" class="nav-tab">
+            <span class="tab-icon"><i data-lucide="layers" class="lucide-icon"></i></span> Thẻ Lật Từ Vựng
+          </button>
           <button id="navTabStudio" class="nav-tab">
             <span class="tab-icon"><i data-lucide="languages" class="lucide-icon"></i></span> Phòng Dịch Thuật AI
           </button>
@@ -223,7 +229,8 @@
         <div class="dashboard-hero-card">
           <div class="badge-pill">Đồng hành học tập thông minh</div>
           <h2 class="dashboard-title">AuraSpeak — Luyện Nói Phản Xạ &amp; Dịch Thuật AI</h2>
-          <p class="dashboard-subtitle">Hệ thống luyện phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và phân tích âm vị.</p>
+          <p class="dashboard-subtitle">Hệ thống luyện phản xạ thời gian thực qua giọng nói với lộ trình chuẩn hóa và
+            phân tích âm vị.</p>
 
           <!-- Thanh Tiến Độ Lộ Trình (Mastery Progress Bar) -->
           <div class="dashboard-progress-card">
@@ -255,7 +262,8 @@
                 <span class="action-status-tag">Phản xạ Live</span>
               </div>
               <h3>Đàm thoại trực tiếp</h3>
-              <p>Trò chuyện giọng nói 2 chiều với gia sư AI, nhận diện âm thanh tức thì và chuẩn hóa phát âm tự nhiên.</p>
+              <p>Trò chuyện giọng nói 2 chiều với gia sư AI, nhận diện âm thanh tức thì và chuẩn hóa phát âm tự nhiên.
+              </p>
               <button type="button" id="btnHomeActionLive" class="btn btn-primary btn-action-trigger">
                 <span class="btn-icon"><i data-lucide="mic" class="lucide-icon"></i></span> Vào Phòng Đàm Thoại
               </button>
@@ -268,7 +276,8 @@
                 <span class="action-status-tag">Ưu tiên từ mới</span>
               </div>
               <h3>Luyện đọc theo từ</h3>
-              <p>Tạo bài đọc tự nhiên lồng ghép các từ bạn vừa chọn với thuật toán ưu tiên từ mới tích, đối chiếu lời dịch.</p>
+              <p>Tạo bài đọc tự nhiên lồng ghép các từ bạn vừa chọn với thuật toán ưu tiên từ mới tích, đối chiếu lời
+                dịch.</p>
               <button type="button" id="btnDashboardReadingAction" class="btn btn-secondary btn-action-trigger">
                 <span class="btn-icon"><i data-lucide="sparkles" class="lucide-icon"></i></span> Tạo Bài Đọc Ngay
               </button>
@@ -294,21 +303,24 @@
               <span class="f-icon"><i data-lucide="book-open" class="lucide-icon"></i></span>
               <div>
                 <strong>Lộ trình chuẩn Oxford 3000:</strong>
-                <span>Bao quát 2.850+ từ vựng thông dụng nhất theo chuẩn CEFR (A1-B2) và phân tích âm vị chuyên sâu.</span>
+                <span>Bao quát 2.850+ từ vựng thông dụng nhất theo chuẩn CEFR (A1-B2) và phân tích âm vị chuyên
+                  sâu.</span>
               </div>
             </div>
             <div class="feature-item">
               <span class="f-icon"><i data-lucide="target" class="lucide-icon"></i></span>
               <div>
                 <strong>Sổ tay chuẩn hóa phát âm:</strong>
-                <span>Tập trung hoàn thiện âm đuôi (/s/, /z/, /t/, /d/), cặp âm /θ/ - /ð/ và các cặp nguyên âm dễ nhầm lẫn.</span>
+                <span>Tập trung hoàn thiện âm đuôi (/s/, /z/, /t/, /d/), cặp âm /θ/ - /ð/ và các cặp nguyên âm dễ nhầm
+                  lẫn.</span>
               </div>
             </div>
             <div class="feature-item">
               <span class="f-icon"><i data-lucide="zap" class="lucide-icon"></i></span>
               <div>
                 <strong>Đường truyền ổn định 24/7:</strong>
-                <span>Hệ thống duy trì hội thoại liền mạch, tự động tối ưu đường truyền để bạn học tập không bị ngắt quãng.</span>
+                <span>Hệ thống duy trì hội thoại liền mạch, tự động tối ưu đường truyền để bạn học tập không bị ngắt
+                  quãng.</span>
               </div>
             </div>
           </div>
@@ -317,7 +329,8 @@
             <span class="sync-icon"><i data-lucide="refresh-cw" class="lucide-icon"></i></span>
             <div>
               <strong>Đồng bộ từ vựng với Tab Luyện Dịch:</strong>
-              <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, AuraSpeak AI chỉ luyện các từ còn lại.</span>
+              <span id="liveSyncStatusText">0 từ đã tích chọn (thành thạo) sẽ được loại trừ hoàn toàn, AuraSpeak AI chỉ
+                luyện các từ còn lại.</span>
             </div>
           </div>
         </div>
@@ -333,7 +346,8 @@
             <span class="status-pulse-dot"></span> Không Gian Luyện Nói 1:1
           </div>
           <h2 class="live-room-title">Phòng Đàm Thoại Trực Tiếp</h2>
-          <p class="live-room-desc">Kết nối giọng nói thời gian thực với Gia sư AI. Hệ thống tự động loại trừ các từ bạn đã thành thạo để tối ưu phản xạ cho các từ mục tiêu.</p>
+          <p class="live-room-desc">Kết nối giọng nói thời gian thực với Gia sư AI. Hệ thống tự động loại trừ các từ bạn
+            đã thành thạo để tối ưu phản xạ cho các từ mục tiêu.</p>
 
           <div class="live-pre-sync-notice">
             <i data-lucide="shield-check" class="lucide-icon"></i>
@@ -351,7 +365,8 @@
       <div class="session-end-section hidden" id="session-end-section">
         <h2>Phiên học đã kết thúc</h2>
         <p>Bạn có thể bắt đầu phiên học mới bất kỳ lúc nào.</p>
-        <button id="restartBtn" class="btn btn-primary"><i data-lucide="rotate-cw" class="lucide-icon"></i> Bắt Đầu Phiên Mới</button>
+        <button id="restartBtn" class="btn btn-primary"><i data-lucide="rotate-cw" class="lucide-icon"></i> Bắt Đầu
+          Phiên Mới</button>
       </div>
 
       <div class="app-section hidden" id="app-section">
@@ -366,7 +381,8 @@
             <!-- Voice Visualizer: SiriWave Canvas Display -->
             <div class="visualizer-wrapper">
               <div class="visualizer-header">
-                <span class="visualizer-label"><i data-lucide="activity" class="lucide-icon"></i> Phổ sóng âm thanh trực tiếp</span>
+                <span class="visualizer-label"><i data-lucide="activity" class="lucide-icon"></i> Phổ sóng âm thanh trực
+                  tiếp</span>
                 <span class="visualizer-status" id="visualizerStatusText">Đang chờ âm thanh...</span>
               </div>
               <div id="voice-visualizer" class="voice-visualizer"></div>
@@ -401,9 +417,12 @@
 
             <div class="controls">
               <button id="micBtn" class="btn icon-btn"><i data-lucide="mic" class="lucide-icon"></i> Start Mic</button>
-              <button id="cameraBtn" class="btn icon-btn"><i data-lucide="video" class="lucide-icon"></i> Start Camera</button>
-              <button id="screenBtn" class="btn icon-btn"><i data-lucide="monitor" class="lucide-icon"></i> Share Screen</button>
-              <button id="disconnectBtn" class="btn icon-btn danger"><i data-lucide="phone-off" class="lucide-icon"></i> Disconnect</button>
+              <button id="cameraBtn" class="btn icon-btn"><i data-lucide="video" class="lucide-icon"></i> Start
+                Camera</button>
+              <button id="screenBtn" class="btn icon-btn"><i data-lucide="monitor" class="lucide-icon"></i> Share
+                Screen</button>
+              <button id="disconnectBtn" class="btn icon-btn danger"><i data-lucide="phone-off" class="lucide-icon"></i>
+                Disconnect</button>
             </div>
           </div>
 
@@ -466,17 +485,19 @@
       <!-- Mobile Vocab Drawer Quick Button -->
       <div class="mobile-vocab-trigger-bar">
         <button id="btnToggleMobileVocabDrawer" class="btn-mobile-select-vocab">
-          <span class="btn-mobile-select-text"><i data-lucide="library" class="lucide-icon"></i> Chọn từ vựng luyện tập (<span id="mobileSelectedCountHighlight">Đang chọn: 0 từ</span>) <i data-lucide="chevron-down" class="lucide-icon"></i></span>
+          <span class="btn-mobile-select-text"><i data-lucide="library" class="lucide-icon"></i> Chọn từ vựng luyện tập
+            (<span id="mobileSelectedCountHighlight">Đang chọn: 0 từ</span>) <i data-lucide="chevron-down"
+              class="lucide-icon"></i></span>
         </button>
       </div>
 
-      <!-- Backdrop for Mobile Bottom Sheet -->
-      <div id="vocabDrawerBackdrop" class="bottom-sheet-backdrop hidden"></div>
+      <!-- Backdrop for Mobile Vocab Modal -->
+      <div id="vocabDrawerBackdrop" class="vocab-modal-backdrop hidden"></div>
 
       <!-- Translation Main Workspace -->
       <div class="translation-workspace">
-        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop, 100dvh Full-Screen Overlay on Mobile) -->
-        <div class="vocab-sidebar vocab-drawer-mobile hidden" id="vocabSidebar">
+        <!-- Left: Vocabulary Selection by Topic (Sidebar on Desktop & iPad, Centered Modal on Phone) -->
+        <div class="vocab-sidebar" id="vocabSidebar">
           <!-- Mobile Drag Handle Removed for Full-Screen Mode -->
 
           <div class="vocab-sidebar-header vocab-drawer-header">
@@ -506,13 +527,8 @@
               <!-- HÀNG 1: TÌM KIẾM TỪ VỰNG -->
               <div class="vocab-search-row">
                 <i data-lucide="search" class="search-icon"></i>
-                <input 
-                  type="text" 
-                  id="vocabSearchInput" 
-                  class="vocab-input-field" 
-                  placeholder="Tìm kiếm từ, nghĩa, phiên âm..." 
-                  autocomplete="off"
-                />
+                <input type="text" id="vocabSearchInput" class="vocab-input-field"
+                  placeholder="Tìm kiếm từ, nghĩa, phiên âm..." autocomplete="off" />
                 <button type="button" id="btnClearVocabSearch" class="btn-clear-search hidden" title="Xóa tìm kiếm">
                   <i data-lucide="x"></i>
                 </button>
@@ -520,13 +536,8 @@
 
               <!-- HÀNG 2: THÊM TỪ MỚI TÙY CHỈNH -->
               <div class="vocab-add-row">
-                <input 
-                  type="text" 
-                  id="inputCustomWord" 
-                  class="vocab-input-field" 
-                  placeholder="Thêm từ mới (VD: comfortable)..." 
-                  autocomplete="off"
-                />
+                <input type="text" id="inputCustomWord" class="vocab-input-field"
+                  placeholder="Thêm từ mới (VD: comfortable)..." autocomplete="off" />
                 <button type="button" id="btnAddCustomWord" class="btn-add-custom-word">
                   <i data-lucide="plus"></i>
                   <span>Thêm</span>
@@ -575,15 +586,20 @@
               <span class="settings-label"><i data-lucide="target" class="lucide-icon"></i> Mức độ khó:</span>
               <div class="level-pills-selector" id="levelPillsSelector">
                 <button type="button" class="level-pill active" data-level="a0"
-                  title="Nấc 1: Khởi động (A0 - Mất gốc hoàn toàn) - Chỉ dùng câu khẳng định cực đơn giản, thì hiện tại đơn, cấu trúc S + V + O hoặc S + to be + Adj.">Khởi động (A0)</button>
+                  title="Nấc 1: Khởi động (A0 - Mất gốc hoàn toàn) - Chỉ dùng câu khẳng định cực đơn giản, thì hiện tại đơn, cấu trúc S + V + O hoặc S + to be + Adj.">Khởi
+                  động (A0)</button>
                 <button type="button" class="level-pill" data-level="a1"
-                  title="Nấc 2: Căn bản (A1 - Cực dễ) - Câu phủ định, nghi vấn đơn giản, trạng từ tần suất (always, usually), liên từ nối ngắn (and, but).">Căn bản (A1)</button>
+                  title="Nấc 2: Căn bản (A1 - Cực dễ) - Câu phủ định, nghi vấn đơn giản, trạng từ tần suất (always, usually), liên từ nối ngắn (and, but).">Căn
+                  bản (A1)</button>
                 <button type="button" class="level-pill" data-level="a2"
-                  title="Nấc 3: Sơ cấp (A2 - Giao tiếp hàng ngày) - Hiện tại đơn, Quá khứ đơn, Tương lai đơn, câu hỏi Wh-, liên từ nguyên nhân kết quả (because, so).">Sơ cấp (A2)</button>
+                  title="Nấc 3: Sơ cấp (A2 - Giao tiếp hàng ngày) - Hiện tại đơn, Quá khứ đơn, Tương lai đơn, câu hỏi Wh-, liên từ nguyên nhân kết quả (because, so).">Sơ
+                  cấp (A2)</button>
                 <button type="button" class="level-pill" data-level="b1_minus"
-                  title="Nấc 4: Tiền trung cấp (B1- - Mở rộng ngữ cảnh) - Hiện tại hoàn thành, câu so sánh, động từ khuyết thiếu (should, must), mệnh đề thời gian.">Tiền trung cấp (B1-)</button>
+                  title="Nấc 4: Tiền trung cấp (B1- - Mở rộng ngữ cảnh) - Hiện tại hoàn thành, câu so sánh, động từ khuyết thiếu (should, must), mệnh đề thời gian.">Tiền
+                  trung cấp (B1-)</button>
                 <button type="button" class="level-pill" data-level="b1"
-                  title="Nấc 5: Trung cấp vững (B1 - Đa dạng cấu trúc) - Mệnh đề quan hệ (who, which, that), câu điều kiện loại 1, liên từ tương phản (although, however).">Trung cấp (B1)</button>
+                  title="Nấc 5: Trung cấp vững (B1 - Đa dạng cấu trúc) - Mệnh đề quan hệ (who, which, that), câu điều kiện loại 1, liên từ tương phản (although, however).">Trung
+                  cấp (B1)</button>
               </div>
             </div>
 
@@ -618,8 +634,10 @@
             <div class="loading-status-bar">
               <div class="spinner-small"></div>
               <div>
-                <h4 style="margin: 0; font-size: 14px; font-weight: 600;">Hệ thống AI đang kiến tạo bài đọc ngữ cảnh...</h4>
-                <p id="passageLoadingSubtext" style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Đang lồng ghép các từ vựng bạn đã tích và tối ưu cấu trúc bài đọc tự nhiên.</p>
+                <h4 style="margin: 0; font-size: 14px; font-weight: 600;">Hệ thống AI đang kiến tạo bài đọc ngữ cảnh...
+                </h4>
+                <p id="passageLoadingSubtext" style="margin: 4px 0 0; font-size: 12px; color: var(--text-muted);">Đang
+                  lồng ghép các từ vựng bạn đã tích và tối ưu cấu trúc bài đọc tự nhiên.</p>
               </div>
             </div>
           </div>
@@ -633,27 +651,32 @@
                 <span id="passageSpeedBadge" class="latency-speed-badge hidden"></span>
               </div>
               <div class="card-tools">
-                <button id="btnSpeakPassage" class="btn-tool" title="Nghe đọc tiếng Anh chuẩn"><i data-lucide="volume-2" class="lucide-icon"></i> Nghe mẫu</button>
+                <button id="btnSpeakPassage" class="btn-tool" title="Nghe đọc tiếng Anh chuẩn"><i data-lucide="volume-2"
+                    class="lucide-icon"></i> Nghe mẫu</button>
                 <button id="btnRandomPassage" class="btn-tool accent"
-                  title="Lấy ngẫu nhiên 3-5 từ khác để tạo bài mới"><i data-lucide="dices" class="lucide-icon"></i> Đổi bài khác</button>
+                  title="Lấy ngẫu nhiên 3-5 từ khác để tạo bài mới"><i data-lucide="dices" class="lucide-icon"></i> Đổi
+                  bài khác</button>
               </div>
             </div>
 
             <div class="passage-box">
-              <label class="passage-label"><i data-lucide="book-open" class="lucide-icon"></i> Đoạn văn tiếng Anh thực hành (Reading & Context):</label>
+              <label class="passage-label"><i data-lucide="book-open" class="lucide-icon"></i> Đoạn văn tiếng Anh thực
+                hành (Reading & Context):</label>
               <div class="english-passage-text" id="passageEnglishText"></div>
             </div>
 
             <!-- User Translation Practice Input -->
             <div class="practice-box">
               <label class="passage-label" for="txtUserTranslation">
-                <i data-lucide="pencil" class="lucide-icon"></i> Bản dịch thực hành của tôi (Hãy tự dịch trước khi nộp để đối chiếu):
+                <i data-lucide="pencil" class="lucide-icon"></i> Bản dịch thực hành của tôi (Hãy tự dịch trước khi nộp
+                để đối chiếu):
               </label>
               <textarea id="txtUserTranslation" rows="3"
                 placeholder="Nhập bản dịch tiếng Việt của bạn tại đây để đối chiếu với đáp án chuẩn của AI..."></textarea>
               <div class="practice-actions">
                 <button id="btnSubmitTranslation" class="btn btn-success btn-large">
-                  <span class="btn-icon"><i data-lucide="send" class="lucide-icon"></i></span> Nộp bài & Đối chiếu đáp án
+                  <span class="btn-icon"><i data-lucide="send" class="lucide-icon"></i></span> Nộp bài & Đối chiếu đáp
+                  án
                 </button>
                 <span id="saveStatusMsg" class="save-status-msg"></span>
               </div>
@@ -693,7 +716,8 @@
               <!-- AI Translation Evaluation & Scoring (AI Translator) -->
               <div id="compareEvaluationBox" class="comparison-evaluation-box hidden">
                 <div class="eval-header">
-                  <span class="eval-badge"><i data-lucide="sparkles" class="lucide-icon"></i> Điểm chấm: <strong id="evalScoreText">--</strong>/10</span>
+                  <span class="eval-badge"><i data-lucide="sparkles" class="lucide-icon"></i> Điểm chấm: <strong
+                      id="evalScoreText">--</strong>/10</span>
                   <span class="eval-model-tag"><i data-lucide="cpu" class="lucide-icon"></i> AI Translator</span>
                 </div>
                 <div class="eval-feedback" id="evalFeedbackText"></div>
@@ -708,7 +732,8 @@
                   <span>Đã tự động lưu vào tiến độ học tập cá nhân</span>
                 </div>
                 <button id="btnNextRandomPassage" class="btn btn-primary">
-                  <span class="btn-icon"><i data-lucide="dices" class="lucide-icon"></i></span> Làm bài tiếp theo (Đổi bài khác)
+                  <span class="btn-icon"><i data-lucide="dices" class="lucide-icon"></i></span> Làm bài tiếp theo (Đổi
+                  bài khác)
                 </button>
               </div>
             </div>
@@ -722,7 +747,8 @@
             <div class="placeholder-actions" style="margin-top: 16px;">
               <button id="btnPlaceholderStartGenerate" class="btn btn-primary btn-large btn-empty-generate"
                 style="padding: 12px 24px; font-weight: 800; font-size: 1rem;">
-                <span class="btn-icon"><i data-lucide="sparkles" class="lucide-icon"></i></span> Bắt đầu tạo bài đọc ngay
+                <span class="btn-icon"><i data-lucide="sparkles" class="lucide-icon"></i></span> Bắt đầu tạo bài đọc
+                ngay
               </button>
             </div>
             <div class="tips-box" style="margin-top: 20px;">
@@ -743,6 +769,140 @@
         </div>
       </div>
     </section>
+
+    <!-- TAB 4: Thẻ Lật Từ Vựng Oxford 3000 (Flashcards Workspace) -->
+    <section id="tabContentFlashcards" class="tab-page hidden">
+      <div class="flashcard-workspace-container">
+        <!-- Header Banner & Deck Controls -->
+        <div class="flashcard-deck-header">
+          <div class="flashcard-deck-info">
+            <div class="badge-pill"><i data-lucide="layers" class="lucide-icon"></i> Thẻ Lật Phản Xạ 100% Cục Bộ</div>
+            <h2 class="flashcard-deck-title">Thẻ Lật Từ Vựng Oxford 3000</h2>
+            <p class="flashcard-deck-sub">Lật thẻ 2 mặt, chuẩn hóa phát âm IPA và tự động đồng bộ từ đã thuộc vào CSDL tài khoản.</p>
+          </div>
+          <div class="flashcard-deck-stats-pill">
+            <span class="deck-stat-counter" id="flashcardCounter">Thẻ 1 / 20</span>
+            <span class="deck-stat-mastered" id="flashcardSessionMasteredBadge">Đã thuộc: 0</span>
+          </div>
+        </div>
+
+        <!-- Filter Deck Options Bar -->
+        <div class="flashcard-filter-bar">
+          <div class="deck-filter-chips">
+            <button type="button" class="deck-filter-btn active" data-deck="unmastered" id="btnDeckUnmastered">
+              <i data-lucide="sparkles" class="lucide-icon"></i> Từ chưa thuộc (Ưu tiên)
+            </button>
+            <button type="button" class="deck-filter-btn" data-deck="all" id="btnDeckAll">
+              <i data-lucide="book-open" class="lucide-icon"></i> Toàn bộ Oxford 3000
+            </button>
+            <button type="button" class="deck-filter-btn" data-deck="selected" id="btnDeckSelected">
+              <i data-lucide="check-square" class="lucide-icon"></i> Từ đang chọn luyện tập
+            </button>
+          </div>
+          <div class="deck-quick-actions">
+            <button type="button" id="btnDeckShuffle" class="btn btn-secondary btn-sm" title="Xáo trộn ngẫu nhiên bộ thẻ">
+              <i data-lucide="shuffle" class="lucide-icon"></i> Xáo trộn
+            </button>
+            <button type="button" id="btnDeckRestartTop" class="btn btn-secondary btn-sm" title="Bắt đầu lại bộ thẻ từ đầu">
+              <i data-lucide="rotate-ccw" class="lucide-icon"></i> Đặt lại
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="flashcard-progress-bar-wrap">
+          <div class="flashcard-progress-bar-fill" id="flashcardProgressBar" style="width: 5%;"></div>
+        </div>
+
+        <!-- Active Flashcard View -->
+        <div class="flashcard-workspace-main" id="flashcardActiveView">
+          <div class="flashcard-scene" id="flashcardScene" title="Nhấp chuột hoặc chạm để lật thẻ (hoặc phím Space)">
+            <div class="flashcard-card-inner" id="flashcardCardInner">
+              <!-- Mặt Trước (Front Face) -->
+              <div class="flashcard-face flashcard-front">
+                <div class="flashcard-face-top">
+                  <span class="flashcard-pos-badge" id="flashcardPos">noun</span>
+                  <button type="button" id="btnFlashcardAudio" class="btn-flashcard-audio" title="Nghe phát âm chuẩn">
+                    <i data-lucide="volume-2" class="lucide-icon"></i>
+                  </button>
+                </div>
+                <div class="flashcard-face-body">
+                  <h2 class="flashcard-word" id="flashcardWord">vocabulary</h2>
+                  <p class="flashcard-ipa" id="flashcardIpa">/vəˈkæbjəleri/</p>
+                  <div class="flashcard-hint-text">
+                    <i data-lucide="rotate-cw" class="lucide-icon"></i> Nhấn vào thẻ hoặc phím Space để lật nghĩa
+                  </div>
+                </div>
+                <div class="flashcard-face-bottom">
+                  <span class="flashcard-flip-tag">Mặt Trước • Tiếng Anh</span>
+                </div>
+              </div>
+
+              <!-- Mặt Sau (Back Face) -->
+              <div class="flashcard-face flashcard-back">
+                <div class="flashcard-face-top">
+                  <span class="flashcard-flip-tag back">Mặt Sau • Nghĩa &amp; Ví Dụ</span>
+                  <button type="button" id="btnFlashcardAudioBack" class="btn-flashcard-audio" title="Nghe lại phát âm">
+                    <i data-lucide="volume-2" class="lucide-icon"></i>
+                  </button>
+                </div>
+                <div class="flashcard-face-body">
+                  <h3 class="flashcard-meaning" id="flashcardMeaning">từ vựng, vốn từ</h3>
+                  <div class="flashcard-example-box" id="flashcardExampleBox">
+                    <p class="flashcard-example-en" id="flashcardExampleEn">Reading every day expands your <strong>vocabulary</strong> quickly.</p>
+                    <p class="flashcard-example-vi" id="flashcardExampleVi">Đọc sách mỗi ngày giúp mở rộng vốn từ của bạn nhanh chóng.</p>
+                  </div>
+                </div>
+                <div class="flashcard-face-bottom">
+                  <div class="flashcard-hint-text">
+                    <i data-lucide="rotate-cw" class="lucide-icon"></i> Nhấn để quay lại mặt trước
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons Bar -->
+          <div class="flashcard-actions-bar">
+            <button type="button" id="btnFlashcardSkip" class="btn btn-flashcard-action btn-skip" title="Chưa thuộc, chuyển sang thẻ kế tiếp (Phím ←)">
+              <i data-lucide="arrow-left" class="lucide-icon"></i> Chưa thuộc (Bỏ qua)
+            </button>
+            <button type="button" id="btnFlashcardFlipAction" class="btn btn-flashcard-action btn-flip" title="Lật xem nghĩa (Phím Space)">
+              <i data-lucide="repeat" class="lucide-icon"></i> Lật thẻ
+            </button>
+            <button type="button" id="btnFlashcardMaster" class="btn btn-flashcard-action btn-master" title="Đã thuộc từ này - Tự động lưu vào CSDL (Phím →)">
+              <i data-lucide="check-circle" class="lucide-icon"></i> Đã thuộc (Lưu CSDL)
+            </button>
+          </div>
+
+          <div class="flashcard-hotkeys-hint">
+            <span><kbd>←</kbd> Chưa thuộc</span>
+            <span><kbd>Space</kbd> Lật thẻ</span>
+            <span><kbd>→</kbd> Đã thuộc &amp; Lưu CSDL</span>
+          </div>
+        </div>
+
+        <!-- Completed View -->
+        <div class="flashcard-completed-view hidden" id="flashcardCompletedView">
+          <div class="flashcard-completed-icon">
+            <i data-lucide="award" class="lucide-icon"></i>
+          </div>
+          <h2 class="flashcard-completed-title">Tuyệt vời! Hoàn thành lượt ôn tập</h2>
+          <p class="flashcard-completed-desc" id="flashcardSummaryText">Bạn đã tích thuộc 0 từ vựng và lưu đồng bộ vào CSDL tài khoản.</p>
+          <div class="flashcard-completed-actions">
+            <button type="button" id="btnFlashcardRestart" class="btn btn-primary">
+              <i data-lucide="refresh-cw" class="lucide-icon"></i> Luyện Tiếp Lượt Mới
+            </button>
+            <button type="button" id="btnFlashcardGoReading" class="btn btn-secondary">
+              <i data-lucide="book-open" class="lucide-icon"></i> Vào Luyện Dịch Ngay
+            </button>
+            <button type="button" id="btnFlashcardGoLive" class="btn btn-secondary">
+              <i data-lucide="mic" class="lucide-icon"></i> Vào Đàm Thoại AI
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
     <!-- TAB 3: Phòng Dịch Thuật AI Song Ngữ (AI Translator Studio) -->
     <section id="tabContentStudio" class="tab-page hidden">
       <div class="studio-container">
@@ -753,7 +913,8 @@
               <i data-lucide="sparkles" class="lucide-icon"></i> AI Translator Studio
             </div>
             <h2>Phòng Dịch Thuật AI Song Ngữ</h2>
-            <p>Dịch thuật ngữ cảnh siêu tốc hai chiều Anh &ndash; Việt kèm bóc tách ngữ pháp, thành ngữ và từ vựng chuyên sâu</p>
+            <p>Dịch thuật ngữ cảnh siêu tốc hai chiều Anh &ndash; Việt kèm bóc tách ngữ pháp, thành ngữ và từ vựng
+              chuyên sâu</p>
           </div>
           <!-- Language Direction Switcher Bar -->
           <div class="studio-direction-bar">
@@ -761,7 +922,8 @@
               <span class="lang-flag" id="studioSourceFlag">🇺🇸</span>
               <span class="lang-title" id="studioSourceTitle">Tiếng Anh (English)</span>
             </div>
-            <button type="button" id="btnSwapStudioLang" class="btn btn-icon-round btn-swap-lang" title="Đảo chiều dịch (Anh <-> Việt)">
+            <button type="button" id="btnSwapStudioLang" class="btn btn-icon-round btn-swap-lang"
+              title="Đảo chiều dịch (Anh <-> Việt)">
               <i data-lucide="arrow-left-right" class="lucide-icon"></i>
             </button>
             <div class="direction-lang" id="studioTargetLangBadge">
@@ -781,7 +943,8 @@
                 <span id="sourcePaneTitle">Văn bản gốc (English)</span>
               </div>
               <div class="pane-actions">
-                <button type="button" id="btnStudioMic" class="btn btn-sm btn-subtle" title="Nhập liệu bằng giọng nói (STT)">
+                <button type="button" id="btnStudioMic" class="btn btn-sm btn-subtle"
+                  title="Nhập liệu bằng giọng nói (STT)">
                   <i data-lucide="mic" class="lucide-icon"></i>
                   <span class="btn-label-mobile-hidden">Nói micro</span>
                 </button>
@@ -791,12 +954,8 @@
               </div>
             </div>
             <div class="pane-body">
-              <textarea
-                id="studioSourceText"
-                class="studio-textarea"
-                placeholder="Nhập hoặc dán văn bản cần dịch vào đây (hoặc nhấn nút Nói micro)..."
-                rows="7"
-              ></textarea>
+              <textarea id="studioSourceText" class="studio-textarea"
+                placeholder="Nhập hoặc dán văn bản cần dịch vào đây (hoặc nhấn nút Nói micro)..." rows="7"></textarea>
             </div>
             <div class="pane-footer">
               <div class="studio-char-counter">
@@ -831,7 +990,8 @@
               <div id="studioTargetPlaceholder" class="studio-target-placeholder">
                 <i data-lucide="languages" class="placeholder-icon"></i>
                 <p>Bản dịch ngữ cảnh thời gian thực sẽ hiển thị tại đây</p>
-                <span class="placeholder-sub">Hệ thống phân tích cấu trúc ngữ pháp, từ vựng và gợi ý các lối diễn đạt tự nhiên</span>
+                <span class="placeholder-sub">Hệ thống phân tích cấu trúc ngữ pháp, từ vựng và gợi ý các lối diễn đạt tự
+                  nhiên</span>
               </div>
               <div id="studioTargetOutput" class="studio-target-output hidden"></div>
               <div id="studioLoadingIndicator" class="studio-loading-indicator hidden">
@@ -909,7 +1069,8 @@
   <!-- Auth Modal Popup (Login & Register) -->
   <div id="authModal" class="auth-modal-overlay hidden">
     <div class="auth-modal-card">
-      <button id="btnCloseAuthModal" class="auth-close-btn" title="Đóng"><i data-lucide="x" class="lucide-icon"></i></button>
+      <button id="btnCloseAuthModal" class="auth-close-btn" title="Đóng"><i data-lucide="x"
+          class="lucide-icon"></i></button>
       <div class="auth-header">
         <div class="auth-icon-badge"><i data-lucide="graduation-cap" class="lucide-icon"></i></div>
         <h2 id="authModalTitle">Đăng Nhập Tài Khoản</h2>
@@ -952,7 +1113,8 @@
       </form>
 
       <div class="auth-footer-notice">
-        <span><i data-lucide="shield-check" class="lucide-icon"></i> Dữ liệu tích từ vựng & bài tập dịch của bạn được bảo mật và phân chia hoàn toàn riêng biệt.</span>
+        <span><i data-lucide="shield-check" class="lucide-icon"></i> Dữ liệu tích từ vựng & bài tập dịch của bạn được
+          bảo mật và phân chia hoàn toàn riêng biệt.</span>
       </div>
     </div>
   </div>
@@ -960,7 +1122,8 @@
   <!-- Micro-Quiz Modal (Unchecked Words Challenge) -->
   <div id="quizModal" class="auth-modal-overlay hidden">
     <div class="quiz-modal-card">
-      <button id="btnCloseQuizModal" class="auth-close-btn" title="Đóng"><i data-lucide="x" class="lucide-icon"></i></button>
+      <button id="btnCloseQuizModal" class="auth-close-btn" title="Đóng"><i data-lucide="x"
+          class="lucide-icon"></i></button>
       <div class="quiz-header">
         <div class="badge-pill"><i data-lucide="puzzle" class="lucide-icon"></i> Thử Thách Từ Chưa Thuộc</div>
         <h3 id="quizTitle">Micro-Quiz Củng Cố Phản Xạ</h3>
@@ -976,7 +1139,8 @@
       <!-- Question Active Container -->
       <div id="quizActiveContainer" class="quiz-active-container">
         <div class="quiz-target-info">
-          <span class="quiz-target-badge"><i data-lucide="target" class="lucide-icon"></i> Từ mục tiêu: <strong id="quizTargetWord">...</strong></span>
+          <span class="quiz-target-badge"><i data-lucide="target" class="lucide-icon"></i> Từ mục tiêu: <strong
+              id="quizTargetWord">...</strong></span>
           <span class="quiz-ipa-badge" id="quizTargetIpa">/.../</span>
         </div>
 
@@ -1024,112 +1188,13 @@
     </div>
   </div>
 
-  <!-- Modal Thẻ Lật Từ Vựng (Flashcards - 100% Cục Bộ) -->
-  <div id="flashcardModal" class="auth-modal-overlay hidden">
-    <div class="flashcard-modal-container">
-      <div class="flashcard-modal-header">
-        <div class="badge-pill"><i data-lucide="layers" class="lucide-icon"></i> Thẻ Lật Phản Xạ 100% Cục Bộ</div>
-        <div class="flashcard-header-meta">
-          <span class="flashcard-progress-counter" id="flashcardCounter">Thẻ 1 / 20</span>
-          <button type="button" id="btnCloseFlashcardModal" class="auth-close-btn" title="Đóng"><i data-lucide="x" class="lucide-icon"></i></button>
-        </div>
-      </div>
-
-      <!-- Thanh tiến trình nhỏ trên đầu thẻ -->
-      <div class="flashcard-progress-bar-track">
-        <div id="flashcardProgressBar" class="flashcard-progress-bar-fill" style="width: 5%;"></div>
-      </div>
-
-      <!-- Khung Thẻ Lật 3D Container -->
-      <div id="flashcardActiveView" class="flashcard-active-view">
-        <div class="flashcard-scene" id="flashcardScene" title="Nhấp chuột hoặc chạm để lật thẻ">
-          <div class="flashcard-card-inner" id="flashcardCardInner">
-            <!-- Mặt Trước (Front Face) -->
-            <div class="flashcard-face flashcard-front">
-              <div class="flashcard-face-top">
-                <span class="flashcard-pos-badge" id="flashcardPos">noun</span>
-                <button type="button" id="btnFlashcardAudio" class="btn-flashcard-audio" title="Nghe phát âm chuẩn">
-                  <i data-lucide="volume-2" class="lucide-icon"></i>
-                </button>
-              </div>
-
-              <div class="flashcard-front-center">
-                <h2 class="flashcard-word" id="flashcardWord">reluctant</h2>
-                <div class="flashcard-ipa-pill" id="flashcardIpa">/rɪˈlʌktənt/</div>
-              </div>
-
-              <div class="flashcard-front-hint">
-                <i data-lucide="rotate-cw" class="lucide-icon"></i>
-                <span>Chạm hoặc nhấp chuột để lật xem nghĩa</span>
-              </div>
-            </div>
-
-            <!-- Mặt Sau (Back Face) -->
-            <div class="flashcard-face flashcard-back">
-              <div class="flashcard-face-top">
-                <span class="flashcard-back-badge"><i data-lucide="book-open" class="lucide-icon"></i> Nghĩa tiếng Việt</span>
-                <button type="button" id="btnFlashcardAudioBack" class="btn-flashcard-audio" title="Nghe lại phát âm">
-                  <i data-lucide="volume-2" class="lucide-icon"></i>
-                </button>
-              </div>
-
-              <div class="flashcard-back-center">
-                <div class="flashcard-meaning" id="flashcardMeaning">miễn cưỡng, lưỡng lự, không sẵn lòng</div>
-                <div class="flashcard-example-box" id="flashcardExampleBox">
-                  <div class="flashcard-example-en" id="flashcardExampleEn">"He was reluctant to admit his mistake."</div>
-                  <div class="flashcard-example-vi" id="flashcardExampleVi">(Anh ấy miễn cưỡng thừa nhận sai lầm của mình.)</div>
-                </div>
-              </div>
-
-              <div class="flashcard-back-hint">
-                <i data-lucide="rotate-ccw" class="lucide-icon"></i>
-                <span>Nhấp chuột để lật lại mặt trước</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2 Nút Bấm Hành Động Ở Dưới Đáy Thẻ -->
-        <div class="flashcard-actions-bar">
-          <button type="button" id="btnFlashcardSkip" class="btn btn-flashcard-action btn-flashcard-skip">
-            <i data-lucide="clock" class="lucide-icon"></i>
-            <span>Chưa thuộc (Để sau)</span>
-          </button>
-          <button type="button" id="btnFlashcardMaster" class="btn btn-flashcard-action btn-flashcard-master">
-            <i data-lucide="check-circle" class="lucide-icon"></i>
-            <span>Đã thuộc (Tích vào sổ)</span>
-          </button>
-        </div>
-
-        <div class="flashcard-keyboard-guide">
-          <span>Phím tắt: <strong>Space</strong> (Lật thẻ) &bull; <strong>&larr;</strong> (Để sau) &bull; <strong>&rarr;</strong> (Đã thuộc)</span>
-        </div>
-      </div>
-
-      <!-- View Hoàn Thành Khi Hết Thẻ -->
-      <div id="flashcardCompletedView" class="flashcard-completed-view hidden">
-        <div class="flashcard-complete-icon"><i data-lucide="sparkles" class="lucide-icon"></i></div>
-        <h3>Tuyệt Vời! Đã Hoàn Thành Lượt Luyện!</h3>
-        <p id="flashcardSummaryText">Bạn đã tích thuộc 5 từ vựng trong lượt ôn tập này.</p>
-        <div class="flashcard-completed-actions">
-          <button type="button" id="btnFlashcardRestart" class="btn btn-secondary">
-            <i data-lucide="refresh-cw" class="lucide-icon"></i> Luyện Tiếp Lượt Mới
-          </button>
-          <button type="button" id="btnFlashcardDone" class="btn btn-primary">
-            <i data-lucide="check" class="lucide-icon"></i> Đóng Thẻ
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Third-party Vendors & Application Scripts (100% Locally Hosted) -->
-  <script src="/static/lucide.min.js?v=3.9.7"></script>
-  <script src="/static/notyf.min.js?v=3.9.7"></script>
-  <script src="/static/siriwave.umd.min.js?v=3.9.7"></script>
-  <script src="/static/media-handler.js?v=3.9.7"></script>
-  <script src="/static/gemini-client.js?v=3.9.7"></script>
-  <script src="/static/main.js?v=3.9.7"></script>
+  <script src="/static/lucide.min.js?v=3.9.8"></script>
+  <script src="/static/notyf.min.js?v=3.9.8"></script>
+  <script src="/static/siriwave.umd.min.js?v=3.9.8"></script>
+  <script src="/static/media-handler.js?v=3.9.8"></script>
+  <script src="/static/gemini-client.js?v=3.9.8"></script>
+  <script src="/static/main.js?v=3.9.8"></script>
 </body>
 
 </html>

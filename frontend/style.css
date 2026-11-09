@@ -2720,15 +2720,28 @@ a:focus-visible {
     background: #2563eb !important;
   }
 
-  /* 1. XÓA BỎ HOÀN TOÀN LỚP PHỦ MỜ RÁC GÂY KẸT MÀN HÌNH */
-  .vocab-drawer-backdrop,
+  /* 1. BACKDROP DIM CHO MODAL CHỌN TỪ TRÊN MOBILE */
+  .vocab-modal-backdrop {
+    display: none;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.72) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 99998 !important;
+    opacity: 0;
+    transition: opacity 0.22s ease !important;
+  }
+
+  .vocab-modal-backdrop.active {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
   .bottom-sheet-backdrop {
     display: none !important;
-    opacity: 0 !important;
     pointer-events: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    visibility: hidden !important;
   }
 
   /* Bố cục translation-workspace trên điện thoại: 1 cột */
@@ -2739,35 +2752,34 @@ a:focus-visible {
     width: 100% !important;
   }
 
-  /* 2. BIẾN DRAWER THÀNH TRANG CHỌN TỪ TOÀN MÀN HÌNH (100dvh) */
+  /* 2. BẢNG ĐIỀU KHIỂN CHỌN TỪ DẠNG POPUP MODAL CHUẨN (CĂN GIỮA, KHÔNG LỆCH MẢNG ĐEN) */
   #vocabDrawer,
   #vocabSidebar,
   .vocab-drawer-mobile,
   .vocab-sidebar {
+    display: none !important;
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: 100dvh !important; /* Dùng 100dvh chuẩn cho iOS Safari */
-    max-height: 100dvh !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.95) !important;
+    width: min(94vw, 480px) !important;
+    height: 86vh !important;
+    max-height: 86vh !important;
     margin: 0 !important;
-    border-radius: 0 !important;
-    background: var(--bg-primary, #0b0f17) !important;
-    z-index: 99999 !important; /* Đè lên toàn bộ mọi thành phần */
-    display: flex !important;
+    border-radius: 16px !important;
+    background: var(--bg-card, #161f30) !important;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12)) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    z-index: 99999 !important;
     flex-direction: column !important;
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
     overflow: hidden !important;
-    box-shadow: none !important;
-    border: none !important;
-    pointer-events: none;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease !important;
     visibility: hidden;
   }
 
-  /* KHI MỞ: TRƯỢT LÊN PHỦ KÍN 100% MÀN HÌNH */
+  /* KHI MỞ: HIỂN THỊ CĂN CHÍNH GIỮA MÀN HÌNH MƯỢT MÀ */
   #vocabDrawer.active,
   #vocabSidebar.active,
   .vocab-drawer-mobile.active,
@@ -2775,18 +2787,19 @@ a:focus-visible {
   .vocab-sidebar.show-drawer,
   .vocab-sidebar.mobile-open {
     display: flex !important;
-    transform: translateY(0) !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+    opacity: 1 !important;
     pointer-events: auto !important;
     visibility: visible !important;
   }
 
-  /* KHI ĐÓNG: ẨN HOÀN TOÀN, TRÁNH ĐÈ LÊN MÀN HÌNH */
+  /* KHI ĐÓNG: ẨN DỨT KHOÁT */
   #vocabDrawer.hidden,
   #vocabSidebar.hidden,
   .vocab-drawer-mobile.hidden,
   .vocab-sidebar.hidden {
     display: none !important;
-    transform: translateY(100%) !important;
+    transform: translate(-50%, -50%) scale(0.95) !important;
     pointer-events: none !important;
     visibility: hidden !important;
   }
@@ -3000,14 +3013,24 @@ a:focus-visible {
     display: none !important;
   }
 
-  /* Khôi phục cột từ vựng hiển thị cố định chuẩn */
-  .vocab-sidebar {
+  /* Khôi phục cột từ vựng hiển thị cố định chuẩn trên iPad và PC (Tuyệt đối không bị ẩn) */
+  #vocabDrawer,
+  #vocabDrawer.hidden,
+  #vocabSidebar,
+  #vocabSidebar.hidden,
+  .vocab-drawer-mobile,
+  .vocab-drawer-mobile.hidden,
+  .vocab-sidebar,
+  .vocab-sidebar.hidden {
     display: flex !important;
     position: sticky !important;
     top: 20px !important;
     width: 100% !important;
+    height: auto !important;
+    max-height: calc(100vh - 160px) !important;
     transform: none !important;
     visibility: visible !important;
+    opacity: 1 !important;
     pointer-events: auto !important;
     z-index: 10 !important;
   }
@@ -3017,21 +3040,19 @@ a:focus-visible {
     display: flex !important;
   }
 
-  /* Cụm tùy chọn Mức độ khó & Độ dài trên PC và Tablet (card bo tròn nằm trong passage-main) */
+  /* Cụm tùy chọn Mức độ khó & Độ dài trên PC và Tablet */
   .generator-settings-card,
   .generator-settings-bar {
     display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 16px !important;
-    flex-wrap: wrap !important;
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    background: var(--bg-card, #161f30) !important;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
     border-radius: 12px !important;
-    padding: 12px 18px !important;
+    padding: 14px 18px !important;
     margin-bottom: 16px !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    box-shadow: var(--shadow-sm) !important;
   }
 
   .generator-settings-card .settings-group,
@@ -3040,7 +3061,81 @@ a:focus-visible {
     flex-direction: row !important;
     align-items: center !important;
     gap: 10px !important;
-    width: auto !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+  }
+
+  .level-pills-selector {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  .level-pill {
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12)) !important;
+    background: var(--bg-surface, #1e293b) !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary, #94a3b8) !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    min-width: auto !important;
+  }
+
+  .level-pill:hover {
+    background: var(--bg-card, #161f30) !important;
+    color: var(--text-primary, #f8fafc) !important;
+  }
+
+  .level-pill.active {
+    background: var(--accent-primary, #2563eb) !important;
+    color: #ffffff !important;
+    border-color: var(--accent-primary, #2563eb) !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
+  }
+
+  /* Tinh gọn toolbar nút bấm trên iPad/PC */
+  .translation-toolbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 10px 14px !important;
+    background: var(--bg-card, #161f30) !important;
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
+    border-radius: 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .toolbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .toolbar-actions .btn {
+    height: 34px !important;
+    padding: 0 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+  }
+
+  .toolbar-actions #btnGeneratePassage {
+    height: 34px !important;
+    padding: 0 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
   }
 }
 
@@ -5645,6 +5740,319 @@ a:focus-visible {
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
+/* ─── FLASHCARDS WORKSPACE FULL-PAGE STYLES (TAB 4) ────────────────────── */
+.flashcard-workspace-container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 12px 10px 36px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.flashcard-deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .flashcard-deck-header {
+  background: var(--bg-card, #161f30);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.flashcard-deck-info {
+  flex: 1 1 300px;
+}
+
+.flashcard-deck-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  margin: 6px 0 4px 0;
+}
+
+[data-theme="dark"] .flashcard-deck-title {
+  color: var(--text-primary, #f8fafc);
+}
+
+.flashcard-deck-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.flashcard-deck-stats-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: var(--bg-subtle, #f1f5f9);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 999px;
+}
+
+[data-theme="dark"] .flashcard-deck-stats-pill {
+  background: var(--bg-surface, #1e293b);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.deck-stat-counter {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+[data-theme="dark"] .deck-stat-counter {
+  color: var(--text-primary, #f8fafc);
+}
+
+.deck-stat-mastered {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* Filter Deck Bar */
+.flashcard-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+}
+
+[data-theme="dark"] .flashcard-filter-bar {
+  background: var(--bg-card, #161f30);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.deck-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.deck-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: var(--bg-surface, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+[data-theme="dark"] .deck-filter-btn {
+  background: var(--bg-surface, #1e293b);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.1));
+  color: var(--text-secondary, #94a3b8);
+}
+
+.deck-filter-btn:hover {
+  color: var(--text-primary, #1e293b);
+  background: var(--bg-subtle-hover, #e2e8f0);
+}
+
+[data-theme="dark"] .deck-filter-btn:hover {
+  color: var(--text-primary, #f8fafc);
+  background: #334155;
+}
+
+.deck-filter-btn.active {
+  background: var(--accent-primary, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: var(--accent-primary, #2563eb) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35) !important;
+}
+
+.deck-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deck-quick-actions .btn-sm {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  border-radius: 8px;
+}
+
+/* Flashcard Progress Bar */
+.flashcard-progress-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: var(--border-color, #e2e8f0);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .flashcard-progress-bar-wrap {
+  background: var(--border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.flashcard-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #10b981);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flashcard-workspace-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+}
+
+.flashcard-face-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.flashcard-word {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .flashcard-word {
+  color: var(--text-primary, #f8fafc);
+}
+
+.flashcard-ipa {
+  font-size: 1.05rem;
+  font-family: var(--font-mono, monospace);
+  color: var(--accent-color, #3b82f6);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 4px 14px;
+  border-radius: 8px;
+  margin: 0 0 14px 0;
+  display: inline-block;
+}
+
+.flashcard-meaning {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #10b981;
+  margin: 0 0 12px 0;
+  line-height: 1.35;
+}
+
+.flashcard-hint-text {
+  font-size: 0.76rem;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.flashcard-face-bottom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flashcard-flip-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+}
+
+.flashcard-flip-tag.back {
+  color: #10b981;
+}
+
+/* Actions Bar */
+.flashcard-actions-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1.3fr;
+  gap: 10px;
+  width: 100%;
+  max-width: 580px;
+}
+
+.btn-flashcard-action {
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-flashcard-action.btn-flip {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  color: var(--text-primary, #1e293b);
+  padding: 0 16px;
+}
+
+[data-theme="dark"] .btn-flashcard-action.btn-flip {
+  background: var(--bg-card, #161f30);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.15));
+  color: var(--text-primary, #f8fafc);
+}
+
+.flashcard-hotkeys-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  flex-wrap: wrap;
+}
+
+.flashcard-hotkeys-hint kbd {
+  background: var(--bg-subtle, #f1f5f9);
+  border: 1px solid var(--border-color, #cbd5e1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+[data-theme="dark"] .flashcard-hotkeys-hint kbd {
+  background: var(--bg-surface, #1e293b);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary, #f8fafc);
+}
+
 .flashcard-keyboard-guide {
   text-align: center;
   font-size: 0.72rem;
@@ -5654,25 +6062,60 @@ a:focus-visible {
 
 .flashcard-completed-view {
   text-align: center;
-  padding: 24px 12px;
+  padding: 36px 20px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  max-width: 580px;
+  margin: 0 auto;
 }
 
-.flashcard-complete-icon {
-  width: 60px;
-  height: 60px;
+[data-theme="dark"] .flashcard-completed-view {
+  background: var(--bg-card, #161f30);
+  border-color: var(--border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.flashcard-complete-icon,
+.flashcard-completed-icon {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #10b981);
-  color: #ffffff;
-  display: flex;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
   font-size: 28px;
 }
 
+.flashcard-completed-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary, #1e293b);
+  margin: 0 0 8px 0;
+}
+
+[data-theme="dark"] .flashcard-completed-title {
+  color: var(--text-primary, #f8fafc);
+}
+
+.flashcard-completed-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+[data-theme="dark"] .flashcard-completed-desc {
+  color: var(--text-secondary, #94a3b8);
+}
+
 .flashcard-completed-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
   justify-content: center;
   margin-top: 20px;
 }
@@ -5908,18 +6351,24 @@ a:focus-visible {
 /* Desktop Sidebar Mode: Always visible and normal layout */
 @media (min-width: 769px) {
   #vocabDrawer,
+  #vocabDrawer.hidden,
   #vocabSidebar,
+  #vocabSidebar.hidden,
   .vocab-drawer-mobile,
-  .vocab-sidebar {
+  .vocab-drawer-mobile.hidden,
+  .vocab-sidebar,
+  .vocab-sidebar.hidden {
     display: flex !important;
-    position: static !important;
+    position: sticky !important;
+    top: 20px !important;
     transform: none !important;
-    width: auto !important;
+    width: 100% !important;
     height: auto !important;
-    max-height: none !important;
+    max-height: calc(100vh - 140px) !important;
     pointer-events: auto !important;
     visibility: visible !important;
-    box-shadow: none !important;
+    opacity: 1 !important;
+    box-shadow: var(--shadow-sm) !important;
   }
 }
 

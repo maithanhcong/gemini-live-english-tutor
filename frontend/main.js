@@ -155,14 +155,16 @@ const focusWordMeaning = document.getElementById("focusWordMeaning");
 const liveFeedbackBox = document.getElementById("liveFeedbackBox");
 const liveFeedbackText = document.getElementById("liveFeedbackText");
 
-// Tab Navigation Elements (4 Tabs: Home, Live, Translation, Studio)
+// Tab Navigation Elements (5 Tabs: Home, Live, Translation, Flashcards, Studio)
 const navTabHome = document.getElementById("navTabHome");
 const navTabLive = document.getElementById("navTabLive");
 const navTabTranslation = document.getElementById("navTabTranslation");
+const navTabFlashcards = document.getElementById("navTabFlashcards");
 const navTabStudio = document.getElementById("navTabStudio");
 const tabContentHome = document.getElementById("tabContentHome");
 const tabContentLive = document.getElementById("tabContentLive");
 const tabContentTranslation = document.getElementById("tabContentTranslation");
+const tabContentFlashcards = document.getElementById("tabContentFlashcards");
 const tabContentStudio = document.getElementById("tabContentStudio");
 
 // Quick Action Elements on Home Tab
@@ -260,7 +262,7 @@ const quizScoreText = document.getElementById("quizScoreText");
 const btnQuizPlayAgain = document.getElementById("btnQuizPlayAgain");
 const btnQuizDone = document.getElementById("btnQuizDone");
 
-// Flashcard Modal Elements
+// Flashcard Workspace Elements (Tab 4 & Dashboard Integration)
 const btnDashboardFlashcardAction = document.getElementById("btnDashboardFlashcardAction");
 const flashcardModal = document.getElementById("flashcardModal");
 const btnCloseFlashcardModal = document.getElementById("btnCloseFlashcardModal");
@@ -279,11 +281,20 @@ const flashcardExampleBox = document.getElementById("flashcardExampleBox");
 const flashcardExampleEn = document.getElementById("flashcardExampleEn");
 const flashcardExampleVi = document.getElementById("flashcardExampleVi");
 const btnFlashcardSkip = document.getElementById("btnFlashcardSkip");
+const btnFlashcardFlipAction = document.getElementById("btnFlashcardFlipAction");
 const btnFlashcardMaster = document.getElementById("btnFlashcardMaster");
 const flashcardCompletedView = document.getElementById("flashcardCompletedView");
 const flashcardSummaryText = document.getElementById("flashcardSummaryText");
 const btnFlashcardRestart = document.getElementById("btnFlashcardRestart");
 const btnFlashcardDone = document.getElementById("btnFlashcardDone");
+const btnFlashcardGoReading = document.getElementById("btnFlashcardGoReading");
+const btnFlashcardGoLive = document.getElementById("btnFlashcardGoLive");
+const btnDeckUnmastered = document.getElementById("btnDeckUnmastered");
+const btnDeckAll = document.getElementById("btnDeckAll");
+const btnDeckSelected = document.getElementById("btnDeckSelected");
+const btnDeckShuffle = document.getElementById("btnDeckShuffle");
+const btnDeckRestartTop = document.getElementById("btnDeckRestartTop");
+const flashcardSessionMasteredBadge = document.getElementById("flashcardSessionMasteredBadge");
 
 // Mobile Bottom Sheet Elements
 const btnToggleMobileVocabDrawer = document.getElementById("btnToggleMobileVocabDrawer");
@@ -388,7 +399,7 @@ function loadMasteredWordsFromStorage() {
   return new Set();
 }
 
-function saveMasteredWordsToStorage() {
+function saveMasteredWordsToStorage(immediate) {
   try {
     localStorage.setItem(
       STORAGE_KEY_MASTERED_WORDS,
@@ -399,15 +410,22 @@ function saveMasteredWordsToStorage() {
   }
   updateSyncBanners();
 
-  // Debounced update to backend SQLite (isolated by user_id if logged in)
-  clearTimeout(updateBackendDebounceTimer);
-  updateBackendDebounceTimer = setTimeout(() => {
+  var sendUpdate = function() {
     fetch("/api/vocab/update-selection", {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify({ selected_words: Array.from(selectedWordSet) }),
-    }).catch((err) => console.debug("Error updating selection in backend:", err));
-  }, 300);
+    }).catch(function(err) {
+      console.debug("Error updating selection in backend:", err);
+    });
+  };
+
+  clearTimeout(updateBackendDebounceTimer);
+  if (immediate) {
+    sendUpdate();
+  } else {
+    updateBackendDebounceTimer = setTimeout(sendUpdate, 300);
+  }
 }
 
 function updateSyncBanners() {
@@ -855,17 +873,19 @@ if (restartBtn) {
   };
 }
 
-// ─── TAB SWITCHING LOGIC (4 TABS: HOME, LIVE, TRANSLATION, STUDIO) ────────────────
+// ─── TAB SWITCHING LOGIC (5 TABS: HOME, LIVE, TRANSLATION, FLASHCARDS, STUDIO) ───
 function switchMainTab(target) {
-  // target: 'home' | 'live' | 'translation' | 'studio'
+  // target: 'home' | 'live' | 'translation' | 'flashcards' | 'studio'
   if (navTabHome) navTabHome.classList.toggle("active", target === "home");
   if (navTabLive) navTabLive.classList.toggle("active", target === "live");
   if (navTabTranslation) navTabTranslation.classList.toggle("active", target === "translation");
+  if (navTabFlashcards) navTabFlashcards.classList.toggle("active", target === "flashcards");
   if (navTabStudio) navTabStudio.classList.toggle("active", target === "studio");
 
   if (tabContentHome) tabContentHome.classList.toggle("hidden", target !== "home");
   if (tabContentLive) tabContentLive.classList.toggle("hidden", target !== "live");
   if (tabContentTranslation) tabContentTranslation.classList.toggle("hidden", target !== "translation");
+  if (tabContentFlashcards) tabContentFlashcards.classList.toggle("hidden", target !== "flashcards");
   if (tabContentStudio) tabContentStudio.classList.toggle("hidden", target !== "studio");
 
   if (target === "home") {
@@ -873,16 +893,19 @@ function switchMainTab(target) {
   } else if (target === "live") {
     syncMasteredWordsToLive();
     updateFocusWordHUD();
-  } else if (target === "translation" && syncedTopics.length === 0) {
+  } else if (target === "translation" && (!syncedTopics || syncedTopics.length === 0)) {
     syncVocabFromExcel();
+  } else if (target === "flashcards") {
+    loadFlashcardDeck(currentDeckFilter || "unmastered");
   }
   refreshIcons();
 }
 
-if (navTabHome) navTabHome.onclick = () => switchMainTab("home");
-if (navTabLive) navTabLive.onclick = () => switchMainTab("live");
-if (navTabTranslation) navTabTranslation.onclick = () => switchMainTab("translation");
-if (navTabStudio) navTabStudio.onclick = () => switchMainTab("studio");
+if (navTabHome) navTabHome.onclick = function() { switchMainTab("home"); };
+if (navTabLive) navTabLive.onclick = function() { switchMainTab("live"); };
+if (navTabTranslation) navTabTranslation.onclick = function() { switchMainTab("translation"); };
+if (navTabFlashcards) navTabFlashcards.onclick = function() { switchMainTab("flashcards"); };
+if (navTabStudio) navTabStudio.onclick = function() { switchMainTab("studio"); };
 
 // Quick Actions on Home
 if (btnHomeActionLive) {
@@ -2072,35 +2095,51 @@ if (btnLogout) {
   };
 }
 
-// ─── MOBILE VOCAB FULL-SCREEN OVERLAY HANDLERS (100% CLEAN, ZERO BACKDROP) ───
+// ─── MOBILE VOCAB POPUP MODAL HANDLERS (CLEAN BACKDROP, ZERO MARGIN GAP) ───
 function openMobileVocabDrawer() {
-  var drawer = document.getElementById("vocabDrawer") || document.getElementById("vocabSidebar");
+  var drawer = document.getElementById("vocabSidebar") || document.getElementById("vocabDrawer");
+  var backdrop = document.getElementById("vocabDrawerBackdrop");
   if (drawer) {
     drawer.classList.remove("hidden");
-    // Force layout reflow before adding active for smooth slide animation
     void drawer.offsetWidth;
     drawer.classList.add("active");
     drawer.classList.add("mobile-open");
     drawer.classList.add("show-drawer");
-    document.body.style.overflow = "hidden"; // Prevent scrolling of background page
   }
+  if (backdrop) {
+    backdrop.classList.remove("hidden");
+    void backdrop.offsetWidth;
+    backdrop.classList.add("active");
+  }
+  document.body.style.overflow = "hidden"; // Prevent scrolling of background page
 }
 
 function closeMobileVocabDrawer() {
-  var drawer = document.getElementById("vocabDrawer") || document.getElementById("vocabSidebar");
+  var drawer = document.getElementById("vocabSidebar") || document.getElementById("vocabDrawer");
+  var backdrop = document.getElementById("vocabDrawerBackdrop");
   if (drawer) {
     drawer.classList.remove("active");
     drawer.classList.remove("mobile-open");
     drawer.classList.remove("show-drawer");
-    setTimeout(function() {
-      if (drawer && !drawer.classList.contains("active")) {
-        drawer.classList.add("hidden");
-        document.body.style.overflow = ""; // Restore background page scrolling
-      }
-    }, 300);
-  } else {
-    document.body.style.overflow = "";
+    if (window.innerWidth < 768) {
+      setTimeout(function() {
+        if (drawer && !drawer.classList.contains("active") && window.innerWidth < 768) {
+          drawer.classList.add("hidden");
+        }
+      }, 250);
+    } else {
+      drawer.classList.remove("hidden");
+    }
   }
+  if (backdrop) {
+    backdrop.classList.remove("active");
+    setTimeout(function() {
+      if (backdrop && !backdrop.classList.contains("active")) {
+        backdrop.classList.add("hidden");
+      }
+    }, 250);
+  }
+  document.body.style.overflow = "";
   updateSelectedCount();
   updateSyncBanners();
 }
@@ -2155,11 +2194,19 @@ if (btnPlaceholderStartGenerate) {
 // Auto close overlay when resized or rotated to Tablet / Desktop (>= 768px)
 window.addEventListener("resize", function() {
   if (window.innerWidth >= 768) {
-    closeMobileVocabDrawer();
-    var drawer = document.getElementById("vocabDrawer") || document.getElementById("vocabSidebar");
+    var drawer = document.getElementById("vocabSidebar") || document.getElementById("vocabDrawer");
     if (drawer) {
       drawer.classList.remove("hidden");
+      drawer.classList.remove("active");
+      drawer.classList.remove("mobile-open");
+      drawer.classList.remove("show-drawer");
     }
+    var backdrop = document.getElementById("vocabDrawerBackdrop");
+    if (backdrop) {
+      backdrop.classList.remove("active");
+      backdrop.classList.add("hidden");
+    }
+    document.body.style.overflow = "";
   }
 });
 
@@ -2185,10 +2232,12 @@ function initApplication() {
     const tabHome = document.getElementById("navTabHome");
     const tabLive = document.getElementById("navTabLive");
     const tabTrans = document.getElementById("navTabTranslation");
+    const tabFlash = document.getElementById("navTabFlashcards");
     const tabStudio = document.getElementById("navTabStudio");
     if (tabHome) tabHome.onclick = (e) => { e.preventDefault(); switchMainTab("home"); };
     if (tabLive) tabLive.onclick = (e) => { e.preventDefault(); switchMainTab("live"); };
     if (tabTrans) tabTrans.onclick = (e) => { e.preventDefault(); switchMainTab("translation"); };
+    if (tabFlash) tabFlash.onclick = (e) => { e.preventDefault(); switchMainTab("flashcards"); };
     if (tabStudio) tabStudio.onclick = (e) => { e.preventDefault(); switchMainTab("studio"); };
   } catch (err) {
     console.warn("[Init] Tab binding error:", err);
@@ -3081,12 +3130,13 @@ document.addEventListener("keydown", function(e) {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FLASHCARDS FEATURE (100% LOCAL, ZERO-LATENCY, NO AI OVERHEAD)
+// FLASHCARDS FEATURE (100% LOCAL, ZERO-LATENCY, NO AI OVERHEAD, TAB 4 & DASHBOARD)
 // ─────────────────────────────────────────────────────────────────────────────
 
 let currentFlashcardDeck = [];
 let currentFlashcardIndex = 0;
 let flashcardMasteredThisSession = 0;
+let currentDeckFilter = "unmastered"; // 'unmastered' | 'all' | 'selected'
 let isCardFlipped = false;
 
 function speakWord(text) {
@@ -3103,24 +3153,6 @@ function speakWord(text) {
   }
 }
 
-function getUnmasteredVocabList() {
-  var list = [];
-  if (syncedTopics && syncedTopics.length > 0) {
-    for (var i = 0; i < syncedTopics.length; i++) {
-      var topic = syncedTopics[i];
-      if (topic && topic.words) {
-        for (var j = 0; j < topic.words.length; j++) {
-          var w = topic.words[j];
-          if (w && w.word && (!selectedWordSet || !selectedWordSet.has(w.word))) {
-            list.push(w);
-          }
-        }
-      }
-    }
-  }
-  return list;
-}
-
 function shuffleArray(arr) {
   var copy = arr.slice();
   for (var i = copy.length - 1; i > 0; i--) {
@@ -3132,52 +3164,93 @@ function shuffleArray(arr) {
   return copy;
 }
 
-async function openFlashcardModal() {
-  if (!flashcardModal) return;
+async function loadFlashcardDeck(filterType) {
+  if (filterType) {
+    currentDeckFilter = filterType;
+  }
   if (!syncedTopics || syncedTopics.length === 0) {
     await syncVocabFromExcel();
   }
 
-  var unmastered = getUnmasteredVocabList();
-  if (unmastered.length === 0) {
-    var all = [];
-    if (syncedTopics && syncedTopics.length > 0) {
-      for (var i = 0; i < syncedTopics.length; i++) {
-        var t = syncedTopics[i];
-        if (t && t.words) {
-          for (var j = 0; j < t.words.length; j++) {
-            all.push(t.words[j]);
+  // Update active state on filter chips
+  var filterButtons = [
+    { el: btnDeckUnmastered, filter: "unmastered" },
+    { el: btnDeckAll, filter: "all" },
+    { el: btnDeckSelected, filter: "selected" }
+  ];
+  for (var f = 0; f < filterButtons.length; f++) {
+    var item = filterButtons[f];
+    if (item.el) {
+      item.el.classList.toggle("active", item.filter === currentDeckFilter);
+    }
+  }
+
+  var pool = [];
+  var allWords = [];
+  if (syncedTopics && syncedTopics.length > 0) {
+    for (var i = 0; i < syncedTopics.length; i++) {
+      var topic = syncedTopics[i];
+      if (topic && topic.words) {
+        for (var j = 0; j < topic.words.length; j++) {
+          var w = topic.words[j];
+          if (w && w.word) {
+            allWords.push(w);
+            var isMastered = selectedWordSet && selectedWordSet.has(w.word);
+            if (currentDeckFilter === "unmastered" && !isMastered) {
+              pool.push(w);
+            } else if (currentDeckFilter === "selected" && isMastered) {
+              pool.push(w);
+            }
           }
         }
       }
     }
-    if (all.length === 0) {
-      notyf.error("Chưa có dữ liệu từ vựng để mở thẻ lật.");
-      return;
-    }
-    notyf.success("Bạn đã tích thuộc tất cả từ! Bắt đầu lượt ôn tập ngẫu nhiên.");
-    unmastered = all;
   }
 
-  var shuffled = shuffleArray(unmastered);
-  var deckSize = Math.min(20, shuffled.length);
+  if (currentDeckFilter === "all") {
+    pool = allWords;
+  }
+
+  if (pool.length === 0) {
+    if (currentDeckFilter === "unmastered") {
+      notyf.success("Bạn đã tích thuộc toàn bộ từ vựng! Đang chuyển sang chế độ ôn tập tất cả.");
+      pool = allWords;
+      currentDeckFilter = "all";
+      if (btnDeckAll) btnDeckAll.classList.add("active");
+      if (btnDeckUnmastered) btnDeckUnmastered.classList.remove("active");
+    } else if (currentDeckFilter === "selected") {
+      notyf.error("Chưa có từ nào được tích chọn để luyện tập. Hãy chọn từ ở phần Luyện Dịch!");
+      return;
+    }
+  }
+
+  var shuffled = shuffleArray(pool);
+  var deckSize = Math.min(30, shuffled.length);
   currentFlashcardDeck = shuffled.slice(0, deckSize);
   currentFlashcardIndex = 0;
   flashcardMasteredThisSession = 0;
 
-  flashcardModal.classList.remove("hidden");
+  if (flashcardSessionMasteredBadge) {
+    flashcardSessionMasteredBadge.textContent = "Đã thuộc: 0";
+  }
+
   renderCurrentFlashcard();
 }
 
-function closeFlashcardModal() {
-  if (!flashcardModal) return;
-  flashcardModal.classList.add("hidden");
-  currentFlashcardDeck = [];
-  currentFlashcardIndex = 0;
-  isCardFlipped = false;
-  if (flashcardCardInner) {
-    flashcardCardInner.classList.remove("is-flipped");
+function shuffleCurrentDeck() {
+  if (!currentFlashcardDeck || currentFlashcardDeck.length === 0) {
+    loadFlashcardDeck(currentDeckFilter);
+    return;
   }
+  currentFlashcardDeck = shuffleArray(currentFlashcardDeck);
+  currentFlashcardIndex = 0;
+  notyf.success("Đã xáo trộn bộ thẻ!");
+  renderCurrentFlashcard();
+}
+
+function restartFlashcardDeck() {
+  currentFlashcardIndex = 0;
+  renderCurrentFlashcard();
 }
 
 function renderCurrentFlashcard() {
@@ -3207,27 +3280,27 @@ function renderCurrentFlashcard() {
   }
 
   if (flashcardWord) {
-    flashcardWord.textContent = item.word || "";
+    flashcardWord.textContent = (item && item.word) ? item.word : "";
   }
 
   if (flashcardIpa) {
-    flashcardIpa.textContent = item.ipa || "/.../";
+    flashcardIpa.textContent = (item && item.ipa) ? item.ipa : "/.../";
   }
 
   if (flashcardPos) {
-    flashcardPos.textContent = item.pos || "word";
+    flashcardPos.textContent = (item && item.pos) ? item.pos : "word";
   }
 
   if (flashcardMeaning) {
-    flashcardMeaning.textContent = item.meaning || "";
+    flashcardMeaning.textContent = (item && item.meaning) ? item.meaning : "";
   }
 
-  if (item.example) {
+  if (item && item.example) {
     var parts = item.example.split(/[\/\n]/);
     var exEn = parts[0] ? parts[0].trim() : item.example;
     var exVi = parts[1] ? parts[1].trim() : "";
-    if (flashcardExampleEn) flashcardExampleEn.textContent = exEn ? '"' + exEn + '"' : "";
-    if (flashcardExampleVi) flashcardExampleVi.textContent = exVi ? "(" + exVi + ")" : "";
+    if (flashcardExampleEn) flashcardExampleEn.textContent = exEn ? exEn : "";
+    if (flashcardExampleVi) flashcardExampleVi.textContent = exVi ? exVi : "";
     if (flashcardExampleBox) flashcardExampleBox.classList.remove("hidden");
   } else {
     if (flashcardExampleBox) flashcardExampleBox.classList.add("hidden");
@@ -3250,7 +3323,7 @@ function skipCurrentFlashcard() {
 function masterCurrentFlashcard() {
   if (!currentFlashcardDeck || !currentFlashcardDeck[currentFlashcardIndex]) return;
   var w = currentFlashcardDeck[currentFlashcardIndex];
-  var wordName = (w.word || "").trim();
+  var wordName = (w && w.word) ? w.word.trim() : "";
   if (!wordName) return;
 
   selectedWordSet.add(wordName);
@@ -3267,11 +3340,17 @@ function masterCurrentFlashcard() {
     }
   }
 
+  // Instant SQLite sync
+  saveMasteredWordsToStorage(true);
   updateSelectedCount();
   updateSyncBanners();
-  flashcardMasteredThisSession++;
 
-  notyf.success('Đã thuộc "' + wordName + '" & lưu vào sổ tay!');
+  flashcardMasteredThisSession++;
+  if (flashcardSessionMasteredBadge) {
+    flashcardSessionMasteredBadge.textContent = "Đã thuộc: " + flashcardMasteredThisSession;
+  }
+
+  notyf.success('Đã thuộc "' + wordName + '" & tự động lưu vào CSDL!');
 
   currentFlashcardIndex++;
   renderCurrentFlashcard();
@@ -3282,7 +3361,7 @@ function showFlashcardCompletion() {
   if (flashcardCompletedView) flashcardCompletedView.classList.remove("hidden");
 
   if (flashcardSummaryText) {
-    flashcardSummaryText.textContent = "Bạn đã tích thuộc " + flashcardMasteredThisSession + " từ vựng trong lượt ôn tập này.";
+    flashcardSummaryText.textContent = "Bạn đã tích thuộc " + flashcardMasteredThisSession + " từ vựng và lưu đồng bộ vào CSDL tài khoản.";
   }
   refreshIcons();
 }
@@ -3290,6 +3369,13 @@ function showFlashcardCompletion() {
 // Flashcard Event Bindings
 if (flashcardScene) {
   flashcardScene.onclick = function() {
+    flipFlashcard();
+  };
+}
+
+if (btnFlashcardFlipAction) {
+  btnFlashcardFlipAction.onclick = function(e) {
+    e.stopPropagation();
     flipFlashcard();
   };
 }
@@ -3328,33 +3414,55 @@ if (btnFlashcardMaster) {
 
 if (btnFlashcardRestart) {
   btnFlashcardRestart.onclick = function() {
-    openFlashcardModal();
+    loadFlashcardDeck(currentDeckFilter);
   };
 }
 
-if (btnFlashcardDone) {
-  btnFlashcardDone.onclick = function() {
-    closeFlashcardModal();
+if (btnFlashcardGoReading) {
+  btnFlashcardGoReading.onclick = function() {
+    switchMainTab("translation");
   };
 }
 
-if (btnCloseFlashcardModal) {
-  btnCloseFlashcardModal.onclick = function() {
-    closeFlashcardModal();
+if (btnFlashcardGoLive) {
+  btnFlashcardGoLive.onclick = function() {
+    switchMainTab("live");
   };
 }
 
-if (flashcardModal) {
-  flashcardModal.onclick = function(e) {
-    if (e.target === flashcardModal) {
-      closeFlashcardModal();
-    }
+if (btnDeckUnmastered) {
+  btnDeckUnmastered.onclick = function() {
+    loadFlashcardDeck("unmastered");
+  };
+}
+
+if (btnDeckAll) {
+  btnDeckAll.onclick = function() {
+    loadFlashcardDeck("all");
+  };
+}
+
+if (btnDeckSelected) {
+  btnDeckSelected.onclick = function() {
+    loadFlashcardDeck("selected");
+  };
+}
+
+if (btnDeckShuffle) {
+  btnDeckShuffle.onclick = function() {
+    shuffleCurrentDeck();
+  };
+}
+
+if (btnDeckRestartTop) {
+  btnDeckRestartTop.onclick = function() {
+    restartFlashcardDeck();
   };
 }
 
 if (btnDashboardFlashcardAction) {
   btnDashboardFlashcardAction.onclick = function() {
-    openFlashcardModal();
+    switchMainTab("flashcards");
   };
 }
 
@@ -3383,12 +3491,11 @@ if (flashcardScene) {
   }, { passive: true });
 }
 
-// Keyboard shortcuts for Flashcard modal
+// Keyboard shortcuts for Flashcard
 document.addEventListener("keydown", function(e) {
-  if (flashcardModal && !flashcardModal.classList.contains("hidden")) {
-    if (e.key === "Escape") {
-      closeFlashcardModal();
-    } else if (e.code === "Space" || e.key === " ") {
+  var isFlashcardActive = tabContentFlashcards && !tabContentFlashcards.classList.contains("hidden");
+  if (isFlashcardActive) {
+    if (e.code === "Space" || e.key === " ") {
       e.preventDefault();
       flipFlashcard();
     } else if (e.key === "ArrowLeft") {
